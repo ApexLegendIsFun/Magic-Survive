@@ -6,10 +6,10 @@ public class UIManager : MonoBehaviour
 {
     public static UIManager Instance { get; private set; }
 
-    [SerializeField] Canvas hudStatcUi;
-    [SerializeField] Canvas hudDynamicUi;
-    [SerializeField] Canvas popupUi;
-    [SerializeField] Canvas damageUi;
+    [SerializeField] HudStatcUi hudStatcUi;
+    [SerializeField] HudDynamicUi hudDynamicUi;
+    [SerializeField] PopupUi popupUi;
+    [SerializeField] DamageUi damageUi;
 
     private void Awake()
     {
@@ -28,14 +28,11 @@ public class UIManager : MonoBehaviour
             Instance = null;
     }
 
-    void Start()
+    //Event가 발생한다면  여기서 처리
+
+    public void KillCountText(int count)
     {
-        
+        hudDynamicUi.UpdateKillCount(count);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }

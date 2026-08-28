@@ -1,10 +1,23 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
+
 
 public class HudDynamicUi : MonoBehaviour
 {
+    [Header("Timer")]
     [SerializeField] private TextMeshProUGUI timerText;
     [SerializeField] private float gameTime = 900f; //기본값 15분 
+
+    [Header("Count")]
+    [SerializeField] private TextMeshProUGUI killCount;
+    [SerializeField] private TextMeshProUGUI Gold;
+  
+    [Header("Bar/lvText")]
+    [SerializeField] private Slider expBar;
+    [SerializeField] private Slider hpbar;
+    [SerializeField] private TextMeshProUGUI lvText;
+
 
     private float currentTime;
     private int lastSecond;
@@ -26,7 +39,6 @@ public class HudDynamicUi : MonoBehaviour
             currentTime = 0f;
             UpdateTimerText();
 
-            GameEnd(); // TODO : 게임종료 팝업임시 
             enabled = false;
             return;
         }
@@ -40,6 +52,8 @@ public class HudDynamicUi : MonoBehaviour
         }
     }
 
+
+    //1초마다 한번씩 그리도록 처리함 
     private void UpdateTimerText()
     {
         int minutes = Mathf.FloorToInt(currentTime / 60f);
@@ -48,8 +62,12 @@ public class HudDynamicUi : MonoBehaviour
         timerText.text = $"{minutes:00}:{seconds:00}";
     }
 
-    private void GameEnd()
+
+    
+    public void UpdateKillCount(int count)
     {
-        Debug.Log("게임 종료!");
+        killCount.text = $"{count}";
     }
+
+
 }
