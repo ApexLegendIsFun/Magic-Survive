@@ -11,7 +11,7 @@ public class HudDynamicUi : MonoBehaviour
 
     [Header("Count")]
     [SerializeField] private TextMeshProUGUI killCount;
-    [SerializeField] private TextMeshProUGUI Gold;
+    [SerializeField] private TextMeshProUGUI gold;
   
     [Header("Bar/lvText")]
     [SerializeField] private Slider expBar;
@@ -62,12 +62,17 @@ public class HudDynamicUi : MonoBehaviour
         timerText.text = $"{minutes:00}:{seconds:00}";
     }
 
-
-    
     public void UpdateKillCount(int count)
     {
         killCount.text = $"{count}";
     }
+
+    public void UpdateGoldCount(int count)
+    {
+        gold.text = $"{count}";
+    }
+
+    //이하 일단 생략 
 
 
 }

@@ -28,6 +28,8 @@ public class UIManager : MonoBehaviour
             Instance = null;
     }
 
+
+
     //Event가 발생한다면  여기서 처리
 
     public void KillCountText(int count)

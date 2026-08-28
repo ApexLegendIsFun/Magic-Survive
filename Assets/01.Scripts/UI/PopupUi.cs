@@ -1,16 +1,16 @@
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PopupUi : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [Header("Item")]
+    [SerializeField] private TextMeshProUGUI[] itemDescripionText;
+    [SerializeField] private TextMeshProUGUI[] itemNameText;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+    [Header("Item_Image")]
+    [SerializeField] private Image[] itemImg;
+    
+
+
 }
