@@ -242,6 +242,7 @@ GameObject:
   - component: {fileID: 174227231}
   - component: {fileID: 174227230}
   - component: {fileID: 174227229}
+  - component: {fileID: 174227232}
   m_Layer: 0
   m_Name: Canvas_Hud_Dynamic
   m_TagString: Untagged
@@ -332,6 +333,20 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &174227232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 174227227}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e16bc6c0bfac045a72ad9b9db6aff1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HudDynamicUi
+  timerText: {fileID: 688920069}
+  gameTime: 900
 --- !u!1 &237631611
 GameObject:
   m_ObjectHideFlags: 0
