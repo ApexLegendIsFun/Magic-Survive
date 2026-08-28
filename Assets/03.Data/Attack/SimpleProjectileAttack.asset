@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23852f2c95bbfc64985b4acac6bdf80f, type: 3}
+  m_Name: SimpleProjectileAttack
+  m_EditorClassIdentifier: Assembly-CSharp::SimpleProjectileAttack
+  projectilePrefab: {fileID: -463991746816620303, guid: 94d58a5c5d8b0124ba44326a3075ec3c, type: 3}
+  cooldown: 0.8
+  range: 8
+  damage: 5
+  speed: 12
+  maxDistance: 10
+  hitRadius: 0.25
+  pierceCount: 0
