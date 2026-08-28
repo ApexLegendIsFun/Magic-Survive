@@ -6,13 +6,14 @@
 현재 캔버스 구상도
 
 Canvas_HUD_Static
-├── 타이머
-├── 레벨
 └── 아이템/스킬아이콘(상시 확인가능한)
+
 
 Canvas_HUD_Dynamic
 ├── Hp Bar
-└── EXP Bar
+└── EXP Bar /Lv Text
+├── 타이머
+└── 골드
 
 Canvas_Damage
 └── Damage Number
