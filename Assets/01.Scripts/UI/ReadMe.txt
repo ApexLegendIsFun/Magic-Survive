@@ -13,7 +13,7 @@ Canvas_HUD_Dynamic
 ├── Hp Bar
 └── EXP Bar /Lv Text
 ├── 타이머
-└── 골드
+└── 골드 / 킬수 
 
 Canvas_Damage
 └── Damage Number
@@ -21,5 +21,5 @@ Canvas_Damage
 Canvas_Popup
 ├── LevelUp
 ├── GameOver
-└── Result
+└── Option
 
