@@ -62,7 +62,7 @@ public class HudDynamicUi : MonoBehaviour
         timerText.text = $"{minutes:00}:{seconds:00}";
     }
 
-    public void UpdateKillCount(int count)
+    public void UpdateKillCount(int count) 
     {
         killCount.text = $"{count}";
     }
@@ -71,6 +71,23 @@ public class HudDynamicUi : MonoBehaviour
     {
         gold.text = $"{count}";
     }
+
+
+    public void UpdateLvtext(int level)
+    {
+        lvText.text = $"{level}";
+    }
+
+    public void PlayerHpSlider(float hp)
+    {
+        hpbar.value = hp;
+    }
+
+    public void PlayerExpSlider(float exp)
+    {
+        expBar.value = exp;
+    }
+
 
     //이하 일단 생략 
 
