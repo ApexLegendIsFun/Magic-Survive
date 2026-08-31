@@ -12,6 +12,12 @@ public class Projectile : MonoBehaviour
     // 관통 중 같은 적을 매 프레임 다시 때리기 방지
     private readonly List<IDamageable> alreadyHit = new List<IDamageable>(4);
 
+
+    // 이 투사체를 만든 프리팹. 어느 풀로 반납할지 찾는 데 쓰임
+    private Projectile sourcePrefab;
+
+    public Projectile SourcePrefab => sourcePrefab;
+
     private ProjectileSpec spec;
     private Vector2 direction;
 
@@ -22,8 +28,14 @@ public class Projectile : MonoBehaviour
     private bool isActive;
     public bool IsActive => isActive;
 
-    // 투사체 생성 직ㅎ ㅜ초기화
-    // 추후 풀링 적용 시 재사용 가능
+
+    public void SetSourcePrefab(Projectile prefab)
+    {
+        sourcePrefab = prefab;
+    }
+
+    // 투사체 발사 전 상태 초기화
+    // 풀에서 재사용될 때도 매번 호출
     public void Launch(in ProjectileSpec launchSpec, Vector2 origin, Vector2 launchDirection)
     {
         spec = launchSpec;
