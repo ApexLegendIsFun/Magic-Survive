@@ -11,11 +11,10 @@ public class HudDynamicUi : MonoBehaviour
 
     [Header("Count")]
     [SerializeField] private TextMeshProUGUI killCount;
-    [SerializeField] private TextMeshProUGUI gold;
   
     [Header("Bar/lvText")]
-    [SerializeField] private Slider expBar;
-    [SerializeField] private Slider hpbar;
+    [SerializeField] private Image hpBar;
+    [SerializeField] private Image levelupBar;
     [SerializeField] private TextMeshProUGUI lvText;
 
 
@@ -67,25 +66,22 @@ public class HudDynamicUi : MonoBehaviour
         killCount.text = $"{count}";
     }
 
-    public void UpdateGoldCount(int count)
-    {
-        gold.text = $"{count}";
-    }
-
-
+ 
     public void UpdateLvtext(int level)
     {
         lvText.text = $"{level}";
     }
 
-    public void PlayerHpSlider(float hp)
+
+    public void UpdateHp(float currentHp, float maxHp)
     {
-        hpbar.value = hp;
+        hpBar.fillAmount = currentHp / maxHp;
     }
 
-    public void PlayerExpSlider(float exp)
+
+    public void UpdateLevelUp(float currentExp, float nextLevelUp)
     {
-        expBar.value = exp;
+        levelupBar.fillAmount = currentExp / nextLevelUp;
     }
 
 
