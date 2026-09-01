@@ -91,10 +91,23 @@ public static class MvpIntegrationEditor
 
     private static GameObject ImportGameplayUi(Scene mainScene)
     {
-        Scene uiScene = EditorSceneManager.OpenScene(UiSourceScenePath, OpenSceneMode.Additive);
+        Behaviour[] mainSceneLights = mainScene.GetRootGameObjects()
+            .SelectMany(root => root.GetComponentsInChildren<Behaviour>(true))
+            .Where(component =>
+                component.enabled &&
+                component.GetType().FullName == "UnityEngine.Rendering.Universal.Light2D")
+            .ToArray();
+
+        foreach (Behaviour light in mainSceneLights)
+        {
+            light.enabled = false;
+        }
+
+        Scene uiScene = default;
 
         try
         {
+            uiScene = EditorSceneManager.OpenScene(UiSourceScenePath, OpenSceneMode.Additive);
             GameObject sourceCanvas = FindRoot(uiScene, "Canvas_InGame");
             GameObject sourceManager = FindRoot(uiScene, "UiManager");
             GameObject sourceEventSystem = FindRoot(uiScene, "EventSystem");
@@ -128,6 +141,14 @@ public static class MvpIntegrationEditor
             if (uiScene.IsValid() && uiScene.isLoaded)
             {
                 EditorSceneManager.CloseScene(uiScene, true);
+            }
+
+            foreach (Behaviour light in mainSceneLights)
+            {
+                if (light != null)
+                {
+                    light.enabled = true;
+                }
             }
         }
     }
@@ -194,35 +215,20 @@ public static class MvpIntegrationEditor
             throw new InvalidOperationException("HudDynamicUi missing in Seungbum UI hierarchy.");
         }
 
-        Slider healthBar = FindNamedComponent<Slider>(canvasRoot, "Hp_Bar");
+        Image healthBar = FindNamedComponent<Image>(canvasRoot, "HpBar");
         if (healthBar == null)
         {
-            throw new InvalidOperationException("Hp_Bar slider missing in Seungbum UI hierarchy.");
+            throw new InvalidOperationException("HpBar image missing in Seungbum UI hierarchy.");
         }
 
-        Slider experienceBar = FindNamedComponent<Slider>(canvasRoot, "Exp_Bar");
+        Image experienceBar = FindNamedComponent<Image>(canvasRoot, "Level");
         if (experienceBar == null)
         {
-            GameObject experienceObject = UnityEngine.Object.Instantiate(
-                healthBar.gameObject,
-                healthBar.transform.parent);
-            experienceObject.name = "Exp_Bar";
-
-            RectTransform rect = experienceObject.GetComponent<RectTransform>();
-            rect.anchoredPosition += new Vector2(0f, -28f);
-
-            experienceBar = experienceObject.GetComponent<Slider>();
+            throw new InvalidOperationException("Level image missing in Seungbum UI hierarchy.");
         }
 
-        healthBar.interactable = false;
-        healthBar.minValue = 0f;
-        healthBar.maxValue = 1f;
-        healthBar.value = 1f;
-
-        experienceBar.interactable = false;
-        experienceBar.minValue = 0f;
-        experienceBar.maxValue = 1f;
-        experienceBar.value = 0f;
+        ConfigureFillBar(healthBar, 1f);
+        ConfigureFillBar(experienceBar, 0f);
 
         TextMeshProUGUI levelText = FindTextBelowNamedObject(canvasRoot, "Level");
         TextMeshProUGUI killText = FindTextBelowNamedObject(canvasRoot, "KillCountText");
@@ -232,8 +238,8 @@ public static class MvpIntegrationEditor
         }
 
         SerializedObject hudSerialized = new SerializedObject(hud);
-        hudSerialized.FindProperty("hpbar").objectReferenceValue = healthBar;
-        hudSerialized.FindProperty("expBar").objectReferenceValue = experienceBar;
+        hudSerialized.FindProperty("hpBar").objectReferenceValue = healthBar;
+        hudSerialized.FindProperty("levelupBar").objectReferenceValue = experienceBar;
         hudSerialized.FindProperty("lvText").objectReferenceValue = levelText;
         hudSerialized.FindProperty("killCount").objectReferenceValue = killText;
         hudSerialized.ApplyModifiedPropertiesWithoutUndo();
@@ -309,15 +315,16 @@ public static class MvpIntegrationEditor
             throw new InvalidOperationException("GameplayUI missing HudDynamicUi.");
         }
 
+        string[] requiredHudFields = { "timerText", "killCount", "hpBar", "levelupBar", "lvText" };
+        ValidateObjectReferences(hud, requiredHudFields);
+
         SerializedObject hudSerialized = new SerializedObject(hud);
-        string[] requiredHudFields = { "timerText", "killCount", "expBar", "hpbar", "lvText" };
-        foreach (string field in requiredHudFields)
-        {
-            if (hudSerialized.FindProperty(field).objectReferenceValue == null)
-            {
-                throw new InvalidOperationException($"HudDynamicUi.{field} is unassigned.");
-            }
-        }
+        ValidateFillBar(
+            hudSerialized.FindProperty("hpBar").objectReferenceValue as Image,
+            "HudDynamicUi.hpBar");
+        ValidateFillBar(
+            hudSerialized.FindProperty("levelupBar").objectReferenceValue as Image,
+            "HudDynamicUi.levelupBar");
 
         if (scene.GetRootGameObjects().Count(root => root.name == "EventSystem") > 0)
         {
@@ -341,6 +348,26 @@ public static class MvpIntegrationEditor
                 throw new InvalidOperationException(
                     $"{target.GetType().Name}.{propertyName} is unassigned.");
             }
+        }
+    }
+
+    private static void ConfigureFillBar(Image bar, float fillAmount)
+    {
+        bar.type = Image.Type.Filled;
+        bar.fillMethod = Image.FillMethod.Horizontal;
+        bar.fillOrigin = (int)Image.OriginHorizontal.Left;
+        bar.fillAmount = fillAmount;
+    }
+
+    private static void ValidateFillBar(Image bar, string label)
+    {
+        if (bar == null ||
+            bar.type != Image.Type.Filled ||
+            bar.fillMethod != Image.FillMethod.Horizontal ||
+            bar.fillOrigin != (int)Image.OriginHorizontal.Left)
+        {
+            throw new InvalidOperationException(
+                $"{label} must be a left-to-right Filled image.");
         }
     }
 

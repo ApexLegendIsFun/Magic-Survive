@@ -178,8 +178,7 @@ public sealed class GameplayHudBinder : MonoBehaviour
             return;
         }
 
-        float normalized = maximum > 0f ? current / maximum : 0f;
-        hud.PlayerHpSlider(Mathf.Clamp01(normalized));
+        hud.UpdateHp(current, maximum);
     }
 
     private void RefreshProgress(int current, int required)
@@ -189,8 +188,7 @@ public sealed class GameplayHudBinder : MonoBehaviour
             return;
         }
 
-        float normalized = required > 0 ? (float)current / required : 0f;
-        hud.PlayerExpSlider(Mathf.Clamp01(normalized));
+        hud.UpdateLevelUp(current, required);
     }
 
     private void RefreshLevel(int level)

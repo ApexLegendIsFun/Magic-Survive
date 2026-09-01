@@ -136,7 +136,9 @@ public static class MvpPlayModeSmokeEditor
                 Assert(skills.CurrentMagic != null, "Starting magic runtime missing.");
                 AssertApproximately(skills.CurrentMagic.Damage, 3f, "Starting damage");
                 AssertApproximately(skills.CurrentMagic.Cooldown, 0.8f, "Starting cooldown");
-                AssertApproximately(FindSlider("Hp_Bar").value, 1f, "Initial HP slider");
+                Image healthBar = FindImage("HpBar");
+                Assert(healthBar.type == Image.Type.Filled, "HP bar must use Filled image type.");
+                AssertApproximately(healthBar.fillAmount, 1f, "Initial HP bar");
 
                 Assert(MoveInputField != null, "Player movement input field missing.");
                 Assert(playerInput.actions != null && playerInput.actions.FindAction("Move") != null,
@@ -174,7 +176,7 @@ public static class MvpPlayModeSmokeEditor
 
                 health.SetMaxHealth(10000f, true);
                 health.TakeDamage(2500f);
-                AssertApproximately(FindSlider("Hp_Bar").value, 0.75f, "Damaged HP slider");
+                AssertApproximately(FindImage("HpBar").fillAmount, 0.75f, "Damaged HP bar");
                 health.Heal(2500f);
                 Advance(2);
                 break;
@@ -215,7 +217,7 @@ public static class MvpPlayModeSmokeEditor
                 Assert(flow.State == GameFlowState.LevelUp, "Level-up must pause game flow.");
                 Assert(Mathf.Approximately(Time.timeScale, 0f), "Level-up must set time scale to 0.");
                 Assert(GameObject.Find("GrayboxGameFlowCanvas") != null, "Graybox canvas missing.");
-                AssertApproximately(FindSlider("Exp_Bar").value, 1f / 3f, "EXP slider");
+                AssertApproximately(FindImage("Level").fillAmount, 1f / 3f, "EXP bar");
                 Assert(FindLevelText().text == "3", "Level HUD must display 3.");
                 Click("Choice1");
                 Advance(4);
@@ -346,18 +348,18 @@ public static class MvpPlayModeSmokeEditor
         return value;
     }
 
-    private static Slider FindSlider(string objectName)
+    private static Image FindImage(string objectName)
     {
-        Slider slider = UnityEngine.Object.FindObjectsByType<Slider>(
+        Image image = UnityEngine.Object.FindObjectsByType<Image>(
                 FindObjectsInactive.Include,
                 FindObjectsSortMode.None)
             .FirstOrDefault(candidate => candidate.gameObject.name == objectName);
-        if (slider == null)
+        if (image == null)
         {
-            throw new InvalidOperationException($"Slider missing: {objectName}");
+            throw new InvalidOperationException($"Image missing: {objectName}");
         }
 
-        return slider;
+        return image;
     }
 
     private static TextMeshProUGUI FindLevelText()
