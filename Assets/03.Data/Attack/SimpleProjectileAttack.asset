@@ -15,7 +15,7 @@ MonoBehaviour:
   projectilePrefab: {fileID: -463991746816620303, guid: 94d58a5c5d8b0124ba44326a3075ec3c, type: 3}
   cooldown: 0.8
   range: 8
-  damage: 5
+  damage: 3
   speed: 12
   maxDistance: 10
   hitRadius: 0.25
