@@ -389,6 +389,13 @@ Final Test
 - 최소 통합 런타임 커밋: `485c167efdbc4adc3310a29b4395845bc7101fff`
 - Unity 검증 도구 커밋: `1c72df77029d52a38195b19025239930ccda50fe`
 - 구현 변경 상태: 커밋 완료
+- 승범 HUD Basic 원본: `origin/Seungbum` `e8b8cf1`
+- 승범 HUD Basic 병합 커밋: `8e7888fb0c89077a4b4b6b6f476e616d91631e42`
+- HUD Basic 통합 상태: 새 Image 기반 HP / EXP 계약에 맞춰 병합 완료
+  - `GameplayHudBinder`를 `UpdateHp` / `UpdateLevelUp` API에 연결
+  - 생성된 `GameplayUI`의 HP / EXP Image를 `Filled / Horizontal / Left`로 보정
+  - 승범 원본 `UI_SampleScene`의 스타일과 레이아웃은 유지
+  - 원본 씬의 HP / EXP Image 기능 설정도 `Filled`, 초기값 `1 / 0`으로 정리
 - 성장 / 스킬 / 게임 흐름: 구현 완료
   - 적 사망 보상 직접 EXP 반영
   - `현재 레벨 × 5` 요구 EXP와 초과 EXP 보존
@@ -408,7 +415,8 @@ Final Test
   - 이동, 카메라, 스폰, 자동공격, 투사체 풀링, 적 사망 정상
   - 적 사망 이벤트 횟수와 EXP 보상 합계가 HUD / 진행도에 각각 1회 반영됨
   - HP 바, 다중 레벨업, 일시정지, 세 강화, 사망 우선순위, 재시작 정상
-  - 120초 combat soak PASS: 48킬, 활성 적 32, 풀 생성 투사체 1
+  - HUD Basic 적용 후 정적 검증과 Play Mode smoke PASS
+  - 120초 combat soak PASS: 47킬, 활성 적 33, 풀 생성 투사체 1
   - 게임 런타임 Error / Exception 0
 - 수정한 통합 결함:
   - 적이 플레이어와 완전히 겹치면 방향 벡터가 0이 되어 자동공격이 멈추던 문제 수정
