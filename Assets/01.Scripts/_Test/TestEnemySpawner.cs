@@ -14,6 +14,10 @@ public class TestEnemySpawner : MonoBehaviour
     [SerializeField] private float spawnMargin = 1f;
 
 
+    // [측정] 동시 활성 적 수 상한. 0이면 제한 x
+    [SerializeField] private int maxActiveCount;
+
+
     private Camera mainCamera;
     private float spawnTimer;
 
@@ -37,6 +41,15 @@ public class TestEnemySpawner : MonoBehaviour
 
 
         spawnTimer -= Time.deltaTime;
+
+        // [측정] 상한에 도달하면 스폰 정지
+        // 그냥 return 하면 상한 걸린동안 spawnTimer 계속 음수
+        if (maxActiveCount > 0 && enemyManager.ActiveCount >= maxActiveCount)
+        {
+            spawnTimer = interval;
+            return;
+
+        }
 
         if (spawnTimer <= 0f)
         {
