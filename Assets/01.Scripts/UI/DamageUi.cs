@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class DamageUi : MonoBehaviour
 {
-    // TODO: 오브젝트 풀 사용
     // 예: DOTween을 사용하여 Fade Out + 이동 연출(고려중)
+    // TODO: Enemy 머리위에 데미지 Text 출력 예정 
 
     [SerializeField] private TextMeshProUGUI damageText;
 
@@ -38,7 +38,7 @@ public class DamageUi : MonoBehaviour
         canvasGroup.alpha = 1f;
 
         //// 이전 Tween 제거
-        //transform.DOKill();  => 뱀서류 특성상, dmg 텍스트는 수없이 반복되므로 사용 고려중 
+        //transform.DOKill();        => 여기서 뱀서류 특성상, dmg 텍스트는 수없이 반복되므로 DoKill이 계속해서 반복될 예정이므로 트윈 사용 고려중 
         //canvasGroup.DOKill();
 
         //// 위로 이동
