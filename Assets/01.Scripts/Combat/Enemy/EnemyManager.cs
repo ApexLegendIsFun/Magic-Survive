@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Pool;
 
 // 현재 살아있는 적 관리
 // 적 이동, 타겟 검색, 적 생성 관련
@@ -10,10 +11,13 @@ public class EnemyManager : MonoBehaviour
 
     private readonly List<Enemy> activeEnemies = new List<Enemy>();
 
+    private readonly Dictionary<Enemy, ObjectPool<Enemy>>
+        pools = new Dictionary<Enemy, ObjectPool<Enemy>>();
+
     // [연동:UI] HUD 적 수 표시, 디버그
     public int ActiveCount => activeEnemies.Count;
 
-    public void Register(Enemy enemy)
+    private void Register(Enemy enemy)
     {
         if (enemy == null)
         {
@@ -66,6 +70,9 @@ public class EnemyManager : MonoBehaviour
         }
     }
 
+
+    // TODO: 풀링 적용 후 반납이 이 루프에만 있음
+    // 플레이어가 사라지는 구조가 생기면 정리 루프는 조건 밖으로 빼야 함
     private void Update()
     {
         if (playerTransform == null)
@@ -84,7 +91,14 @@ public class EnemyManager : MonoBehaviour
             // 죽거나 삭제된 적을 목록에서 제거
             if (enemy == null || !enemy.IsAlive)
             {
+
                 RemoveAtSwapBack(i);
+
+                if (enemy != null)
+                {
+                    pools[enemy.SourcePrefab].Release(enemy);
+                }
+
                 continue;
             }
 
@@ -116,9 +130,13 @@ public class EnemyManager : MonoBehaviour
             return null;
         }
 
-        Enemy enemy = Instantiate(data.Prefab, position, Quaternion.identity); // [교체:풀링]
+        Enemy enemy = GetPool(data.Prefab).Get();
+
+        enemy.transform.position = position;
 
         enemy.Initialize(data);
+
+        enemy.gameObject.SetActive(true);
 
         Register(enemy);
 
@@ -126,6 +144,52 @@ public class EnemyManager : MonoBehaviour
 
     }
 
+    private ObjectPool<Enemy> GetPool(Enemy prefab)
+    {
+        if (pools.TryGetValue(prefab, out ObjectPool<Enemy> existing))
+        {
+            return existing;
+        }
+
+        Enemy Create()
+        {
+            return CreateEnemy(prefab);
+        }
+
+        ObjectPool<Enemy> pool = new ObjectPool<Enemy>(
+            createFunc: Create,
+            actionOnRelease: DeactivateEnemy,
+            actionOnDestroy: DestroyEnemy);
+
+        pools.Add(prefab, pool);
+
+        return pool;
+
+    }
+
+
+    // 풀이 비어 있을 때 호출
+    private Enemy CreateEnemy(Enemy prefab)
+    {
+        Enemy created = Instantiate(prefab);
+
+        // 활성 상태로 생성해 Awake를 돌린 뒤 즉시 비활성화
+        created.SetSourcePrefab(prefab);
+        created.gameObject.SetActive(false);
+
+        return created;
+    }
+
+    private void DeactivateEnemy(Enemy enemy)
+    {
+        enemy.gameObject.SetActive(false);
+    }
+
+
+    private void DestroyEnemy(Enemy enemy)
+    {
+        Destroy(enemy.gameObject);
+    }
 
     // [연동:스폰] 종료, 재시작 시 호출
     public void DespawnAll()
@@ -137,7 +201,7 @@ public class EnemyManager : MonoBehaviour
 
             if (enemy != null)
             {
-                Destroy(enemy.gameObject); // [교체:풀링]
+                pools[enemy.SourcePrefab].Release(enemy);
             }
         }
 

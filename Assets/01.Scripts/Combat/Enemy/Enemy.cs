@@ -13,6 +13,17 @@ public class Enemy : MonoBehaviour
 
     private Health health;
 
+    private Enemy sourcePrefab;
+
+    public Enemy SourcePrefab => sourcePrefab;
+
+
+
+    public void SetSourcePrefab(Enemy prefab)
+    {
+        sourcePrefab = prefab;
+    }
+
     // EnemyManager에서 생존 여부 확인용
     public bool IsAlive => health != null && health.IsAlive;
 
@@ -72,7 +83,5 @@ public class Enemy : MonoBehaviour
     private void HandleDied()
     {
         GameEvents.RaiseEnemyKilled(transform.position, experienceReward);
-
-        Destroy(gameObject); // [교체:풀링]
     }
 }
