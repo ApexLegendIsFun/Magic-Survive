@@ -29,7 +29,7 @@ public class UiObjectPool : MonoBehaviour
 
     private void Start()
     {
-        // DamageText를 정리할 부모
+        // DamageText 정리
         GameObject parentPool = new GameObject("DamageText_Pool");
         parentPool.transform.SetParent(transform);
 
@@ -78,7 +78,7 @@ public class UiObjectPool : MonoBehaviour
     {
         damageText.SetActive(false);
 
-        // 다시 풀에 넣음
+        // 다시 풀에
         damageText.transform.SetParent(poolParent);
 
         pool.Enqueue(damageText);

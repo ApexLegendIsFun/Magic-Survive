@@ -18,6 +18,12 @@ public class DamageUi : MonoBehaviour
         SetDamage(damage);
     }
 
-    
+
+    public void ReturnToPool()
+    {
+        UiObjectPool.instance.ReturnDamageText(gameObject);
+    }
+
+
 
 }

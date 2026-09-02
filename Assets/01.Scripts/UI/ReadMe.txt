@@ -15,7 +15,7 @@ Canvas_HUD_Dynamic (가장 변동이 많은)
 └── 골드 / 킬수      골드 => 기획상,없을수도 있음.  
 
 
-Canvas_World_Space
+Canvas_World_Space (Damage Number&Sound(피격음,공격사운드 등) => 오브젝트 풀링 사용예정)
 └── Damage Number (뱀서류 특성상 Damage 텍스트가 있을 경우 매우 많으므로 따로 관리)
     Hp Bar (플레이어, 몬스터) 플레이어의 경우, 고정 캔버스 Hpbar 또는 WorldSpace hp bar 둘중 하나 (미정)
     
