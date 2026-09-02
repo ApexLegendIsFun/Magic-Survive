@@ -154,6 +154,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fb05251c9d772f347910531787b68646, type: 2}
   spawnInterval: 1.5
   spawnMargin: 1
+  maxActiveCount: 0
 --- !u!4 &237631613
 Transform:
   m_ObjectHideFlags: 0
@@ -675,9 +676,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f15d0c7f8ef68144ca87053f74187e0d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileLauncher
-  enemyLayers:
-    serializedVersion: 2
-    m_Bits: 64
+  enemyManager: {fileID: 1220391823}
   defaultProjectilePrefab: {fileID: -463991746816620303, guid: 94d58a5c5d8b0124ba44326a3075ec3c, type: 3}
 --- !u!114 &847271160
 MonoBehaviour:
@@ -707,9 +706,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7be860fd38390614e84325cad2189185, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerContactDamage
-  enemyLayers:
-    serializedVersion: 2
-    m_Bits: 64
+  enemyManager: {fileID: 1220391823}
   checkRadius: 0.4
   checkInterval: 0.15
   invincibilityDuration: 0.5
@@ -791,7 +788,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ee176665471249f7b4769803943f54ea, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameplayHudBinder
   hud: {fileID: 6265525312274827274}
   playerHealth: {fileID: 847271157}
@@ -806,7 +803,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2579586ceee045a8b9e916fcf194edb0, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelUpController
   playerProgression: {fileID: 1916492297}
   playerSkillSystem: {fileID: 1916492295}
@@ -822,7 +819,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 833159cdd46b4e7e91f69bb1cc251d06, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrayboxGameFlowView
 --- !u!114 &1916492295
 MonoBehaviour:
@@ -834,7 +831,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6c14c145df254b03a44969638327b566, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillSystem
   weaponRunner: {fileID: 847271158}
   startingMagic: {fileID: 11400000, guid: 98465160ca7a04b5eba6d969c1737f0b, type: 2}
@@ -848,7 +845,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 81fa3c8b509d45e2b1cba328159276bc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameFlowController
 --- !u!114 &1916492297
 MonoBehaviour:
@@ -860,7 +857,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f515844dada84fb2bb49a860f7bf110f, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerProgression
   startingLevel: 1
   startingExperience: 0
@@ -945,7 +942,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c1e16bc6c0bfac045a72ad9b9db6aff1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HudDynamicUi
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

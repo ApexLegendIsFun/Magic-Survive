@@ -5,12 +5,11 @@ using System.Collections.Generic;
 // 투사체 1개 이동, 피격, 관통 처리
 public class Projectile : MonoBehaviour
 {
-    // OverlapCircle 결과 재사용하기. 모든 투사체가 공유
-    // TODO: 16개 고정. 광역 마법 도입 시 크기 재검토
-    private static readonly Collider2D[] HitBuffer = new Collider2D[16];
+    // 반경 질의 결과 버퍼. 인스턴스 필드
+    private readonly List<Enemy> hitBuffer = new List<Enemy>(16);
 
     // 관통 중 같은 적을 매 프레임 다시 때리기 방지
-    private readonly List<IDamageable> alreadyHit = new List<IDamageable>(4);
+    private readonly List<Enemy> alreadyHit = new List<Enemy>(4);
 
 
     // 이 투사체를 만든 프리팹. 어느 풀로 반납할지 찾는 데 쓰임
@@ -55,7 +54,7 @@ public class Projectile : MonoBehaviour
     }
 
     // ProjectileLauncher에서 매 프레임 호출
-    public void Tick(float deltaTime, in ContactFilter2D enemyFilter)
+    public void Tick(float deltaTime, EnemyManager enemyManager)
     {
         if (!isActive)
         {
@@ -72,7 +71,7 @@ public class Projectile : MonoBehaviour
         traveledDistance += step;
 
         // 적 명중으로 소멸시 이번 Tick 종료
-        if (CheckHits(nextPosition, enemyFilter))
+        if (CheckHits(nextPosition, enemyManager))
         {
             return;
         }
@@ -85,28 +84,23 @@ public class Projectile : MonoBehaviour
     }
 
 
-    private bool CheckHits(Vector2 position, in ContactFilter2D enemyFilter)
+    private bool CheckHits(Vector2 position, EnemyManager enemyManager)
     {
-        int hitCount = Physics2D.OverlapCircle(position, spec.HitRadius, enemyFilter, HitBuffer);
+        enemyManager.FindOverlappingEnemies(position, spec.HitRadius, hitBuffer);
 
-        for (int i = 0; i < hitCount; i++)
+        for (int i = 0; i < hitBuffer.Count; i++)
         {
 
-            if (!HitBuffer[i].TryGetComponent(out IDamageable target))
+            Enemy enemy = hitBuffer[i];
+
+            if (alreadyHit.Contains(enemy))
             {
                 continue;
             }
 
-            // 이미 죽은 적 & 이미 맞춘 적 제외
-            if (!target.IsAlive || alreadyHit.Contains(target))
-            {
-                continue;
-            }
+            alreadyHit.Add(enemy);
 
-            alreadyHit.Add(target);
-
-            //데미지 적용
-            target.TakeDamage(spec.Damage);
+            enemy.TakeDamage(spec.Damage);
 
             // PierceCount 0이며 첫 명중 시 소멸
             if (remainingPierce <= 0)

@@ -62,6 +62,35 @@ public class EnemyManager : MonoBehaviour
         return nearest;
     }
 
+    public void FindOverlappingEnemies(Vector2 center, float radius, List<Enemy> results)
+    {
+        results.Clear();
+
+       for (int i = 0; i < activeEnemies.Count; i++)
+        {
+            Enemy enemy = activeEnemies[i];
+
+            if (enemy == null || !enemy.IsAlive)
+            {
+                continue;
+            }
+
+            Vector2 enemyPosition = enemy.transform.position;
+
+            float combined = radius + enemy.HitRadius;
+
+            if ((enemyPosition - center).sqrMagnitude < combined * combined)
+            {
+                results.Add(enemy);
+            }
+            {
+                
+            }
+
+        }
+
+    }
+
     private void Awake()
     {
         if (playerTransform == null)

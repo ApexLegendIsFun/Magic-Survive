@@ -1,4 +1,6 @@
 using UnityEngine;
+using System.Collections.Generic;
+using Unity.VisualScripting;
 
 
 // 플레이어가 적과 겹쳤는지 주기적으로 검사하여 피해 적용
@@ -7,20 +9,17 @@ using UnityEngine;
 public class PlayerContactDamage : MonoBehaviour
 {
 
-
-    [SerializeField] private LayerMask enemyLayers;
+    [SerializeField] private EnemyManager enemyManager;
     [SerializeField] private float checkRadius = 0.4f;
     [SerializeField] private float checkInterval = 0.15f;
 
     // 피격 후 이 시간 동안 무적. 접촉 피해 빈도 설정
     [SerializeField] private float invincibilityDuration = 0.5f;
 
-    // 적이 밀집하면 기존 32 버퍼가 부족할 수 있으므로 64로
-    private const int OverlapBufferSize = 64;
-    private static readonly Collider2D[] OverlapBuffer = new Collider2D[OverlapBufferSize];
+    // 겹친 적 담는 버퍼. 매 프레임 재사용
+    private readonly List<Enemy> overlappedEnemies = new List<Enemy>(64);
 
     private Health health;
-    private ContactFilter2D enemyFilter;
     private float checkTimer;
 
 
@@ -35,9 +34,14 @@ public class PlayerContactDamage : MonoBehaviour
     {
         health = GetComponent<Health>();
 
-        enemyFilter = new ContactFilter2D();
-        enemyFilter.SetLayerMask(enemyLayers);
-        enemyFilter.useTriggers = true;
+        if (enemyManager == null)
+        {
+            Debug.LogError("[PlayerContactDamage] EnemyManager 미연결. 접촉 피해를 비활성화 합니다.", this);
+
+            enabled = false;
+
+        }
+
     }
 
 
@@ -72,29 +76,19 @@ public class PlayerContactDamage : MonoBehaviour
     // 전부 합산 시 과도한 피해로 증발 방지
     private void ApplyHighestContactDamage()
     {
-        int hitCount = Physics2D.OverlapCircle(transform.position, checkRadius, enemyFilter, OverlapBuffer);
-
-
+        enemyManager.FindOverlappingEnemies(transform.position, checkRadius, overlappedEnemies);
 
         float highestDamage = 0f;
 
-        for (int i = 0; i < hitCount; i++)
+        for (int i = 0; i < overlappedEnemies.Count; i++)
         {
-            if (!OverlapBuffer[i].TryGetComponent(out Enemy enemy))
-            {
-                continue;
-            }
+            float damage = overlappedEnemies[i].ContactDamage;
 
-            if (!enemy.IsAlive)
+            if (damage > highestDamage)
             {
-                continue;
-            }
+                highestDamage = damage;
 
-            if (enemy.ContactDamage > highestDamage)
-            {
-                highestDamage = enemy.ContactDamage;
             }
-
 
         }
 
@@ -106,7 +100,6 @@ public class PlayerContactDamage : MonoBehaviour
         health.TakeDamage(highestDamage);
 
         invincibleTimer = invincibilityDuration;
-
     }
 
 }
