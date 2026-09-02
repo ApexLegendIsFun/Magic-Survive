@@ -7,7 +7,6 @@ using UnityEngine;
 public class PlayerContactDamage : MonoBehaviour
 {
 
-    private static readonly Collider2D[] OverlapBuffer = new Collider2D[32];
 
     [SerializeField] private LayerMask enemyLayers;
     [SerializeField] private float checkRadius = 0.4f;
@@ -16,9 +15,14 @@ public class PlayerContactDamage : MonoBehaviour
     // 피격 후 이 시간 동안 무적. 접촉 피해 빈도 설정
     [SerializeField] private float invincibilityDuration = 0.5f;
 
+    // 적이 밀집하면 기존 32 버퍼가 부족할 수 있으므로 64로
+    private const int OverlapBufferSize = 64;
+    private static readonly Collider2D[] OverlapBuffer = new Collider2D[OverlapBufferSize];
+
     private Health health;
     private ContactFilter2D enemyFilter;
     private float checkTimer;
+
 
     // [임시] 인스펙터 확인용 필드화
     [SerializeField] private float invincibleTimer;
@@ -69,6 +73,8 @@ public class PlayerContactDamage : MonoBehaviour
     private void ApplyHighestContactDamage()
     {
         int hitCount = Physics2D.OverlapCircle(transform.position, checkRadius, enemyFilter, OverlapBuffer);
+
+
 
         float highestDamage = 0f;
 
