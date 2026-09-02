@@ -54,5 +54,10 @@ public class UIManager : MonoBehaviour
         hudDynamicUi.UpdateLevelUp(currentExp, nextLevelUp);
     }
 
+    public void PlayerUpdateLevelText(int level) //레벨업 시 , 현재 레벨 텍스트 변경시 호출 
+    {
+        hudDynamicUi.UpdateLvtext(level);
+    }
+
 
 }
