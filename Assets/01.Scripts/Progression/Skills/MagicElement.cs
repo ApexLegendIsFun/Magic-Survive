@@ -6,5 +6,6 @@ public enum MagicElement
     Fire = 0,
     Frost = 1,
     Lightning = 2,
-    Dark = 3
+    Dark = 3,
+    Earth = 4
 }

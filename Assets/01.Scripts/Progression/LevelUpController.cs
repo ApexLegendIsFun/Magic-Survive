@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -7,14 +7,26 @@ public sealed class LevelUpController : MonoBehaviour
     [SerializeField] private PlayerProgression playerProgression;
     [SerializeField] private PlayerSkillSystem playerSkillSystem;
     [SerializeField] private GameFlowController gameFlowController;
+    [SerializeField] private RunDirector runDirector;
     [SerializeField] private GrayboxGameFlowView view;
 
-    private readonly List<string> choiceLabels = new List<string>(3);
     private int pendingLevelUps;
     private bool isPresenting;
     private bool isSubscribed;
 
     public int PendingLevelUps => pendingLevelUps;
+    public bool IsPresenting => isPresenting;
+    public bool CanSpendSkillPoint =>
+        isPresenting &&
+        pendingLevelUps > 0 &&
+        gameFlowController != null &&
+        gameFlowController.State == GameFlowState.LevelUp;
+    public SkillTreeNodeId? PendingSelection => playerSkillSystem != null
+        ? playerSkillSystem.Tree.PendingSelection
+        : null;
+
+    public event Action LevelUpOpened;
+    public event Action LevelUpClosed;
 
     private void Awake()
     {
@@ -48,6 +60,7 @@ public sealed class LevelUpController : MonoBehaviour
         playerSkillSystem = skillSystem;
         gameFlowController = flowController;
         view = gameFlowView;
+        runDirector = GetComponent<RunDirector>();
 
         if (isActiveAndEnabled)
         {
@@ -56,9 +69,71 @@ public sealed class LevelUpController : MonoBehaviour
         }
     }
 
+    public bool TryChooseStartingElement(MagicElement element)
+    {
+        if (gameFlowController == null || playerSkillSystem == null ||
+            gameFlowController.State != GameFlowState.ElementSelect ||
+            !playerSkillSystem.TryChooseStartingElement(element))
+        {
+            return false;
+        }
+
+        view?.HideElementSelect();
+        return gameFlowController.TryBeginPlaying();
+    }
+
+    public bool TrySelectNode(SkillTreeNodeId nodeId)
+    {
+        if (!isPresenting || gameFlowController == null || playerSkillSystem == null ||
+            gameFlowController.State != GameFlowState.LevelUp)
+        {
+            return false;
+        }
+
+        bool selected = playerSkillSystem.TrySelectNode(nodeId);
+        if (selected)
+        {
+            view?.RefreshSkillTree(playerSkillSystem);
+        }
+
+        return selected;
+    }
+
+    public bool ConfirmSelectedNode()
+    {
+        if (!isPresenting || gameFlowController == null || playerSkillSystem == null ||
+            gameFlowController.State != GameFlowState.LevelUp)
+        {
+            return false;
+        }
+
+        return playerSkillSystem.ConfirmSelectedNode();
+    }
+
+    private void HandleSkillPointSpent(SkillTreeNodeId _)
+    {
+        if (!CanSpendSkillPoint)
+        {
+            return;
+        }
+
+        pendingLevelUps = Mathf.Max(0, pendingLevelUps - 1);
+        isPresenting = false;
+        view?.HideLevelUp();
+        LevelUpClosed?.Invoke();
+
+        if (pendingLevelUps > 0)
+        {
+            TryPresentNextLevelUp();
+            return;
+        }
+
+        gameFlowController.TryResumeActiveState();
+    }
+
     private void HandleLevelUpRequested(int _)
     {
-        if (gameFlowController != null && gameFlowController.State == GameFlowState.GameOver)
+        if (gameFlowController == null || gameFlowController.IsTerminal)
         {
             return;
         }
@@ -71,97 +146,86 @@ public sealed class LevelUpController : MonoBehaviour
         TryPresentNextLevelUp();
     }
 
-    private void HandleChoiceSelected(int choiceIndex)
-    {
-        if (!isPresenting || gameFlowController == null ||
-            gameFlowController.State != GameFlowState.LevelUp)
-        {
-            return;
-        }
-
-        if (playerSkillSystem == null || !playerSkillSystem.ApplyChoice(choiceIndex))
-        {
-            return;
-        }
-
-        pendingLevelUps = Mathf.Max(0, pendingLevelUps - 1);
-        isPresenting = false;
-        view?.HideLevelUp();
-
-        if (pendingLevelUps > 0)
-        {
-            TryPresentNextLevelUp();
-            return;
-        }
-
-        gameFlowController.TryResumePlaying();
-    }
-
     private void HandleStateChanged(GameFlowState state)
     {
         switch (state)
         {
+            case GameFlowState.ElementSelect:
+                view?.ShowElementSelect(SkillTreeCatalog.PentagonElements);
+                break;
+
             case GameFlowState.Playing:
-                view?.HideGameOver();
+            case GameFlowState.Boss:
+                view?.HideElementSelect();
+                view?.HideResult();
                 TryPresentNextLevelUp();
                 break;
 
             case GameFlowState.LevelUp:
-                view?.HideGameOver();
+                view?.HideElementSelect();
                 break;
 
+            case GameFlowState.Victory:
             case GameFlowState.GameOver:
                 pendingLevelUps = 0;
                 isPresenting = false;
+                playerSkillSystem?.CancelSelectedNode();
+                view?.HideElementSelect();
                 view?.HideLevelUp();
-                view?.ShowGameOver();
+                if (runDirector == null || runDirector.Result == null)
+                {
+                    view?.ShowGameOver();
+                }
                 break;
         }
     }
 
+    private void HandleTreeChanged()
+    {
+        if (isPresenting && playerSkillSystem != null)
+        {
+            view?.RefreshSkillTree(playerSkillSystem);
+        }
+    }
+
+    private void HandleResultReady(RunResult result)
+    {
+        view?.ShowResult(result);
+    }
+
     private void HandleRestartRequested()
     {
-        if (gameFlowController != null &&
-            gameFlowController.State == GameFlowState.GameOver)
+        if (gameFlowController != null && gameFlowController.IsTerminal)
         {
             gameFlowController.RestartCurrentScene();
         }
     }
 
+    private void HandleTitleRequested()
+    {
+        if (gameFlowController != null && gameFlowController.IsTerminal)
+        {
+            gameFlowController.LoadTitleScene();
+        }
+    }
+
     private void TryPresentNextLevelUp()
     {
-        if (pendingLevelUps <= 0 || isPresenting ||
-            playerSkillSystem == null || gameFlowController == null || view == null)
+        if (pendingLevelUps <= 0 || isPresenting || playerSkillSystem == null ||
+            gameFlowController == null)
         {
             return;
         }
 
-        if (!gameFlowController.TryEnterLevelUp())
+        if (gameFlowController.State != GameFlowState.LevelUp &&
+            !gameFlowController.TryEnterLevelUp())
         {
             return;
-        }
-
-        IReadOnlyList<SkillChoice> choices = playerSkillSystem.GetLevelUpChoices();
-        if (choices == null || choices.Count == 0)
-        {
-            Debug.LogError("Level up choices are unavailable.", this);
-            pendingLevelUps = 0;
-            view.HideLevelUp();
-            gameFlowController.TryResumePlaying();
-            return;
-        }
-
-        choiceLabels.Clear();
-        for (int i = 0; i < choices.Count; i++)
-        {
-            SkillChoice choice = choices[i];
-            choiceLabels.Add(string.IsNullOrWhiteSpace(choice.Description)
-                ? choice.Title
-                : $"{choice.Title}\n{choice.Description}");
         }
 
         isPresenting = true;
-        view.ShowLevelUp(choiceLabels);
+        view?.ShowSkillTree(playerSkillSystem);
+        LevelUpOpened?.Invoke();
     }
 
     private void SyncViewToCurrentState()
@@ -171,7 +235,9 @@ public sealed class LevelUpController : MonoBehaviour
             return;
         }
 
+        view.HideElementSelect();
         view.HideLevelUp();
+        view.HideResult();
         HandleStateChanged(gameFlowController.State);
     }
 
@@ -192,6 +258,11 @@ public sealed class LevelUpController : MonoBehaviour
             gameFlowController = GetComponent<GameFlowController>();
         }
 
+        if (runDirector == null)
+        {
+            runDirector = GetComponent<RunDirector>();
+        }
+
         if (view == null)
         {
             view = GetComponentInChildren<GrayboxGameFlowView>(true);
@@ -210,15 +281,29 @@ public sealed class LevelUpController : MonoBehaviour
             playerProgression.LevelUpRequested += HandleLevelUpRequested;
         }
 
+        if (playerSkillSystem != null)
+        {
+            playerSkillSystem.TreeChanged += HandleTreeChanged;
+            playerSkillSystem.SkillPointSpent += HandleSkillPointSpent;
+        }
+
         if (gameFlowController != null)
         {
             gameFlowController.StateChanged += HandleStateChanged;
         }
 
+        if (runDirector != null)
+        {
+            runDirector.ResultReady += HandleResultReady;
+        }
+
         if (view != null)
         {
-            view.ChoiceSelected += HandleChoiceSelected;
+            view.StartingElementSelected += HandleStartingElementSelected;
+            view.NodeSelected += HandleNodeSelected;
+            view.ConfirmRequested += HandleConfirmRequested;
             view.RestartRequested += HandleRestartRequested;
+            view.TitleRequested += HandleTitleRequested;
         }
 
         isSubscribed = true;
@@ -236,17 +321,46 @@ public sealed class LevelUpController : MonoBehaviour
             playerProgression.LevelUpRequested -= HandleLevelUpRequested;
         }
 
+        if (playerSkillSystem != null)
+        {
+            playerSkillSystem.TreeChanged -= HandleTreeChanged;
+            playerSkillSystem.SkillPointSpent -= HandleSkillPointSpent;
+        }
+
         if (gameFlowController != null)
         {
             gameFlowController.StateChanged -= HandleStateChanged;
         }
 
+        if (runDirector != null)
+        {
+            runDirector.ResultReady -= HandleResultReady;
+        }
+
         if (view != null)
         {
-            view.ChoiceSelected -= HandleChoiceSelected;
+            view.StartingElementSelected -= HandleStartingElementSelected;
+            view.NodeSelected -= HandleNodeSelected;
+            view.ConfirmRequested -= HandleConfirmRequested;
             view.RestartRequested -= HandleRestartRequested;
+            view.TitleRequested -= HandleTitleRequested;
         }
 
         isSubscribed = false;
+    }
+
+    private void HandleConfirmRequested()
+    {
+        ConfirmSelectedNode();
+    }
+
+    private void HandleStartingElementSelected(MagicElement element)
+    {
+        TryChooseStartingElement(element);
+    }
+
+    private void HandleNodeSelected(SkillTreeNodeId nodeId)
+    {
+        TrySelectNode(nodeId);
     }
 }

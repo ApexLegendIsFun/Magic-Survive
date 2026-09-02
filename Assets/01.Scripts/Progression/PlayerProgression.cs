@@ -8,14 +8,17 @@ public sealed class PlayerProgression : MonoBehaviour
 
     [SerializeField, Min(1)] private int startingLevel = 1;
     [SerializeField, Min(0)] private int startingExperience;
+    [SerializeField] private Health playerHealth;
 
     public int Level { get; private set; }
     public int CurrentExperience { get; private set; }
     public int RequiredExperience => GetRequiredExperience(Level);
+    public bool ExperienceEnabled { get; private set; } = true;
 
     public event Action<int, int> ProgressChanged;
     public event Action<int> LevelChanged;
     public event Action<int> LevelUpRequested;
+    public event Action<float> LevelUpHealed;
 
     private bool isSubscribed;
 
@@ -41,7 +44,7 @@ public sealed class PlayerProgression : MonoBehaviour
 
     public void AddExperience(int amount)
     {
-        if (amount <= 0)
+        if (!ExperienceEnabled || amount <= 0)
         {
             return;
         }
@@ -53,6 +56,7 @@ public sealed class PlayerProgression : MonoBehaviour
             remainingExperience -= RequiredExperience;
             Level++;
 
+            HealForLevelUp();
             LevelChanged?.Invoke(Level);
             LevelUpRequested?.Invoke(Level);
         }
@@ -63,8 +67,14 @@ public sealed class PlayerProgression : MonoBehaviour
 
     public void ResetProgression()
     {
+        ExperienceEnabled = true;
         SetStartingProgress();
         PublishSnapshot();
+    }
+
+    public void SetExperienceEnabled(bool value)
+    {
+        ExperienceEnabled = value;
     }
 
     public static int GetRequiredExperience(int level)
@@ -82,6 +92,18 @@ public sealed class PlayerProgression : MonoBehaviour
     {
         Level = Mathf.Max(1, startingLevel);
         CurrentExperience = Mathf.Clamp(startingExperience, 0, RequiredExperience - 1);
+    }
+
+    private void HealForLevelUp()
+    {
+        if (playerHealth == null)
+        {
+            return;
+        }
+
+        float amount = playerHealth.MaxHealth * 0.1f;
+        playerHealth.Heal(amount);
+        LevelUpHealed?.Invoke(amount);
     }
 
     private void PublishSnapshot()

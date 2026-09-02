@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEditor;
@@ -10,31 +11,42 @@ using UnityEngine.UI;
 public static class MvpIntegrationEditor
 {
     private const string MainScenePath = "Assets/00.Scenes/SampleScene.unity";
+    private const string TitleScenePath = "Assets/01.Scripts/UI/TitleScene.unity";
     private const string UiSourceScenePath = "Assets/01.Scripts/UI/UI_SampleScene.unity";
     private const string GameplayUiPrefabPath = "Assets/02.Prefabs/UI/GameplayUI.prefab";
     private const string ProjectilePrefabPath = "Assets/02.Prefabs/Projectile/Projectile.prefab";
-    private const string StartingMagicPath = "Assets/03.Data/Magic/FireBolt.asset";
+    private const string MagicDataFolder = "Assets/03.Data/Magic";
+    private const string BasicEnemyPath = "Assets/03.Data/Enemy/Enemy_A.asset";
+    private const string FastEnemyPath = "Assets/03.Data/Enemy/Enemy_B.asset";
 
     [MenuItem("Tools/Magic Survive/Build MVP Integration Scene")]
     public static void Run()
     {
         CreateFolderRecursive("Assets/02.Prefabs/UI");
-        CreateFolderRecursive("Assets/03.Data/Magic");
+        CreateFolderRecursive(MagicDataFolder);
 
-        ProjectileMagicDefinition startingMagic = CreateOrUpdateStartingMagic();
+        ConfigureTitleScene();
+        EnsureTargetedMagics();
         Scene mainScene = EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
 
-        DestroyRootIfPresent(mainScene, "GameplayUI");
-        DestroyRootIfPresent(mainScene, "GameSystems");
+        GameObject gameplayUi = FindRoot(mainScene, "GameplayUI");
+        if (gameplayUi == null)
+        {
+            gameplayUi = ImportGameplayUi(mainScene);
+        }
 
-        GameObject gameplayUi = ImportGameplayUi(mainScene);
-        GameObject gameSystems = CreateGameSystems(mainScene, gameplayUi, startingMagic);
+        GameObject gameSystems = FindRoot(mainScene, "GameSystems");
+        if (gameSystems == null)
+        {
+            gameSystems = CreateGameSystems(mainScene, gameplayUi, LoadTargetedMagics());
+        }
 
         EditorSceneManager.MarkSceneDirty(mainScene);
         EditorSceneManager.SaveScene(mainScene, MainScenePath);
 
         EditorBuildSettings.scenes = new[]
         {
+            new EditorBuildSettingsScene(TitleScenePath, true),
             new EditorBuildSettingsScene(MainScenePath, true)
         };
 
@@ -48,6 +60,8 @@ public static class MvpIntegrationEditor
     [MenuItem("Tools/Magic Survive/Validate MVP Integration Scene")]
     public static void Validate()
     {
+        Scene titleScene = EditorSceneManager.OpenScene(TitleScenePath, OpenSceneMode.Single);
+        ValidateTitleScene(titleScene);
         Scene scene = EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
         GameObject gameplayUi = FindRoot(scene, "GameplayUI");
         GameObject gameSystems = FindRoot(scene, "GameSystems");
@@ -55,7 +69,7 @@ public static class MvpIntegrationEditor
         Debug.Log("[MVP Integration] Validation passed.");
     }
 
-    private static ProjectileMagicDefinition CreateOrUpdateStartingMagic()
+    private static ProjectileMagicDefinition[] EnsureTargetedMagics()
     {
         GameObject projectileObject = AssetDatabase.LoadAssetAtPath<GameObject>(ProjectilePrefabPath);
         Projectile projectile = projectileObject != null ? projectileObject.GetComponent<Projectile>() : null;
@@ -64,33 +78,207 @@ public static class MvpIntegrationEditor
             throw new InvalidOperationException($"Projectile prefab missing: {ProjectilePrefabPath}");
         }
 
-        ProjectileMagicDefinition definition =
-            AssetDatabase.LoadAssetAtPath<ProjectileMagicDefinition>(StartingMagicPath);
-
-        if (definition == null)
+        MagicId[] magicIds =
         {
-            definition = ScriptableObject.CreateInstance<ProjectileMagicDefinition>();
-            definition.name = "FireBolt";
-            AssetDatabase.CreateAsset(definition, StartingMagicPath);
+            MagicId.FireBolt,
+            MagicId.ChainLightning,
+            MagicId.IceSpear,
+            MagicId.RockSpear,
+            MagicId.ShadowOrb
+        };
+
+        ProjectileMagicDefinition[] definitions =
+        {
+            EnsureTargetedMagic(projectile, MagicId.FireBolt, MagicElement.Fire, 6f, 0.8f, 0),
+            EnsureTargetedMagic(projectile, MagicId.ChainLightning, MagicElement.Lightning, 4f, 0.7f, 0),
+            EnsureTargetedMagic(projectile, MagicId.IceSpear, MagicElement.Frost, 5f, 0.9f, 1),
+            EnsureTargetedMagic(projectile, MagicId.RockSpear, MagicElement.Earth, 8f, 1.1f, 0),
+            EnsureTargetedMagic(projectile, MagicId.ShadowOrb, MagicElement.Dark, 6f, 1f, 1)
+        };
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        for (int index = 0; index < definitions.Length; index++)
+        {
+            string path = $"{MagicDataFolder}/{magicIds[index]}.asset";
+            definitions[index] = AssetDatabase.LoadAssetAtPath<ProjectileMagicDefinition>(path);
+            if (definitions[index] == null)
+            {
+                throw new InvalidOperationException($"Targeted magic asset failed to load: {path}");
+            }
         }
 
+        return definitions;
+    }
+
+    private static ProjectileMagicDefinition EnsureTargetedMagic(
+        Projectile projectile,
+        MagicId magicId,
+        MagicElement element,
+        float damage,
+        float cooldown,
+        int pierceCount)
+    {
+        string path = $"{MagicDataFolder}/{magicId}.asset";
+        ProjectileMagicDefinition definition =
+            AssetDatabase.LoadAssetAtPath<ProjectileMagicDefinition>(path);
+
+        if (definition != null)
+        {
+            if (definition.MagicId != magicId)
+            {
+                throw new InvalidOperationException(
+                    $"Existing targeted magic identity mismatch: {path}");
+            }
+
+            return definition;
+        }
+
+        definition = ScriptableObject.CreateInstance<ProjectileMagicDefinition>();
+        definition.name = magicId.ToString();
+        AssetDatabase.CreateAsset(definition, path);
+
         SerializedObject serialized = new SerializedObject(definition);
-        serialized.FindProperty("element").enumValueIndex = (int)MagicElement.Fire;
+        serialized.FindProperty("magicId").enumValueIndex = (int)magicId;
+        serialized.FindProperty("element").enumValueIndex = (int)element;
         serialized.FindProperty("projectilePrefab").objectReferenceValue = projectile;
-        serialized.FindProperty("cooldown").floatValue = 0.8f;
+        serialized.FindProperty("cooldown").floatValue = cooldown;
         serialized.FindProperty("range").floatValue = 8f;
-        serialized.FindProperty("damage").floatValue = 3f;
+        serialized.FindProperty("damage").floatValue = damage;
         serialized.FindProperty("speed").floatValue = 12f;
         serialized.FindProperty("maxDistance").floatValue = 10f;
         serialized.FindProperty("hitRadius").floatValue = 0.25f;
-        serialized.FindProperty("pierceCount").intValue = 0;
+        serialized.FindProperty("pierceCount").intValue = pierceCount;
         serialized.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(definition);
         return definition;
     }
 
+    private static ProjectileMagicDefinition[] LoadTargetedMagics()
+    {
+        MagicId[] magicIds =
+        {
+            MagicId.FireBolt,
+            MagicId.ChainLightning,
+            MagicId.IceSpear,
+            MagicId.RockSpear,
+            MagicId.ShadowOrb
+        };
+
+        ProjectileMagicDefinition[] definitions =
+            new ProjectileMagicDefinition[magicIds.Length];
+        for (int index = 0; index < magicIds.Length; index++)
+        {
+            string path = $"{MagicDataFolder}/{magicIds[index]}.asset";
+            definitions[index] = AssetDatabase.LoadAssetAtPath<ProjectileMagicDefinition>(path);
+            if (definitions[index] == null)
+            {
+                throw new InvalidOperationException($"Targeted magic asset failed to load: {path}");
+            }
+        }
+
+        return definitions;
+    }
+
+    private static void ConfigureTitleScene()
+    {
+        Scene titleScene = EditorSceneManager.OpenScene(TitleScenePath, OpenSceneMode.Single);
+        GameObject[] roots = titleScene.GetRootGameObjects();
+        Transform startTransform = roots
+            .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
+            .FirstOrDefault(candidate => candidate.name == "GameStart");
+
+        if (startTransform == null)
+        {
+            throw new InvalidOperationException("Seungbum TitleScene GameStart object is missing.");
+        }
+
+        foreach (GameObject root in roots)
+        {
+            FixZeroCanvasScales(root);
+        }
+
+        Image targetGraphic = startTransform.GetComponent<Image>();
+        if (targetGraphic == null)
+        {
+            throw new InvalidOperationException("TitleScene GameStart image is missing.");
+        }
+
+        Button startButton = startTransform.GetComponent<Button>();
+        if (startButton == null)
+        {
+            startButton = startTransform.gameObject.AddComponent<Button>();
+        }
+
+        startButton.targetGraphic = targetGraphic;
+
+        GameObject flowObject = FindRoot(titleScene, "TitleFlow");
+        if (flowObject == null)
+        {
+            flowObject = new GameObject("TitleFlow");
+            SceneManager.MoveGameObjectToScene(flowObject, titleScene);
+        }
+
+        TitleSceneController controller = flowObject.GetComponent<TitleSceneController>();
+        if (controller == null)
+        {
+            controller = flowObject.AddComponent<TitleSceneController>();
+        }
+
+        SetObjectReference(controller, "gameStartButton", startButton);
+        EditorSceneManager.MarkSceneDirty(titleScene);
+        EditorSceneManager.SaveScene(titleScene, TitleScenePath);
+        ValidateTitleScene(titleScene);
+    }
+
+    private static void ValidateTitleScene(Scene titleScene)
+    {
+        GameObject flowObject = FindRoot(titleScene, "TitleFlow");
+        TitleSceneController controller = flowObject != null
+            ? flowObject.GetComponent<TitleSceneController>()
+            : null;
+        if (controller == null)
+        {
+            throw new InvalidOperationException("TitleScene missing TitleSceneController.");
+        }
+
+        ValidateObjectReferences(controller, "gameStartButton");
+
+        Button startButton = titleScene.GetRootGameObjects()
+            .SelectMany(root => root.GetComponentsInChildren<Button>(true))
+            .FirstOrDefault(button => button.name == "GameStart");
+        if (startButton == null)
+        {
+            throw new InvalidOperationException("TitleScene GameStart button is missing.");
+        }
+    }
+
     private static GameObject ImportGameplayUi(Scene mainScene)
     {
+        GameObject existingPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(GameplayUiPrefabPath);
+        if (existingPrefab != null)
+        {
+            GameObject instance = PrefabUtility.InstantiatePrefab(existingPrefab, mainScene) as GameObject;
+            if (instance == null)
+            {
+                throw new InvalidOperationException("GameplayUI prefab could not be instantiated.");
+            }
+
+            instance.name = "GameplayUI";
+            FixZeroCanvasScales(instance);
+
+            GameObject canvas = instance.transform.Find("Canvas_InGame")?.gameObject;
+            GameObject manager = instance.transform.Find("UiManager")?.gameObject;
+            if (canvas == null || manager == null)
+            {
+                throw new InvalidOperationException("GameplayUI prefab roots are incomplete.");
+            }
+
+            ConfigureHud(canvas, manager);
+            return instance;
+        }
+
         Behaviour[] mainSceneLights = mainScene.GetRootGameObjects()
             .SelectMany(root => root.GetComponentsInChildren<Behaviour>(true))
             .Where(component =>
@@ -156,7 +344,7 @@ public static class MvpIntegrationEditor
     private static GameObject CreateGameSystems(
         Scene mainScene,
         GameObject gameplayUi,
-        ProjectileMagicDefinition startingMagic)
+        ProjectileMagicDefinition[] targetedMagics)
     {
         GameObject player = mainScene.GetRootGameObjects().FirstOrDefault(root => root.name == "Player");
         if (player == null)
@@ -183,16 +371,53 @@ public static class MvpIntegrationEditor
         GameFlowController flow = systems.AddComponent<GameFlowController>();
         PlayerSkillSystem skills = systems.AddComponent<PlayerSkillSystem>();
         GrayboxGameFlowView graybox = systems.AddComponent<GrayboxGameFlowView>();
+        RunDirector runDirector = systems.AddComponent<RunDirector>();
+        SpawnDirector spawnDirector = systems.AddComponent<SpawnDirector>();
         LevelUpController levelUp = systems.AddComponent<LevelUpController>();
         GameplayHudBinder hudBinder = systems.AddComponent<GameplayHudBinder>();
 
         SetObjectReference(skills, "weaponRunner", weaponRunner);
-        SetObjectReference(skills, "startingMagic", startingMagic);
+        SetObjectReferences(skills, "targetedMagicDefinitions", targetedMagics);
+
+        SetObjectReference(progression, "playerHealth", health);
 
         SetObjectReference(levelUp, "playerProgression", progression);
         SetObjectReference(levelUp, "playerSkillSystem", skills);
         SetObjectReference(levelUp, "gameFlowController", flow);
+        SetObjectReference(levelUp, "runDirector", runDirector);
         SetObjectReference(levelUp, "view", graybox);
+
+        EnemyManager enemyManager = UnityEngine.Object.FindFirstObjectByType<EnemyManager>();
+        if (enemyManager == null)
+        {
+            throw new InvalidOperationException("EnemyManager missing from SampleScene.");
+        }
+
+        SetObjectReference(runDirector, "gameFlowController", flow);
+        SetObjectReference(runDirector, "playerProgression", progression);
+        SetObjectReference(runDirector, "playerSkillSystem", skills);
+        SetObjectReference(runDirector, "enemyManager", enemyManager);
+
+        SetObjectReference(spawnDirector, "enemyManager", enemyManager);
+        SetObjectReference(spawnDirector, "gameFlowController", flow);
+        SetObjectReference(spawnDirector, "runDirector", runDirector);
+        SetObjectReference(spawnDirector, "spawnCamera", Camera.main);
+        SetObjectReferences(
+            spawnDirector,
+            "normalEnemies",
+            new UnityEngine.Object[]
+            {
+                AssetDatabase.LoadAssetAtPath<EnemyData>(BasicEnemyPath),
+                AssetDatabase.LoadAssetAtPath<EnemyData>(FastEnemyPath),
+                null,
+                null
+            });
+
+        TestEnemySpawner legacySpawner = UnityEngine.Object.FindFirstObjectByType<TestEnemySpawner>();
+        if (legacySpawner != null)
+        {
+            legacySpawner.enabled = false;
+        }
 
         HudDynamicUi hud = gameplayUi.GetComponentInChildren<HudDynamicUi>(true);
         if (hud == null)
@@ -238,6 +463,7 @@ public static class MvpIntegrationEditor
         }
 
         SerializedObject hudSerialized = new SerializedObject(hud);
+        hudSerialized.FindProperty("gameTime").floatValue = 600f;
         hudSerialized.FindProperty("hpBar").objectReferenceValue = healthBar;
         hudSerialized.FindProperty("levelupBar").objectReferenceValue = experienceBar;
         hudSerialized.FindProperty("lvText").objectReferenceValue = levelText;
@@ -255,11 +481,13 @@ public static class MvpIntegrationEditor
 
     private static void ValidateScene(Scene scene, GameObject gameplayUi, GameObject gameSystems)
     {
-        if (EditorBuildSettings.scenes.Length != 1 ||
-            EditorBuildSettings.scenes[0].path != MainScenePath ||
-            !EditorBuildSettings.scenes[0].enabled)
+        if (EditorBuildSettings.scenes.Length != 2 ||
+            EditorBuildSettings.scenes[0].path != TitleScenePath ||
+            !EditorBuildSettings.scenes[0].enabled ||
+            EditorBuildSettings.scenes[1].path != MainScenePath ||
+            !EditorBuildSettings.scenes[1].enabled)
         {
-            throw new InvalidOperationException("Build Settings must contain only SampleScene.");
+            throw new InvalidOperationException("Build Settings must contain TitleScene then SampleScene.");
         }
 
         if (gameplayUi == null || gameSystems == null)
@@ -281,6 +509,8 @@ public static class MvpIntegrationEditor
             typeof(PlayerSkillSystem),
             typeof(LevelUpController),
             typeof(GameFlowController),
+            typeof(RunDirector),
+            typeof(SpawnDirector),
             typeof(GameplayHudBinder),
             typeof(GrayboxGameFlowView)
         };
@@ -293,16 +523,31 @@ public static class MvpIntegrationEditor
             }
         }
 
+        PlayerSkillSystem skillSystem = gameSystems.GetComponent<PlayerSkillSystem>();
+        ValidateObjectReferences(skillSystem, "weaponRunner");
+        ValidateObjectReferenceArray(skillSystem, "targetedMagicDefinitions", 5);
         ValidateObjectReferences(
-            gameSystems.GetComponent<PlayerSkillSystem>(),
-            "weaponRunner",
-            "startingMagic");
+            gameSystems.GetComponent<PlayerProgression>(),
+            "playerHealth");
         ValidateObjectReferences(
             gameSystems.GetComponent<LevelUpController>(),
             "playerProgression",
             "playerSkillSystem",
             "gameFlowController",
+            "runDirector",
             "view");
+        ValidateObjectReferences(
+            gameSystems.GetComponent<RunDirector>(),
+            "gameFlowController",
+            "playerProgression",
+            "playerSkillSystem",
+            "enemyManager");
+        ValidateObjectReferences(
+            gameSystems.GetComponent<SpawnDirector>(),
+            "enemyManager",
+            "gameFlowController",
+            "runDirector",
+            "spawnCamera");
         ValidateObjectReferences(
             gameSystems.GetComponent<GameplayHudBinder>(),
             "hud",
@@ -351,8 +596,32 @@ public static class MvpIntegrationEditor
         }
     }
 
+    private static void ValidateObjectReferenceArray(
+        UnityEngine.Object target,
+        string propertyName,
+        int expectedCount)
+    {
+        SerializedObject serialized = new SerializedObject(target);
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        if (property == null || !property.isArray || property.arraySize != expectedCount)
+        {
+            throw new InvalidOperationException(
+                $"{target.GetType().Name}.{propertyName} must contain {expectedCount} entries.");
+        }
+
+        for (int index = 0; index < property.arraySize; index++)
+        {
+            if (property.GetArrayElementAtIndex(index).objectReferenceValue == null)
+            {
+                throw new InvalidOperationException(
+                    $"{target.GetType().Name}.{propertyName}[{index}] is unassigned.");
+            }
+        }
+    }
+
     private static void ConfigureFillBar(Image bar, float fillAmount)
     {
+        bar.material = null;
         bar.type = Image.Type.Filled;
         bar.fillMethod = Image.FillMethod.Horizontal;
         bar.fillOrigin = (int)Image.OriginHorizontal.Left;
@@ -393,6 +662,7 @@ public static class MvpIntegrationEditor
                 Mathf.Approximately(scale.z, 0f))
             {
                 canvas.transform.localScale = Vector3.one;
+                EditorUtility.SetDirty(canvas.transform);
             }
         }
     }
@@ -436,6 +706,33 @@ public static class MvpIntegrationEditor
         }
 
         property.objectReferenceValue = value;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void SetObjectReferences(
+        UnityEngine.Object target,
+        string propertyName,
+        IReadOnlyList<UnityEngine.Object> values)
+    {
+        SerializedObject serialized = new SerializedObject(target);
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        if (property == null || !property.isArray)
+        {
+            throw new InvalidOperationException($"{target.GetType().Name}.{propertyName} array not found.");
+        }
+
+        property.arraySize = values != null ? values.Count : 0;
+        for (int index = 0; index < property.arraySize; index++)
+        {
+            UnityEngine.Object value = values[index];
+            if (value == null && propertyName == "targetedMagicDefinitions")
+            {
+                throw new InvalidOperationException($"{propertyName}[{index}] source is null.");
+            }
+
+            property.GetArrayElementAtIndex(index).objectReferenceValue = value;
+        }
+
         serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 

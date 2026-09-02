@@ -27,6 +27,7 @@ public static class MvpPlayModeSmokeEditor
     private static GameFlowController flow;
     private static GrayboxGameFlowView view;
     private static GameplayHudBinder hudBinder;
+    private static RunDirector runDirector;
     private static Health health;
     private static PlayerController player;
     private static PlayerInput playerInput;
@@ -130,29 +131,48 @@ public static class MvpPlayModeSmokeEditor
         {
             case 0:
                 ResolveRuntimeReferences();
-                health.SetMaxHealth(10000f, true);
-                Assert(flow.State == GameFlowState.Playing, "Game must start in Playing state.");
-                Assert(Mathf.Approximately(Time.timeScale, 1f), "Time scale must start at 1.");
-                Assert(skills.CurrentMagic != null, "Starting magic runtime missing.");
-                AssertApproximately(skills.CurrentMagic.Damage, 3f, "Starting damage");
-                AssertApproximately(skills.CurrentMagic.Cooldown, 0.8f, "Starting cooldown");
-                Image healthBar = FindImage("HpBar");
-                Assert(healthBar.type == Image.Type.Filled, "HP bar must use Filled image type.");
-                AssertApproximately(healthBar.fillAmount, 1f, "Initial HP bar");
+                Assert(flow.State == GameFlowState.ElementSelect,
+                    "Game must start in ElementSelect state.");
+                Assert(Mathf.Approximately(Time.timeScale, 0f),
+                    "Element selection must pause time.");
+                Assert(skills.CurrentMagic == null, "Magic must wait for element selection.");
+                Assert(IsActive("ElementSelectPanel"), "Element selection panel missing.");
+                Click("Element_Fire");
+                Advance(1);
+                break;
 
+            case 1:
+                Assert(flow.State == GameFlowState.Playing,
+                    "Element selection must begin play.");
+                Assert(Mathf.Approximately(Time.timeScale, 1f),
+                    "Playing must restore time scale.");
+                Assert(skills.Tree.StartingElement == MagicElement.Fire,
+                    "Fire must be the selected starting element.");
+                Assert(skills.CurrentMagic != null, "Starting magic runtime missing.");
+                AssertApproximately(skills.CurrentMagic.Damage, 6f, "Starting damage");
+                AssertApproximately(skills.CurrentMagic.Cooldown, 0.8f, "Starting cooldown");
+                Assert(!skills.TrySelectNode(SkillTreeNodeId.CommonPower),
+                    "Skill nodes must not be selectable outside a level-up.");
+
+                health.SetMaxHealth(10000f, true);
+                Image healthBar = FindImage("HpBar");
+                Assert(healthBar.type == Image.Type.Filled,
+                    "HP bar must use Filled image type.");
+                AssertApproximately(healthBar.fillAmount, 1f, "Initial HP bar");
                 Assert(MoveInputField != null, "Player movement input field missing.");
                 Assert(playerInput.actions != null && playerInput.actions.FindAction("Move") != null,
                     "PlayerInput Move action missing.");
+
                 GameEvents.EnemyKilled -= HandleObservedEnemyKilled;
                 GameEvents.EnemyKilled += HandleObservedEnemyKilled;
                 playerStartPosition = player.transform.position;
                 cameraStartPosition = cameraFollow.transform.position;
                 playerInput.enabled = false;
                 SetMoveInput(Vector2.right);
-                Advance(1);
+                Advance(2);
                 break;
 
-            case 1:
+            case 2:
                 if (!Elapsed(0.25d))
                 {
                     return;
@@ -162,10 +182,10 @@ public static class MvpPlayModeSmokeEditor
                 playerInput.enabled = true;
                 Assert(player.transform.position.x > playerStartPosition.x + 0.05f,
                     "Player did not move from input.");
-                Advance(10);
+                Advance(20);
                 break;
 
-            case 10:
+            case 20:
                 if (!Elapsed(0.5d))
                 {
                     return;
@@ -173,15 +193,13 @@ public static class MvpPlayModeSmokeEditor
 
                 Assert(cameraFollow.transform.position.x > cameraStartPosition.x + 0.01f,
                     "Camera did not follow player movement.");
-
-                health.SetMaxHealth(10000f, true);
                 health.TakeDamage(2500f);
                 AssertApproximately(FindImage("HpBar").fillAmount, 0.75f, "Damaged HP bar");
                 health.Heal(2500f);
-                Advance(2);
+                Advance(3);
                 break;
 
-            case 2:
+            case 3:
                 if (hudBinder.KillCount <= 0)
                 {
                     Assert(!Elapsed(12d), "Automatic attack did not kill an enemy within 12 seconds.");
@@ -192,64 +210,72 @@ public static class MvpPlayModeSmokeEditor
                 Projectile[] pooledProjectiles = UnityEngine.Object.FindObjectsByType<Projectile>(
                     FindObjectsInactive.Include,
                     FindObjectsSortMode.None);
-
                 Assert(enemyManager != null, "Enemy manager missing during Play Mode smoke.");
                 Assert(pooledProjectiles.Length > 0,
                     "Automatic attack did not create a pooled projectile.");
                 Assert(observedKillEvents > 0, "EnemyKilled event was not raised.");
                 Assert(hudBinder.KillCount == observedKillEvents,
-                    "HUD kill count must update exactly once per EnemyKilled event.");
+                    "HUD kill count must update once per EnemyKilled event.");
+                Assert(runDirector.KillCount == observedKillEvents,
+                    "Run kill count must update once per EnemyKilled event.");
                 Assert(progression.Level == 1, "Natural combat unexpectedly reached level 2.");
                 Assert(progression.CurrentExperience == observedExperienceRewards,
-                    "Enemy death rewards must be applied to EXP exactly once.");
-                Assert(health.IsAlive, "Player died before progression smoke began.");
+                    "Enemy rewards must be applied to EXP exactly once.");
 
-                Time.timeScale = 0f;
                 progression.ResetProgression();
+                health.SetMaxHealth(10000f, true);
+                health.TakeDamage(5000f);
                 progression.AddExperience(20);
-                Advance(3);
-                break;
-
-            case 3:
-                Assert(progression.Level == 3, "20 EXP must raise level 1 to 3.");
-                Assert(progression.CurrentExperience == 5, "Overflow EXP must remain 5.");
-                Assert(levelUp.PendingLevelUps == 2, "Two level-up choices must be queued.");
-                Assert(flow.State == GameFlowState.LevelUp, "Level-up must pause game flow.");
-                Assert(Mathf.Approximately(Time.timeScale, 0f), "Level-up must set time scale to 0.");
-                Assert(GameObject.Find("GrayboxGameFlowCanvas") != null, "Graybox canvas missing.");
-                AssertApproximately(FindImage("Level").fillAmount, 1f / 3f, "EXP bar");
-                Assert(FindLevelText().text == "3", "Level HUD must display 3.");
-                Click("Choice1");
                 Advance(4);
                 break;
 
             case 4:
-                Assert(levelUp.PendingLevelUps == 1, "One queued level-up must remain.");
-                Assert(flow.State == GameFlowState.LevelUp, "Game must remain paused for queued level-up.");
-                AssertApproximately(skills.CurrentMagic.Damage, 5f, "Damage upgrade");
-                Click("Choice2");
+                Assert(progression.Level == 3, "20 EXP must raise level 1 to 3.");
+                Assert(progression.CurrentExperience == 5, "Overflow EXP must remain 5.");
+                Assert(levelUp.PendingLevelUps == 2, "Two level-ups must be queued.");
+                AssertApproximately(health.CurrentHealth, 7000f, "Two 10% level-up heals");
+                Assert(flow.State == GameFlowState.LevelUp, "Level-up must pause game flow.");
+                Assert(Mathf.Approximately(Time.timeScale, 0f),
+                    "Level-up must set time scale to 0.");
+                AssertApproximately(FindImage("Level").fillAmount, 1f / 3f, "EXP bar");
+                Assert(FindLevelText().text == "3", "Level HUD must display 3.");
+                Assert(skills.TrySelectNode(SkillTreeNodeId.CommonPower),
+                    "Public skill API could not select during level-up.");
+                Assert(skills.ConfirmSelectedNode(),
+                    "Public skill API did not spend the queued skill point.");
                 Advance(5);
                 break;
 
             case 5:
-                Assert(levelUp.PendingLevelUps == 0, "Level-up queue must be empty.");
-                Assert(flow.State == GameFlowState.Playing, "Game must resume after final queued choice.");
-                Assert(Mathf.Approximately(Time.timeScale, 1f), "Time scale must resume to 1.");
-                AssertApproximately(skills.CurrentMagic.Cooldown, 0.72f, "Fire-rate upgrade");
-                progression.AddExperience(10);
+                Assert(levelUp.PendingLevelUps == 1, "One queued level-up must remain.");
+                Assert(flow.State == GameFlowState.LevelUp,
+                    "Queued level-up must stay paused.");
+                AssertApproximately(skills.CurrentMagic.Damage, 6.9f, "Power upgrade");
+                Click("Node_CommonRapidFire");
+                Click("ConfirmButton");
                 Advance(6);
                 break;
 
             case 6:
-                Assert(progression.Level == 4, "10 overflow EXP must reach level 4.");
-                Assert(flow.State == GameFlowState.LevelUp, "Third choice must pause game.");
-                Click("Choice3");
+                Assert(levelUp.PendingLevelUps == 0, "Level-up queue must be empty.");
+                Assert(flow.State == GameFlowState.Playing,
+                    "Game must resume after queued selections.");
+                AssertApproximately(skills.CurrentMagic.Cooldown, 0.72f, "Rapid-fire upgrade");
+                progression.AddExperience(10);
+                Assert(flow.State == GameFlowState.LevelUp, "Third level-up must pause game.");
+                Click("Node_CommonPierce");
+                Click("ConfirmButton");
                 Advance(7);
                 break;
 
             case 7:
-                Assert(skills.CurrentMagic.PierceCount == 1, "Pierce upgrade must add one pierce.");
-                Assert(flow.State == GameFlowState.Playing, "Game must resume after pierce choice.");
+                Assert(progression.Level == 4, "10 overflow EXP must reach level 4.");
+                Assert(skills.CurrentMagic.PierceCount == 1,
+                    "Pierce upgrade must add one pierce.");
+                Assert(skills.BonusChainTargets == 1,
+                    "Pierce upgrade must add one chain target.");
+                Assert(flow.State == GameFlowState.Playing,
+                    "Game must resume after pierce selection.");
                 progression.AddExperience(20);
                 health.TakeDamage(health.CurrentHealth);
                 Advance(8);
@@ -258,13 +284,20 @@ public static class MvpPlayModeSmokeEditor
             case 8:
                 Assert(!health.IsAlive, "Fatal damage must kill the player.");
                 Assert(!player.enabled, "Player movement must be disabled on death.");
-                Assert(flow.State == GameFlowState.GameOver, "PlayerDied must force GameOver.");
-                Assert(levelUp.PendingLevelUps == 0, "GameOver must clear pending level-ups.");
+                Assert(flow.State == GameFlowState.GameOver,
+                    "PlayerDied must force GameOver over LevelUp.");
+                Assert(levelUp.PendingLevelUps == 0,
+                    "GameOver must clear pending level-ups.");
+                int levelAtDeath = progression.Level;
                 GameEvents.RaiseEnemyKilled(Vector2.zero, progression.RequiredExperience);
-                Assert(flow.State == GameFlowState.GameOver && levelUp.PendingLevelUps == 0,
-                    "EnemyKilled after death must not override GameOver or queue a level-up.");
-                Assert(Mathf.Approximately(Time.timeScale, 0f), "GameOver must pause time.");
-                Assert(IsActive("GameOverPanel"), "GameOver graybox panel missing.");
+                Assert(progression.Level == levelAtDeath,
+                    "EXP must be disabled after terminal state.");
+                Assert(Mathf.Approximately(Time.timeScale, 0f),
+                    "GameOver must pause time.");
+                Assert(IsActive("ResultPanel"), "Result panel missing.");
+                Assert(runDirector.Result != null &&
+                       runDirector.Result.Outcome == RunOutcome.Defeat,
+                    "Death result must be recorded as defeat.");
                 Click("RestartButton");
                 Advance(9);
                 break;
@@ -276,11 +309,24 @@ public static class MvpPlayModeSmokeEditor
                 }
 
                 ResolveRuntimeReferences();
-                Assert(flow.State == GameFlowState.Playing, "Restart must return to Playing.");
+                Assert(flow.State == GameFlowState.ElementSelect,
+                    "Restart must return to element selection.");
                 Assert(progression.Level == 1 && progression.CurrentExperience == 0,
                     "Restart must reset progression.");
-                Assert(Mathf.Approximately(Time.timeScale, 1f), "Restart must restore time scale.");
-                AssertApproximately(skills.CurrentMagic.Damage, 3f, "Restarted damage");
+                Assert(Mathf.Approximately(Time.timeScale, 0f),
+                    "Restarted element selection must pause time.");
+                Assert(!skills.Tree.HasStartingElement && skills.CurrentMagic == null,
+                    "Restart must reset skill tree and magic runtime.");
+                Assert(runDirector.ElapsedCombatTime == 0f && runDirector.KillCount == 0,
+                    "Restart must reset run statistics.");
+                Click("Element_Fire");
+                Advance(10);
+                break;
+
+            case 10:
+                Assert(flow.State == GameFlowState.Playing,
+                    "Restarted element selection must begin play.");
+                AssertApproximately(skills.CurrentMagic.Damage, 6f, "Restarted damage");
                 AssertApproximately(skills.CurrentMagic.Cooldown, 0.8f, "Restarted cooldown");
                 Assert(skills.CurrentMagic.PierceCount == 0, "Restart must reset pierce.");
                 Succeed();
@@ -296,6 +342,7 @@ public static class MvpPlayModeSmokeEditor
         flow = Require<GameFlowController>();
         view = Require<GrayboxGameFlowView>();
         hudBinder = Require<GameplayHudBinder>();
+        runDirector = Require<RunDirector>();
 
         player = Require<PlayerController>();
         playerInput = player.GetComponent<PlayerInput>();
@@ -323,6 +370,7 @@ public static class MvpPlayModeSmokeEditor
         flow = null;
         view = null;
         hudBinder = null;
+        runDirector = null;
         health = null;
         player = null;
         playerInput = null;

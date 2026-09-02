@@ -10,6 +10,17 @@ public sealed class MagicRuntime : IAttackSource
     private const float FireRateCooldownMultiplier = 0.9f;
 
     private readonly Projectile projectilePrefab;
+    private float baseCooldown;
+    private float baseRange;
+    private float baseDamage;
+    private float baseMaxDistance;
+    private float baseHitRadius;
+    private int basePierceCount;
+    private float globalDamageMultiplier = 1f;
+    private float globalCooldownMultiplier = 1f;
+    private float masteryDamageMultiplier = 1f;
+    private float masteryRangeMultiplier = 1f;
+    private int bonusPierce;
 
     public MagicRuntime(ProjectileMagicDefinition definition)
     {
@@ -18,25 +29,27 @@ public sealed class MagicRuntime : IAttackSource
             throw new ArgumentNullException(nameof(definition));
         }
 
+        Id = definition.MagicId;
         Element = definition.Element;
         projectilePrefab = definition.ProjectilePrefab;
-        Cooldown = definition.Cooldown;
-        Range = definition.Range;
-        Damage = definition.Damage;
+        baseCooldown = definition.Cooldown;
+        baseRange = definition.Range;
+        baseDamage = definition.Damage;
         Speed = definition.Speed;
-        MaxDistance = definition.MaxDistance;
-        HitRadius = definition.HitRadius;
-        PierceCount = definition.PierceCount;
+        baseMaxDistance = definition.MaxDistance;
+        baseHitRadius = definition.HitRadius;
+        basePierceCount = definition.PierceCount;
     }
 
+    public MagicId Id { get; }
     public MagicElement Element { get; }
-    public float Cooldown { get; private set; }
-    public float Range { get; }
-    public float Damage { get; private set; }
+    public float Cooldown => baseCooldown * globalCooldownMultiplier;
+    public float Range => baseRange * masteryRangeMultiplier;
+    public float Damage => baseDamage * globalDamageMultiplier * masteryDamageMultiplier;
     public float Speed { get; }
-    public float MaxDistance { get; }
-    public float HitRadius { get; }
-    public int PierceCount { get; private set; }
+    public float MaxDistance => baseMaxDistance * masteryRangeMultiplier;
+    public float HitRadius => baseHitRadius * masteryRangeMultiplier;
+    public int PierceCount => basePierceCount + bonusPierce;
 
     public bool Execute(in AttackContext context)
     {
@@ -72,19 +85,33 @@ public sealed class MagicRuntime : IAttackSource
         switch (kind)
         {
             case SkillUpgradeKind.Damage:
-                Damage += DamageUpgradeAmount;
+                baseDamage += DamageUpgradeAmount;
                 break;
 
             case SkillUpgradeKind.FireRate:
-                Cooldown *= FireRateCooldownMultiplier;
+                baseCooldown *= FireRateCooldownMultiplier;
                 break;
 
             case SkillUpgradeKind.Pierce:
-                PierceCount += 1;
+                basePierceCount += 1;
                 break;
 
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, "지원하지 않는 강화 종류입니다.");
         }
+    }
+
+    public void SetTreeModifiers(
+        float damageMultiplier,
+        float cooldownMultiplier,
+        int additionalPierce,
+        float masteryDamage,
+        float masteryRange)
+    {
+        globalDamageMultiplier = Mathf.Max(0f, damageMultiplier);
+        globalCooldownMultiplier = Mathf.Max(0.05f, cooldownMultiplier);
+        bonusPierce = Mathf.Max(0, additionalPierce);
+        masteryDamageMultiplier = Mathf.Max(0f, masteryDamage);
+        masteryRangeMultiplier = Mathf.Max(0f, masteryRange);
     }
 }

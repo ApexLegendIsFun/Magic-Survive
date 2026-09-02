@@ -5,8 +5,10 @@ using UnityEngine.SceneManagement;
 [DisallowMultipleComponent]
 public sealed class GameFlowController : MonoBehaviour
 {
-    public GameFlowState State { get; private set; } = GameFlowState.Playing;
+    public GameFlowState State { get; private set; } = GameFlowState.ElementSelect;
     public GameFlowState CurrentState => State;
+    public GameFlowState ResumeState { get; private set; } = GameFlowState.Playing;
+    public bool IsTerminal => State == GameFlowState.Victory || State == GameFlowState.GameOver;
 
     public event Action<GameFlowState> StateChanged;
 
@@ -14,7 +16,8 @@ public sealed class GameFlowController : MonoBehaviour
 
     private void Awake()
     {
-        State = GameFlowState.Playing;
+        State = GameFlowState.ElementSelect;
+        ResumeState = GameFlowState.Playing;
         ApplyTimeScale(State);
     }
 
@@ -35,30 +38,12 @@ public sealed class GameFlowController : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (State != GameFlowState.Playing)
-        {
-            Time.timeScale = 1f;
-        }
+        Time.timeScale = 1f;
     }
 
-    public bool TryEnterLevelUp()
+    public bool TryBeginPlaying()
     {
-        if (State == GameFlowState.GameOver)
-        {
-            return false;
-        }
-
-        if (State != GameFlowState.LevelUp)
-        {
-            SetState(GameFlowState.LevelUp);
-        }
-
-        return true;
-    }
-
-    public bool TryResumePlaying()
-    {
-        if (State != GameFlowState.LevelUp)
+        if (State != GameFlowState.ElementSelect)
         {
             return false;
         }
@@ -67,9 +52,61 @@ public sealed class GameFlowController : MonoBehaviour
         return true;
     }
 
+    public bool TryEnterLevelUp()
+    {
+        if (State != GameFlowState.Playing && State != GameFlowState.Boss)
+        {
+            return false;
+        }
+
+        ResumeState = State;
+        SetState(GameFlowState.LevelUp);
+        return true;
+    }
+
+    public bool TryResumeActiveState()
+    {
+        if (State != GameFlowState.LevelUp)
+        {
+            return false;
+        }
+
+        SetState(ResumeState == GameFlowState.Boss
+            ? GameFlowState.Boss
+            : GameFlowState.Playing);
+        return true;
+    }
+
+    public bool TryResumePlaying()
+    {
+        return TryResumeActiveState();
+    }
+
+    public bool TryEnterBoss()
+    {
+        if (State != GameFlowState.Playing)
+        {
+            return false;
+        }
+
+        SetState(GameFlowState.Boss);
+        return true;
+    }
+
+    public bool TryEnterVictory()
+    {
+        if (State != GameFlowState.Boss)
+        {
+            return false;
+        }
+
+        SetState(GameFlowState.Victory);
+        return true;
+    }
+
     public void EnterGameOver()
     {
-        if (State == GameFlowState.GameOver)
+        if (IsTerminal)
         {
             return;
         }
@@ -91,6 +128,12 @@ public sealed class GameFlowController : MonoBehaviour
         SceneManager.LoadScene(currentScene.name);
     }
 
+    public void LoadTitleScene()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene("TitleScene");
+    }
+
     private void HandlePlayerDied()
     {
         EnterGameOver();
@@ -110,7 +153,8 @@ public sealed class GameFlowController : MonoBehaviour
 
     private static void ApplyTimeScale(GameFlowState state)
     {
-        Time.timeScale = state == GameFlowState.Playing ? 1f : 0f;
+        bool combatIsActive = state == GameFlowState.Playing || state == GameFlowState.Boss;
+        Time.timeScale = combatIsActive ? 1f : 0f;
     }
 
     private void Subscribe()

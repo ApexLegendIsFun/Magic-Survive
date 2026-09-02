@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fff96ce429a24df588dbf35581f79f21, type: 3}
-  m_Name: FireBolt
+  m_Name: ShadowOrb
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileMagicDefinition
-  magicId: 0
-  element: 0
+  magicId: 8
+  element: 3
   projectilePrefab: {fileID: -463991746816620303, guid: 94d58a5c5d8b0124ba44326a3075ec3c, type: 3}
-  cooldown: 0.8
+  cooldown: 1
   range: 8
   damage: 6
   speed: 12
   maxDistance: 10
   hitRadius: 0.25
-  pierceCount: 0
+  pierceCount: 1

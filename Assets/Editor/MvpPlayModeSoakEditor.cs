@@ -86,8 +86,16 @@ public static class MvpPlayModeSoakEditor
                 progression = Require<PlayerProgression>();
                 hudBinder = Require<GameplayHudBinder>();
                 PlayerController player = Require<PlayerController>();
+                LevelUpController levelUp = Require<LevelUpController>();
+                GameFlowController flow = Require<GameFlowController>();
                 playerHealth = player.GetComponent<Health>();
                 Assert(playerHealth != null, "Player Health missing.");
+                Assert(flow.State == GameFlowState.ElementSelect,
+                    "Soak must start at element selection.");
+                Assert(levelUp.TryChooseStartingElement(MagicElement.Fire),
+                    "Soak could not choose Fire.");
+                Assert(flow.State == GameFlowState.Playing,
+                    "Soak did not enter Playing state.");
 
                 playerHealth.SetMaxHealth(1000000f, true);
                 progression.enabled = false;

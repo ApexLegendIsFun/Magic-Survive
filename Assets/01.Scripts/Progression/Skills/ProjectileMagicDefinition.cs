@@ -6,6 +6,7 @@ using UnityEngine;
 public sealed class ProjectileMagicDefinition : ScriptableObject
 {
     [Header("Identity")]
+    [SerializeField] private MagicId magicId = MagicId.FireBolt;
     [SerializeField] private MagicElement element = MagicElement.Fire;
 
     [Header("Projectile")]
@@ -22,6 +23,7 @@ public sealed class ProjectileMagicDefinition : ScriptableObject
     [SerializeField, Min(0f)] private float hitRadius = 0.25f;
     [SerializeField, Min(0)] private int pierceCount;
 
+    public MagicId MagicId => magicId;
     public MagicElement Element => element;
     public Projectile ProjectilePrefab => projectilePrefab;
     public float Cooldown => cooldown;
