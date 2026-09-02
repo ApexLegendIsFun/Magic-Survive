@@ -490,9 +490,15 @@ public static class MvpIntegrationEditor
             throw new InvalidOperationException("Build Settings must contain TitleScene then SampleScene.");
         }
 
-        if (gameplayUi == null || gameSystems == null)
+        GameObject[] sceneRoots = scene.GetRootGameObjects();
+        int gameplayUiCount = sceneRoots.Count(root => root.name == "GameplayUI");
+        int gameSystemsCount = sceneRoots.Count(root => root.name == "GameSystems");
+        if (gameplayUiCount != 1 || gameSystemsCount != 1 ||
+            gameplayUi == null || gameSystems == null)
         {
-            throw new InvalidOperationException("GameplayUI or GameSystems root missing.");
+            throw new InvalidOperationException(
+                $"Scene must contain exactly one GameplayUI and GameSystems root " +
+                $"(found {gameplayUiCount} and {gameSystemsCount}).");
         }
 
         int missingScriptCount = scene.GetRootGameObjects()
