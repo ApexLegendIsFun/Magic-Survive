@@ -60,4 +60,10 @@ public class UIManager : MonoBehaviour
     }
 
 
+    public void EnemyDamageTextUi(int damage, Vector3 position)  //데미지 텍스트 호출 시 , 플레이어가 가한 데미지값 / 해당 위치로 호출 
+    {
+        damageUi.Show(damage, position);
+    }
+
+
 }

@@ -11,50 +11,35 @@ public class DamageUi : MonoBehaviour
 
     [Header("Animation")]
     [SerializeField] private float duration = 1f;
-    [SerializeField] private float moveDistance = 0.5f;
+    [SerializeField] private float moveSpeed = 50f;
 
-    private CanvasGroup canvasGroup;
+    private float timer;
 
-
-    private void Awake()
-    {
-        canvasGroup = GetComponent<CanvasGroup>();
-    }
-
-
-    public void SetDamage(int damage)
-    {
-        damageText.text = $"{damage}";
-    }
-
-
-    public void Show(Vector3 position, int damage)
+    public void Show(int damage, Vector3 position)
     {
         transform.position = position;
 
-        SetDamage(damage);
+        damageText.text = $"{damage}";
 
-        // 풀링으로 재사용되므로 상태 초기화
-        canvasGroup.alpha = 1f;
-
-        //// 이전 Tween 제거
-        //transform.DOKill();        => 여기서 뱀서류 특성상, dmg 텍스트는 수없이 반복되므로 DoKill이 계속해서 반복될 예정이므로 트윈 사용 고려중 
-        //canvasGroup.DOKill();
-
-        //// 위로 이동
-        //transform.DOMoveY(
-        //    position.y + moveDistance,
-        //    duration
-        //);
-
-        //// Fade Out
-        //canvasGroup.DOFade(0f, duration)
-        //    .OnComplete(ReturnToPool);
+        timer = 0f;
+        damageText.alpha = 1f;
     }
 
-
-    public void ReturnToPool()
+    private void Update()
     {
-        
+        timer += Time.deltaTime;
+
+        transform.position += Vector3.up * moveSpeed * Time.deltaTime;
+
+        float progress = timer / duration;
+        damageText.alpha = 1f - progress;
+
+        if (timer >= duration)
+        {
+            UiObjectPool.instance.ReturnObject(
+                "DamageText",
+                gameObject
+            );
+        }
     }
 }
