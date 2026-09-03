@@ -61,25 +61,25 @@ public class HudDynamicUi : MonoBehaviour
         timerText.text = $"{minutes:00}:{seconds:00}";
     }
 
-    public void UpdateKillCount(int count) //킬 카운트 텍스트
+    public void UpdateKillCount(int count) 
     {
         killCount.text = $"{count}";
     }
 
- 
-    public void UpdateLvtext(int level) //레벨 텍스트
+
+    public void UpdateLvtext(int level)
     {
         lvText.text = $"{level}";
     }
 
 
-    public void UpdateHp(float currentHp, float maxHp) //체력 변경 
+    public void UpdateHp(float currentHp, float maxHp)
     {
         hpBar.fillAmount = currentHp / maxHp;
     }
 
 
-    public void UpdateLevelUp(float currentExp, float nextLevelUp)//레벨 게이지 Bar 
+    public void UpdateLevelUp(float currentExp, float nextLevelUp)
     {
         levelupBar.fillAmount = currentExp / nextLevelUp;
     }

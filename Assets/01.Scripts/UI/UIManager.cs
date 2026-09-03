@@ -37,14 +37,14 @@ public class UIManager : MonoBehaviour
 
 
 
-   
+
 
     public void PlayerKillCountText(int count) // 킬카운트 텍스트 호출시 사용
     {
         hudDynamicUi.UpdateKillCount(count);
     }
 
-    public void PlayerUpdateHp(float currenthp, float maxHp) // 체력이 바뀔경우 호출 
+    public void PlayerUpdateHp(float currenthp, float maxHp) // 체력이 바뀔경우 호출
     {
         hudDynamicUi.UpdateHp(currenthp, maxHp);
     }
