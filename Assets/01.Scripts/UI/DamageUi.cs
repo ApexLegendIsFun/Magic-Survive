@@ -55,6 +55,6 @@ public class DamageUi : MonoBehaviour
 
     public void ReturnToPool()
     {
-        UiObjectPool.instance.ReturnDamageText(gameObject);
+        
     }
 }
