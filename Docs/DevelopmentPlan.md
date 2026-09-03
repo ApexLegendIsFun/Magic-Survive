@@ -468,3 +468,28 @@ Final Test
   - 회색 트리·결과 UI와 임시 투사체 어댑터는 검증용이며 최종 UI·전투를 대체하지 않음
   - 최종 오각형 UI·한국어 TMP·표식/융합 VFX는 승범 결과 대기
   - 정확한 Unity `6000.3.17f1`은 설치되어 있지 않아 미검증. 프로젝트 버전 파일은 `6000.3.17f1` 유지
+
+### 2026-09-03 — 팀 최신 작업 보존 통합
+
+- 통합 전 기준 HEAD: `7868fd631f5a5876af2e161d20700929b73ef384`
+  - 팀 계약 공유를 위해 병합 전에 `origin/Seondong`으로 먼저 푸시
+- 유신 최신 전투 원본: `origin/Yushin` `bfad21d2a4f8db18b987e60a11552b00ac1b144a`
+- 유신 병합 커밋: `7fccd250f771a153f00ad57e119dc9142854a1c5`
+  - 유신의 반경 기반 충돌 탐색, 적 활성 상한, 전투 코드와 적 프리팹을 그대로 사용
+  - `SampleScene` 충돌에서는 최신 `GameSystems`와 `GameplayUI`를 유지하고 새 `EnemyManager` 참조만 연결
+- 전투 참조 통합 커밋: `3d97e5c7702a6dde75a3971ffdb58a8610487048`
+  - `MvpIntegrationEditor`가 `ProjectileLauncher`와 `PlayerContactDamage`의 `EnemyManager`를 배선·검증
+- 승범 최신 UI 원본: `origin/Seungbum` `5526f65ae00e8a116dc674869efa9f013f9aa80a`
+- 승범 병합 커밋: `97c42e5a8764c0e952cea10a8feb73d90f4ebda6`
+  - Damage Number, UI 풀, World Space Canvas 작업을 수정 없이 보존
+  - 진행 중 UI를 기준 씬에 대신 연결하거나 완료 처리하지 않음
+- Unity `6000.3.19f1` 검증:
+  - 컴파일, 통합 씬 정적 검증, 10분 규칙 검증 PASS
+  - 타이틀 전환과 MVP Play Mode smoke PASS
+  - 120초 combat soak PASS: 76킬, 활성 적 19, 풀 생성 투사체 1
+  - 저장소의 프로젝트 버전은 `6000.3.17f1` 유지
+- 담당자 결과 대기:
+  - 유신: 표식·숙련·융합 반응, Tank·Ranged, 엘리트·보스, 난이도 배율, 100마리 상태 초기화
+  - 승범: Damage Number 런타임 완성, 최종 오각형·결과 UI, 한국어 TMP, VFX·SFX
+  - 태환: 통합본 회귀·성능 테스트와 정확한 Unity `6000.3.17f1` 검증
+  - 담당 결과와 QA가 끝날 때까지 `main`은 갱신하지 않음
