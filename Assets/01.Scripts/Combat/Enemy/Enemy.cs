@@ -1,9 +1,10 @@
+using System;
 using UnityEngine;
 
 [RequireComponent(typeof(Health))]
 
 // 적 이동, 사망 처리
-public class Enemy : MonoBehaviour
+public class Enemy : MonoBehaviour, IElementMarkTarget
 {
 
     [Header("EnemyData 안 쓰고 직접 배치 했을 시 값(씬 직접 배치는 미지원)")]
@@ -15,8 +16,8 @@ public class Enemy : MonoBehaviour
     // 실제 캐릭터 크기가 확정되면 다시 조정
     [SerializeField] private float hitRadius = 0.5f;
 
-    private float baseMaxHealth;
-    private float baseContactDamage;
+    // Initialize가 비활성 상태에서 호출돼도 이미 살아 있음
+    private readonly ElementMarkState markState = new ElementMarkState();
 
     private Health health;
 
@@ -24,6 +25,37 @@ public class Enemy : MonoBehaviour
 
     public Enemy SourcePrefab => sourcePrefab;
 
+    public float CrowdControlDurationMultiplier => 1f;
+
+    private float baseMaxHealth;
+    private float baseContactDamage;
+
+    public bool IsKnockbackImmune => false;
+
+    // 구독을 markState로 그대로 넘김
+    public event Action<ElementMarkChange> ElementMarkChanged
+    {
+        add { markState.Changed += value; }
+
+        remove { markState.Changed -= value; }
+    }
+
+    public ElementMarkSnapshot GetElementMark(MagicElement element)
+    {
+
+        return markState.Get(element);
+
+    }
+
+    public void ApplyElementMark(MagicElement element, int amount, float duration)
+    {
+        markState.Apply(element, amount, duration);
+    }
+
+    public void ConsumeElementMarks(MagicElement element, int amount)
+    {
+        markState.Consume(element, amount);
+    }
 
 
     public void SetSourcePrefab(Enemy prefab)
@@ -79,6 +111,8 @@ public class Enemy : MonoBehaviour
 
         contactDamage = baseContactDamage;
         health.ResetHealth(baseMaxHealth);
+
+        markState.Reset();
     }
 
     // 스폰 직후 SpawnDirector가 1회 호출
@@ -93,6 +127,9 @@ public class Enemy : MonoBehaviour
     // 현재는 플레이어 방향으로 직선적으로 추적함
     public void Tick(float deltaTime, Vector2 playerPosition)
     {
+
+        markState.Tick(deltaTime);
+
         Vector2 currentPosition = transform.position;
         Vector2 toPlayer = playerPosition - currentPosition;
 
