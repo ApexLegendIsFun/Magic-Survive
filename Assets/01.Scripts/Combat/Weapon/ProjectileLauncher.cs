@@ -6,8 +6,7 @@ using System.Collections.Generic;
 public class ProjectileLauncher : MonoBehaviour
 {
 
-    // 투사체가 판정할 레이어
-    [SerializeField] private LayerMask enemyLayers;
+    [SerializeField] private EnemyManager enemyManager;
 
     // 공격 so에서 프리팹 미지정시 사용할 기본 프리팹
     [SerializeField] private Projectile defaultProjectilePrefab;
@@ -19,18 +18,17 @@ public class ProjectileLauncher : MonoBehaviour
         pools = new Dictionary<Projectile, ObjectPool<Projectile>>();
 
 
-    // 적 레이어만 검사하도록 하는 필터
-    private ContactFilter2D enemyFilter;
-
-
     public int ActiveCount => activeProjectiles.Count;
 
 
     private void Awake()
     {
-        enemyFilter = new ContactFilter2D();
-        enemyFilter.SetLayerMask(enemyLayers);
-        enemyFilter.useTriggers = true; //Trigger Collider를 피격 판정에 포함
+        if (enemyManager == null)
+        {
+            Debug.LogError("[ProjectileLauncher] EnemyManager 미연결. 투사체 판정을 비활성화합니다.", this);
+
+            enabled = false;
+        }
     }
 
 
@@ -138,7 +136,7 @@ public class ProjectileLauncher : MonoBehaviour
             }
 
             // 개별 Projectile.Update 대신 Launcher에서 Tick 호출
-            projectile.Tick(deltaTime, enemyFilter);
+            projectile.Tick(deltaTime, enemyManager);
 
         }
 

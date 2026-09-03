@@ -11,6 +11,11 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float contactDamage = 5f;
     [SerializeField] private int experienceReward = 1;
 
+
+    // 물리 Collider 대신 사용하는 피격 반경, 기존 콜라이더 크기 참고해 0.5로 시작
+    // 실제 캐릭터 크기가 확정되면 다시 조정
+    [SerializeField] private float hitRadius = 0.5f;
+
     private Health health;
 
     private Enemy sourcePrefab;
@@ -29,6 +34,8 @@ public class Enemy : MonoBehaviour
 
     public float ContactDamage => contactDamage;
 
+    public float HitRadius => hitRadius;
+
     private void Awake()
     {
         health = GetComponent<Health>();
@@ -43,6 +50,14 @@ public class Enemy : MonoBehaviour
     private void OnDisable()
     {
         health.Died -= HandleDied;
+    }
+
+    // [연동:전투] 투사체가 적을 때릴 때 호출
+    // Health를 통째로 노출하지 않는 이유: 외부에서 ResetHealth/SetMaxHealth까지
+    // 부를 수 있게 되면 적의 생명주기가 EnemyManager 밖에서 흔들림
+    public void TakeDamage(float amount)
+    {
+        health.TakeDamage(amount);
     }
 
     // EnemyData의 수치를 실제 적에게 적용
