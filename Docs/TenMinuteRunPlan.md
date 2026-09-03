@@ -1,5 +1,7 @@
 # 마법사 뱀서류 — 10분 한 판 기획·구현 계약
 
+팀원이 처음 읽을 요약은 [GameDesignBrief.md](GameDesignBrief.md), 날짜별 담당 작업은 [TeamSchedule.md](TeamSchedule.md)를 따른다. 이 문서는 상세 규칙과 공개 계약의 원본이다.
+
 ## 목표
 
 - 수업 평가용 Unity Play Mode 빌드

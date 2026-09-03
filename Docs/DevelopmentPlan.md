@@ -1,5 +1,7 @@
 # 마법사 뱀서류 — 개발 계획
 
+팀 작업 시작 순서는 저장소 [README](../README.md), 한 장짜리 [GameDesignBrief.md](GameDesignBrief.md), 실제 날짜와 카드가 있는 [TeamSchedule.md](TeamSchedule.md)를 먼저 따른다.
+
 ## 1. 게임 한 줄
 
 **마법사가 몬스터 떼를 잡고, 마법 스킬트리를 성장시키는 뱀서류 게임.**
@@ -223,6 +225,8 @@ Final Test
 ```
 
 ## 8. 30일 개발
+
+프로젝트 시작일은 2026년 8월 26일, Day 30은 9월 24일이다. 아래는 주차별 방향이며 실제 일일 배분, Gate, 자동 컷은 [TeamSchedule.md](TeamSchedule.md)가 기준이다. 9월 17일 18:00에 기능을 닫고 9월 18~24일은 안정화만 한다.
 
 ### 1주차 — 게임 돌아가게 만들기
 
