@@ -41,6 +41,8 @@ public static class MvpIntegrationEditor
             gameSystems = CreateGameSystems(mainScene, gameplayUi, LoadTargetedMagics());
         }
 
+        ConfigureCombatReferences(mainScene);
+
         EditorSceneManager.MarkSceneDirty(mainScene);
         EditorSceneManager.SaveScene(mainScene, MainScenePath);
 
@@ -341,6 +343,31 @@ public static class MvpIntegrationEditor
         }
     }
 
+    private static void ConfigureCombatReferences(Scene mainScene)
+    {
+        GameObject player = FindRoot(mainScene, "Player");
+        EnemyManager[] enemyManagers = mainScene.GetRootGameObjects()
+            .SelectMany(root => root.GetComponentsInChildren<EnemyManager>(true))
+            .ToArray();
+        ProjectileLauncher projectileLauncher = player != null
+            ? player.GetComponent<ProjectileLauncher>()
+            : null;
+        PlayerContactDamage contactDamage = player != null
+            ? player.GetComponent<PlayerContactDamage>()
+            : null;
+
+        if (player == null || enemyManagers.Length != 1 ||
+            projectileLauncher == null || contactDamage == null)
+        {
+            throw new InvalidOperationException(
+                "Player combat references are incomplete in SampleScene.");
+        }
+
+        EnemyManager enemyManager = enemyManagers[0];
+        SetObjectReference(projectileLauncher, "enemyManager", enemyManager);
+        SetObjectReference(contactDamage, "enemyManager", enemyManager);
+    }
+
     private static GameObject CreateGameSystems(
         Scene mainScene,
         GameObject gameplayUi,
@@ -501,6 +528,27 @@ public static class MvpIntegrationEditor
                 $"(found {gameplayUiCount} and {gameSystemsCount}).");
         }
 
+        GameObject player = sceneRoots.FirstOrDefault(root => root.name == "Player");
+        EnemyManager[] enemyManagers = sceneRoots
+            .SelectMany(root => root.GetComponentsInChildren<EnemyManager>(true))
+            .ToArray();
+        if (player == null || enemyManagers.Length != 1)
+        {
+            throw new InvalidOperationException(
+                $"Scene must contain one Player root and one EnemyManager " +
+                $"(found {(player != null ? 1 : 0)} and {enemyManagers.Length}).");
+        }
+
+        ProjectileLauncher projectileLauncher = player.GetComponent<ProjectileLauncher>();
+        PlayerContactDamage contactDamage = player.GetComponent<PlayerContactDamage>();
+        if (projectileLauncher == null || contactDamage == null)
+        {
+            throw new InvalidOperationException("Player combat components are incomplete.");
+        }
+
+        ValidateObjectReference(projectileLauncher, "enemyManager", enemyManagers[0]);
+        ValidateObjectReference(contactDamage, "enemyManager", enemyManagers[0]);
+
         int missingScriptCount = scene.GetRootGameObjects()
             .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
             .Sum(transform => GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(transform.gameObject));
@@ -599,6 +647,20 @@ public static class MvpIntegrationEditor
                 throw new InvalidOperationException(
                     $"{target.GetType().Name}.{propertyName} is unassigned.");
             }
+        }
+    }
+
+    private static void ValidateObjectReference(
+        UnityEngine.Object target,
+        string propertyName,
+        UnityEngine.Object expected)
+    {
+        SerializedObject serialized = new SerializedObject(target);
+        SerializedProperty property = serialized.FindProperty(propertyName);
+        if (property == null || property.objectReferenceValue != expected)
+        {
+            throw new InvalidOperationException(
+                $"{target.GetType().Name}.{propertyName} must reference {expected.name}.");
         }
     }
 
