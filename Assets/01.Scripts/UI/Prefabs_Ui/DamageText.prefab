@@ -11,8 +11,9 @@ GameObject:
   - component: {fileID: 2675593565398654690}
   - component: {fileID: 2900193467283784097}
   - component: {fileID: 2027395982878282703}
+  - component: {fileID: 7375525428773964018}
   m_Layer: 0
-  m_Name: Damage_Number
+  m_Name: DamageText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -76,6 +77,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7375525428773964018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4855702990589633410}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f325818d0df05ad449b5b30120ed45de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DamageUi
+  damageText: {fileID: 889185617109776106}
+  duration: 1
+  moveSpeed: 50
 --- !u!1 &8510952540507040661
 GameObject:
   m_ObjectHideFlags: 0
@@ -88,7 +104,7 @@ GameObject:
   - component: {fileID: 4105482870214239138}
   - component: {fileID: 889185617109776106}
   m_Layer: 0
-  m_Name: Damage_Text
+  m_Name: DamageText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

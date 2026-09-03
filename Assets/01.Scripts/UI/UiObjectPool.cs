@@ -5,84 +5,83 @@ public class UiObjectPool : MonoBehaviour
 {
     public static UiObjectPool instance;
 
-    [Header("Damage Text")] //Ui에 쓸 풀링은 DamageText 하나 
-    [SerializeField] private GameObject damageTextPrefab;
-    [SerializeField] private int poolSize = 30; //추후, 다른종류의 데미지텍스트가발생할경우 여기서 변경. 
+    [Header("List&size")]
+    [SerializeField] List<GameObject> objList = new();
+    [SerializeField] int poolsize;
 
-    private Queue<GameObject> pool = new Queue<GameObject>();
+    [Header("UiParent")]
+    [SerializeField] private Transform uiParent;
 
-    private Transform poolParent;
+    Dictionary<string, Queue<GameObject>> pools = new();
 
 
     private void Awake()
     {
         if (instance == null)
-        {
             instance = this;
-        }
         else
         {
             Destroy(gameObject);
+            DontDestroyOnLoad(gameObject);
         }
     }
 
 
-    private void Start()
+    void Start()
     {
-        // DamageText 정리
-        GameObject parentPool = new GameObject("DamageText_Pool");
-        parentPool.transform.SetParent(transform);
-
-        poolParent = parentPool.transform;
-
-
-        // 초기 풀 생성
-        for (int i = 0; i < poolSize; i++)
+        foreach (GameObject obj in objList)
         {
-            GameObject damageText = Instantiate(
-                damageTextPrefab,
-                poolParent
-            );
+            pools[obj.name] = new Queue<GameObject>();
 
-            damageText.SetActive(false);
-            pool.Enqueue(damageText);
+            GameObject parentPool = new($"{obj.name}_Pool");
+            parentPool.transform.SetParent(uiParent);
+
+            for (int i = 0; i < poolsize; i++)
+            {
+                GameObject ori = Instantiate(obj, parentPool.transform);
+                ori.SetActive(false);
+                pools[obj.name].Enqueue(ori);
+            }
         }
     }
 
 
-    public DamageText GetDamageText()
+    public T GetObject<T>(string name) where T : Component
     {
-        GameObject damageText;
-
-        // 사용할 수 있는 객체가 있으면 꺼냄
-        if (pool.Count > 0)
+        // 예외처리
+        if (!pools.ContainsKey(name))
         {
-            damageText = pool.Dequeue();
+            return null;
         }
-        // 없으면 새로 생성
+
+        if (pools[name].Count > 0)
+        {
+            GameObject ori = pools[name].Dequeue();
+            ori.SetActive(true);
+
+            return ori.GetComponent<T>();
+        }
         else
         {
-            damageText = Instantiate(
-                damageTextPrefab,
-                poolParent
+            GameObject ori = Instantiate(
+                objList.Find(obj => obj.name == name),
+                uiParent
             );
+
+            return ori.GetComponent<T>();
+        }
+    }
+
+
+    public void ReturnObject(string name, GameObject ori)
+    {
+        if (!pools.ContainsKey(name))
+        {
+            Destroy(ori);
+            return;
         }
 
-        damageText.SetActive(true);
-
-        return damageText.GetComponent<DamageText>();
-    }
-
-
-    public void ReturnDamageText(GameObject damageText)
-    {
-        damageText.SetActive(false);
-
-        // 다시 풀에
-        damageText.transform.SetParent(poolParent);
-
-        pool.Enqueue(damageText);
+        ori.SetActive(false);
+        pools[name].Enqueue(ori);
     }
 }
-
-
