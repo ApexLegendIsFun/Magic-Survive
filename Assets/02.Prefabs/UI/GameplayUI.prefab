@@ -79,54 +79,6 @@ MonoBehaviour:
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
   m_ScrollDeltaPerTick: 6
---- !u!1 &1407944062585292435
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7053661260354628494}
-  - component: {fileID: 2214595477389393728}
-  m_Layer: 0
-  m_Name: UiManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7053661260354628494
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1407944062585292435}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1852801818649451300}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2214595477389393728
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1407944062585292435}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 052829ea27d5ebd4eacf9cdd0c1fcd6a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::UIManager
-  hudStatcUi: {fileID: 0}
-  hudDynamicUi: {fileID: 0}
-  popupUi: {fileID: 0}
-  damageUi: {fileID: 0}
 --- !u!1 &3054636065095016730
 GameObject:
   m_ObjectHideFlags: 0
@@ -157,7 +109,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4504707136173945395}
-  - {fileID: 7053661260354628494}
   - {fileID: 8552992608715306463}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -213,11 +164,20 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7454215982793833975, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
+      propertyPath: uiParent
+      value: 
+      objectReference: {fileID: 2661742256123737985}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
+--- !u!224 &2661742256123737985 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2791642057976800617, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
+  m_PrefabInstance: {fileID: 165946900071682792}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4504707136173945395 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4381545686761021659, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}

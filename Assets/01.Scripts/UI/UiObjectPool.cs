@@ -34,23 +34,21 @@ public class UiObjectPool : MonoBehaviour
             pools[obj.name] = new Queue<GameObject>();
 
             GameObject parentPool = new($"{obj.name}_Pool");
-            parentPool.transform.SetParent(this.transform);
+            parentPool.transform.SetParent(uiParent);
 
             for (int i = 0; i < poolsize; i++)
             {
                 GameObject ori = Instantiate(obj, parentPool.transform);
                 ori.SetActive(false);
                 pools[obj.name].Enqueue(ori);
-
             }
-
         }
-
     }
+
 
     public T GetObject<T>(string name) where T : Component
     {
-        //抗寇贸府
+        // 抗寇贸府
         if (!pools.ContainsKey(name))
         {
             return null;
@@ -65,13 +63,15 @@ public class UiObjectPool : MonoBehaviour
         }
         else
         {
-            GameObject ori = Instantiate(objList.Find(obj => obj.name == name));
+            GameObject ori = Instantiate(
+                objList.Find(obj => obj.name == name),
+                uiParent
+            );
 
             return ori.GetComponent<T>();
-
         }
-
     }
+
 
     public void ReturnObject(string name, GameObject ori)
     {
@@ -85,5 +85,3 @@ public class UiObjectPool : MonoBehaviour
         pools[name].Enqueue(ori);
     }
 }
-
-

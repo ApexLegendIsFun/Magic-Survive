@@ -10,7 +10,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] HudStatcUi hudStatcUi;
     [SerializeField] HudDynamicUi hudDynamicUi;
     [SerializeField] PopupUi popupUi;
-    [SerializeField] DamageUi damageUi;
 
     private void Awake()
     {
@@ -35,10 +34,6 @@ public class UIManager : MonoBehaviour
 
 
 
-
-
-
-
     public void PlayerKillCountText(int count) // 킬카운트 텍스트 호출시 사용
     {
         hudDynamicUi.UpdateKillCount(count);
@@ -60,8 +55,10 @@ public class UIManager : MonoBehaviour
     }
 
 
-    public void EnemyDamageTextUi(int damage, Vector3 position)  //데미지 텍스트 호출 시 , 플레이어가 가한 데미지값 / 해당 위치로 호출 
+    public void EnemyDamageTextUi(int damage, Vector3 position)  //데미지 텍스트 호출 시  플레이어가 가한 데미지 값 / 해당 위치값으로 호출 
     {
+        DamageUi damageUi = UiObjectPool.instance.GetObject<DamageUi>("DamageText");
+
         damageUi.Show(damage, position);
     }
 
