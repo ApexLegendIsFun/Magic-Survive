@@ -11,10 +11,12 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float contactDamage = 5f;
     [SerializeField] private int experienceReward = 1;
 
-
     // 물리 Collider 대신 사용하는 피격 반경, 기존 콜라이더 크기 참고해 0.5로 시작
     // 실제 캐릭터 크기가 확정되면 다시 조정
     [SerializeField] private float hitRadius = 0.5f;
+
+    private float baseMaxHealth;
+    private float baseContactDamage;
 
     private Health health;
 
@@ -70,10 +72,21 @@ public class Enemy : MonoBehaviour
         }
 
         moveSpeed = data.MoveSpeed;
-        contactDamage = data.ContactDamage;
         experienceReward = data.ExperienceReward;
 
-        health.ResetHealth(data.MaxHealth);
+        baseMaxHealth = data.MaxHealth;
+        baseContactDamage = data.ContactDamage;
+
+        contactDamage = baseContactDamage;
+        health.ResetHealth(baseMaxHealth);
+    }
+
+    // 스폰 직후 SpawnDirector가 1회 호출
+    public void ApplyDifficulty(float healthMultiplier, float damageMultiplier)
+    {
+        contactDamage = baseContactDamage * damageMultiplier;
+
+        health.SetMaxHealth(baseMaxHealth * healthMultiplier, true);
     }
 
     // EnemyManager에서 매 프레임 호출합니다
