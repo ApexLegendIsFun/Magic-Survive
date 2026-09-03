@@ -2024,7 +2024,6 @@ MonoBehaviour:
   hudStatcUi: {fileID: 0}
   hudDynamicUi: {fileID: 8410462459829026172}
   popupUi: {fileID: 0}
-  damageUi: {fileID: 0}
 --- !u!1 &4632182578895830393
 GameObject:
   m_ObjectHideFlags: 0
@@ -2992,9 +2991,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UiObjectPool
   objList:
-  - {fileID: 0}
-  - {fileID: 0}
-  poolsize: 0
+  - {fileID: 4855702990589633410, guid: 6d01eeea3a0045140998a5d2f56aa268, type: 3}
+  poolsize: 30
+  uiParent: {fileID: 2791642057976800617}
 --- !u!1 &7519376207559413555
 GameObject:
   m_ObjectHideFlags: 0

@@ -12,7 +12,7 @@ Canvas_HUD_Static(가장 변동이 적은 )
 Canvas_HUD_Dynamic (가장 변동이 많은)
 └── EXP Bar /Lv Text
 ├── 타이머
-└── 골드 / 킬수      골드 => 기획상,없을수도 있음.  
+└── 킬수   
 
 
 Canvas_World_Space (Damage Number&Sound(피격음,공격사운드 등) => 오브젝트 풀링 사용예정)

@@ -33,6 +33,7 @@ public class DamageUi : MonoBehaviour
         float progress = timer / duration;
         damageText.alpha = 1f - progress;
 
+        //시간이 지나면, 다시 풀로 
         if (timer >= duration)
         {
             UiObjectPool.instance.ReturnObject(

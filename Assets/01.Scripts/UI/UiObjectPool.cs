@@ -9,7 +9,7 @@ public class UiObjectPool : MonoBehaviour
     [SerializeField] List<GameObject> objList = new();
     [SerializeField] int poolsize;
 
-    [Header("uiParent")]
+    [Header("UiParent")]
     [SerializeField] private Transform uiParent;
 
     Dictionary<string, Queue<GameObject>> pools = new();
