@@ -17,3 +17,10 @@ TrueTypeFontImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 336778
+  packageName: Casual Fantasy GUI (Survivor-like)
+  packageVersion: 1.0
+  assetPath: Assets/TextMesh Pro/Fonts/LiberationSans.ttf
+  uploadId: 797408
