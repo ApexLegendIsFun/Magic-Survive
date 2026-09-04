@@ -29,3 +29,11 @@ Canvas_Popup    => 레벨업 시 스킬 고르는 Ui 창, 게임오버 => 씬 �
 ├── GameOver
 └── Option
 
+VFX, SFX
+
+VFX를 담당할경우 풀링할 예정이며, 
+
+SFX는 풀링 X
+
+마찬가지로 VfxManager를 만들어 중계기처럼 쓸 예정
+
