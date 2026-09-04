@@ -14,7 +14,7 @@ public class DamageUi : MonoBehaviour
 
     private float timer;
 
-    public void Show(float damage, Vector3 position)
+    public void Show(float damage, Vector2 position)
     {
         transform.position = position;
 
