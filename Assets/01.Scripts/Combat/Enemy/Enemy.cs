@@ -19,6 +19,17 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // Initialize가 비활성 상태에서 호출돼도 이미 살아 있음
     private readonly ElementMarkState markState = new ElementMarkState();
 
+    // Combat 계약에 효과 수치 경로가 없어 카탈로그의 확정값을 임시로 미러링
+    private const float FireDotDamagePerStack = 1f;
+    private const float DarkDamageTakenPerStack = 0.05f;
+
+    // 매 프레임 HealthChanged가 발행되는 것을 피하기 위해 1초 단위로 처리
+    private const float FireDotIntervalSeconds = 1f;
+
+    private float fireDotTimer = FireDotIntervalSeconds;
+    private float baseMaxHealth;
+    private float baseContactDamage;
+
     private Health health;
 
     private Enemy sourcePrefab;
@@ -26,9 +37,6 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     public Enemy SourcePrefab => sourcePrefab;
 
     public float CrowdControlDurationMultiplier => 1f;
-
-    private float baseMaxHealth;
-    private float baseContactDamage;
 
     public bool IsKnockbackImmune => false;
 
@@ -86,12 +94,19 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         health.Died -= HandleDied;
     }
 
+
+    /// <summary>
+    /// 적 전용 받는 피해 보정을 적용한 뒤 Health에 전달
+    /// amount는 보정 전 피해량
+    /// </summary>
     // [연동:전투] 투사체가 적을 때릴 때 호출
     // Health를 통째로 노출하지 않는 이유: 외부에서 ResetHealth/SetMaxHealth까지
     // 부를 수 있게 되면 적의 생명주기가 EnemyManager 밖에서 흔들림
     public void TakeDamage(float amount)
     {
-        health.TakeDamage(amount);
+        int darkStacks = markState.Get(MagicElement.Dark).Stacks;
+
+        health.TakeDamage(amount * (1f + darkStacks * DarkDamageTakenPerStack));
     }
 
     // EnemyData의 수치를 실제 적에게 적용
@@ -113,6 +128,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         health.ResetHealth(baseMaxHealth);
 
         markState.Reset();
+
+        fireDotTimer = FireDotIntervalSeconds;
+
     }
 
     // 스폰 직후 SpawnDirector가 1회 호출
@@ -128,6 +146,8 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     public void Tick(float deltaTime, Vector2 playerPosition)
     {
 
+        TickFireDot(deltaTime);
+
         markState.Tick(deltaTime);
 
         Vector2 currentPosition = transform.position;
@@ -141,6 +161,30 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         Vector2 direction = toPlayer.normalized;
 
         transform.position = currentPosition + direction * moveSpeed * deltaTime;
+    }
+
+    // 화염표식 지속피해. Enemy.TakeDamage를 지나므로 암흑 배율도 함께 적용
+    private void TickFireDot(float deltaTime)
+    {
+        int fireStacks = markState.Get(MagicElement.Fire).Stacks;
+
+        if (fireStacks <= 0)
+        {
+            // 표식이 사라졌을 때만 주기 되돌림
+            fireDotTimer = FireDotIntervalSeconds;
+            return;
+        }
+
+        fireDotTimer -= deltaTime;
+
+        if (fireDotTimer > 0f)
+        {
+            return;
+        }
+
+        fireDotTimer += FireDotIntervalSeconds;
+
+        TakeDamage(fireStacks * FireDotDamagePerStack);
     }
 
 
