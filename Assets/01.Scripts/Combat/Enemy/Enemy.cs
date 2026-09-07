@@ -146,6 +146,8 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     public void Tick(float deltaTime, Vector2 playerPosition)
     {
 
+        // markState.Tick보다 앞이어야 함
+        // 뒤에 두면 표식이 만료되는 프레임에 스택이 이미 0이라 마지막 도트 틱이 사라짐
         TickFireDot(deltaTime);
 
         markState.Tick(deltaTime);
