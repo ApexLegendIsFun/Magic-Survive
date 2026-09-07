@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using System;
 
 public class PopupUi : MonoBehaviour
 {
@@ -16,11 +17,11 @@ public class PopupUi : MonoBehaviour
     [SerializeField] private TextMeshProUGUI itemDescriptionText;
 
     [Header("Item Button")]
-    [SerializeField] private Button[] itemButtons;
+    [SerializeField] private Button[] itemButtons; //아이템이미지 & 버튼 
 
     [Header("Item Info")]
-    [SerializeField] private string[] itemNames;
-    [SerializeField] private string[] itemDescriptions;
+    [SerializeField] private string[] itemNames; //아이템 이름 
+    [SerializeField] private string[] itemDescriptions; //아이템 설명 
 
     [Header("Item Outline")]
     [SerializeField] private Image[] itemOutline;
@@ -123,7 +124,15 @@ public class PopupUi : MonoBehaviour
         }
         //levelUpController 참조함 (임시)
         levelUpController.TryChooseStartingElement(selectedElement);
+
+
+        
+      
         gameObject.SetActive(false);
         Debug.Log($"{selectedElement} 선택됨");
+
+
+
     }
 }
+
