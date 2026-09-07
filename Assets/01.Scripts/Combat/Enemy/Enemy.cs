@@ -22,6 +22,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // Combat 계약에 효과 수치 경로가 없어 카탈로그의 확정값을 임시로 미러링
     private const float FireDotDamagePerStack = 1f;
     private const float DarkDamageTakenPerStack = 0.05f;
+    private const float FrostMovementSpeedReductionPerStack = 0.10f;
 
     // 매 프레임 HealthChanged가 발행되는 것을 피하기 위해 1초 단위로 처리
     private const float FireDotIntervalSeconds = 1f;
@@ -162,7 +163,11 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
         Vector2 direction = toPlayer.normalized;
 
-        transform.position = currentPosition + direction * moveSpeed * deltaTime;
+        // 냉기 표식 중첩당 이동속도 감소. moveSpeed 원본은 그대로 두어 만료 시 복원
+        int frostStacks = markState.Get(MagicElement.Frost).Stacks;
+        float currentSpeed = moveSpeed * (1f - frostStacks * FrostMovementSpeedReductionPerStack);
+
+        transform.position = currentPosition + direction * currentSpeed * deltaTime;
     }
 
     // 화염표식 지속피해. Enemy.TakeDamage를 지나므로 암흑 배율도 함께 적용
