@@ -808,6 +808,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2661742256123737985, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 2661742256123737985, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.05
+      objectReference: {fileID: 0}
+    - target: {fileID: 2661742256123737985, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.05
+      objectReference: {fileID: 0}
     - target: {fileID: 3054636065095016730, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
       propertyPath: m_Name
       value: GameplayUI
@@ -836,6 +848,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8573297711850483604, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
+      propertyPath: gameTime
+      value: 600
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -846,6 +862,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2661742256123737985, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
   m_PrefabInstance: {fileID: 1959795033}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1959795035 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8573297711850483604, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
+  m_PrefabInstance: {fileID: 1959795033}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1e16bc6c0bfac045a72ad9b9db6aff1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HudDynamicUi
 --- !u!1 &2046186186
 GameObject:
   m_ObjectHideFlags: 0
@@ -882,7 +909,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee176665471249f7b4769803943f54ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameplayHudBinder
-  hud: {fileID: 0}
+  hud: {fileID: 1959795035}
   playerHealth: {fileID: 847271157}
   progression: {fileID: 2046186194}
 --- !u!114 &2046186188

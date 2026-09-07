@@ -71,6 +71,36 @@ public static class MvpIntegrationEditor
         Debug.Log("[MVP Integration] Validation passed.");
     }
 
+    [MenuItem("Tools/Magic Survive/Reconnect Existing Gameplay HUD")]
+    public static void ReconnectGameplayHud()
+    {
+        Scene scene = EditorSceneManager.OpenScene(MainScenePath, OpenSceneMode.Single);
+        GameObject gameplayUi = FindRoot(scene, "GameplayUI");
+        GameObject gameSystems = FindRoot(scene, "GameSystems");
+        HudDynamicUi[] hudComponents = gameplayUi != null
+            ? gameplayUi.GetComponentsInChildren<HudDynamicUi>(true)
+            : Array.Empty<HudDynamicUi>();
+        GameplayHudBinder binder = gameSystems != null
+            ? gameSystems.GetComponent<GameplayHudBinder>()
+            : null;
+        if (hudComponents.Length != 1 || binder == null)
+        {
+            throw new InvalidOperationException("Expected one existing HUD and GameplayHudBinder.");
+        }
+
+        HudDynamicUi hud = hudComponents[0];
+        SetObjectReference(binder, "hud", hud);
+        SerializedObject hudSerialized = new SerializedObject(hud);
+        hudSerialized.FindProperty("gameTime").floatValue = 600f;
+        hudSerialized.ApplyModifiedPropertiesWithoutUndo();
+        PrefabUtility.RecordPrefabInstancePropertyModifications(hud);
+
+        ValidateScene(scene, gameplayUi, gameSystems);
+        EditorSceneManager.MarkSceneDirty(scene);
+        EditorSceneManager.SaveScene(scene, MainScenePath);
+        Debug.Log("[MVP Integration] Existing gameplay HUD reconnected.");
+    }
+
     private static ProjectileMagicDefinition[] EnsureTargetedMagics()
     {
         GameObject projectileObject = AssetDatabase.LoadAssetAtPath<GameObject>(ProjectilePrefabPath);

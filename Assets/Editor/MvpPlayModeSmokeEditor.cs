@@ -238,7 +238,7 @@ public static class MvpPlayModeSmokeEditor
                 Assert(Mathf.Approximately(Time.timeScale, 0f),
                     "Level-up must set time scale to 0.");
                 AssertApproximately(FindImage("Level").fillAmount, 1f / 3f, "EXP bar");
-                Assert(FindLevelText().text == "3", "Level HUD must display 3.");
+                Assert(FindLevelText().text == "Lv/3", "Level HUD must display Lv/3.");
                 Assert(skills.TrySelectNode(SkillTreeNodeId.CommonPower),
                     "Public skill API could not select during level-up.");
                 Assert(skills.ConfirmSelectedNode(),
@@ -412,8 +412,15 @@ public static class MvpPlayModeSmokeEditor
 
     private static TextMeshProUGUI FindLevelText()
     {
-        GameObject level = GameObject.Find("Level");
-        TextMeshProUGUI text = level != null ? level.GetComponentInChildren<TextMeshProUGUI>(true) : null;
+        SerializedObject binderSerialized = new SerializedObject(hudBinder);
+        HudDynamicUi hud = binderSerialized.FindProperty("hud").objectReferenceValue as HudDynamicUi;
+        if (hud == null)
+        {
+            throw new InvalidOperationException("GameplayHudBinder HUD reference missing.");
+        }
+
+        SerializedObject hudSerialized = new SerializedObject(hud);
+        TextMeshProUGUI text = hudSerialized.FindProperty("lvText").objectReferenceValue as TextMeshProUGUI;
         if (text == null)
         {
             throw new InvalidOperationException("Level text missing.");

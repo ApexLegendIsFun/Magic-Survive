@@ -1,7 +1,10 @@
 
 
-역할구분 용이하게 하기 위한 폴더 유지용입니다.
+Damage_Number를 호출하려면 
 
+Enemy가 받은 데미지,(Player가 가한 데미지) 위치정보(Transform.position)으로 호출하시면 됩니다.*테스트 할때는 Enemy의 TakeDamage에서 amount와 transform.position을 활용했습니다. * 
+
+(UiManager의 EnemyDamageTextUi() 함수)
 
 현재 캔버스 구상도
 
@@ -25,4 +28,12 @@ Canvas_Popup    => 레벨업 시 스킬 고르는 Ui 창, 게임오버 => 씬 �
 ├── LevelUp
 ├── GameOver
 └── Option
+
+VFX, SFX
+
+VFX를 담당할경우 풀링할 예정이며, 
+
+SFX는 풀링 X
+
+마찬가지로 VfxManager를 만들어 중계기처럼 쓸 예정
 
