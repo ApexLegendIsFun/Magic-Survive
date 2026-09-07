@@ -3,39 +3,40 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-public enum Item
-{
-    Fire,
-    Elec,
-    Ice,
-    Earth,
-    Dark
-}
-
 public class PopupUi : MonoBehaviour
 {
+    [Header("Level Up Controller")]
+    [SerializeField] private LevelUpController levelUpController;
+
     [Header("Item")]
-    [SerializeField] private TextMeshProUGUI itemNameText; // 실제 출력될 아이템 이름
-    [SerializeField] private TextMeshProUGUI itemDescriptionText; // 실제 출력될 아이템 설명
+    [SerializeField] private TextMeshProUGUI itemNameText;
+    [SerializeField] private TextMeshProUGUI itemDescriptionText;
 
     [Header("Item Button")]
-    [SerializeField] private Button[] itemButtons; // 아이템 버튼&이미지
+    [SerializeField] private Button[] itemButtons;
 
     [Header("Item Info")]
-    [SerializeField] private string[] itemNames; // 아이템 이름 배열
-    [SerializeField] private string[] itemDescriptions; // 아이템 설명 배열
+    [SerializeField] private string[] itemNames;
+    [SerializeField] private string[] itemDescriptions;
 
     [Header("Item Outline")]
-    [SerializeField] private Image[] itemOutline; // Hover용 테두리 이미지
+    [SerializeField] private Image[] itemOutline;
 
     [Header("Start Button")]
     [SerializeField] private Button startButton;
 
-    private Color normalColor = Color.white;
-    private Color hoverColor = Color.red;
+    private readonly Color normalColor = Color.white;
+    private readonly Color hoverColor = Color.red;
 
-    // 현재 선택한 아이템
-    private Item selectedItem = Item.Fire;
+    private MagicElement selectedElement;
+
+    private void Awake()
+    {
+        if (levelUpController == null)
+        {
+            levelUpController = FindFirstObjectByType<LevelUpController>();
+        }
+    }
 
     private void Start()
     {
@@ -43,18 +44,19 @@ public class PopupUi : MonoBehaviour
         {
             int index = i;
 
-            // 클릭
             itemButtons[i].onClick.AddListener(() => SelectItem(index));
 
-            // 마우스 이벤트
-            EventTrigger trigger = itemButtons[i].gameObject.AddComponent<EventTrigger>();
+            EventTrigger trigger = itemButtons[i].gameObject.GetComponent<EventTrigger>();
 
-            // 마우스를 올렸을 때
+            if (trigger == null)
+            {
+                trigger = itemButtons[i].gameObject.AddComponent<EventTrigger>();
+            }
+
             EventTrigger.Entry pointerEnter = new EventTrigger.Entry();
             pointerEnter.eventID = EventTriggerType.PointerEnter;
             pointerEnter.callback.AddListener((data) => OnPointerEnter(index));
 
-            // 마우스를 뗐을 때
             EventTrigger.Entry pointerExit = new EventTrigger.Entry();
             pointerExit.eventID = EventTriggerType.PointerExit;
             pointerExit.callback.AddListener((data) => OnPointerExit(index));
@@ -63,11 +65,17 @@ public class PopupUi : MonoBehaviour
             trigger.triggers.Add(pointerExit);
         }
 
-        // 시작 기본값 : 화염
-        SelectItem(0);
-
-        // 시작 버튼
         startButton.onClick.AddListener(OnClickStart);
+
+        SelectItem(0);
+    }
+
+    private void SelectItem(int index)
+    {
+        selectedElement = (MagicElement)index;
+
+        itemNameText.text = itemNames[index];
+        itemDescriptionText.text = itemDescriptions[index];
     }
 
     private void OnPointerEnter(int index)
@@ -80,25 +88,18 @@ public class PopupUi : MonoBehaviour
         itemOutline[index].color = normalColor;
     }
 
-    private void SelectItem(int index)
-    {
-        // 현재 선택한 아이템 저장
-        selectedItem = (Item)index;
-
-        // 해당 아이템의 이름과 설명 출력
-        itemNameText.text = itemNames[index];
-        itemDescriptionText.text = itemDescriptions[index];
-    }
-
     private void OnClickStart()
     {
-        //값 전달 => selectedItem 
-        Debug.Log($"선택한 아이템 : {selectedItem}");
-    }
+        if (levelUpController == null)
+        {
+            return;
+        }
 
-    // 다른 스크립트에서 선택한 아이템을 가져감
-    public Item GetSelectedItem()
-    {
-        return selectedItem;
+        //levelUpController 참조함 (임시)
+        levelUpController.TryChooseStartingElement(selectedElement);
+        gameObject.SetActive(false);
+
+
+        Debug.Log($"{selectedElement} 선택됨");
     }
 }
