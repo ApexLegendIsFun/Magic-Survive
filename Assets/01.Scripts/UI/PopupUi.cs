@@ -71,6 +71,7 @@ public class PopupUi : MonoBehaviour
                 trigger = itemButtons[i].gameObject.AddComponent<EventTrigger>();
             }
 
+            //오브젝트 호버, 드래그 감지 
             EventTrigger.Entry pointerEnter = new EventTrigger.Entry();
             pointerEnter.eventID = EventTriggerType.PointerEnter;
             pointerEnter.callback.AddListener((data) => OnPointerEnter(index));

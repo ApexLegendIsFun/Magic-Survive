@@ -10,6 +10,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] HudStatcUi hudStatcUi;
     [SerializeField] HudDynamicUi hudDynamicUi;
     [SerializeField] PopupUi popupUi;
+    [SerializeField] ResultUi resultUi;
 
     private void Awake()
     {

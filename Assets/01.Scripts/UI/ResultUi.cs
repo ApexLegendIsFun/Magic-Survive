@@ -1,13 +1,22 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ResultUi : MonoBehaviour
 {
-    [SerializeField] TextMeshProUGUI killCount;
+    [Header ("Game Info")]
     [SerializeField] TextMeshProUGUI time;
-    [SerializeField] TextMeshProUGUI weapon;
-    [SerializeField] TextMeshProUGUI score; //점수가 있다면 
+    [SerializeField] TextMeshProUGUI killCount;
+    [SerializeField] TextMeshProUGUI level;
 
+    [Header("Gameflow BUtton")]
+    [SerializeField] Button title;
+    [SerializeField] Button reStart;
+
+
+
+
+ 
 
     void Start()
     {
