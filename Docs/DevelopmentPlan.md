@@ -47,9 +47,13 @@
 - 융합 마법 5개
 - 플레이 시간 10분
 
+이번 제출 실제 범위 (9월 3일 승인): 일반 적 3종 (Basic·Fast·Tank, Ranged P1), 엘리트 0, 보스 1 (1단계·패턴 1개), 기본 마법 10, 융합 1 활성 (플라즈마) + 4 P1. 기준은 [GameDesignBrief.md](GameDesignBrief.md) P0 표.
+
 구체 규칙과 공개 계약은 [TenMinuteRunPlan.md](TenMinuteRunPlan.md)를 기준으로 한다.
 
 ## 5. 사용 에셋
+
+전부 팀 보유, 저장소 미반입. 반입 9/8 정오, 담당 = 아래 §6 담당 에셋. 미반입 시 관련 P1 자동 보류. 한글 폰트는 Noto Sans KR (OFL), 선동 제공.
 
 ### 캐릭터
 
@@ -367,6 +371,7 @@ Final Test
 - 복잡한 장비 시스템
 - 상점 / 메타 성장
 - 마지막 주 신규 기능
+- 이번 제출 삭제 (9월 3일 승인): 냉기·대지 제어, 보스 제어 저항·밀치기 면역, 보스 2단계·예고 장판·원형 파동, 연쇄 전격 연쇄, 돌진·소환 엘리트, Enemy HP Bar, 마법별 고유 VFX, 셰이더·화면 연출, 오각형 신규 UI
 
 ## 9. 팀 운영 원칙
 
@@ -497,3 +502,14 @@ Final Test
   - 승범: Damage Number 런타임 완성, 최종 오각형·결과 UI, 한국어 TMP, VFX·SFX
   - 태환: 통합본 회귀·성능 테스트와 정확한 Unity `6000.3.17f1` 검증
   - 담당 결과와 QA가 끝날 때까지 `main`은 갱신하지 않음
+
+### 2026-09-04 — 팀 작업 병합과 범위 컷 (A안)
+
+- 기준 브랜치: `Seondong`
+- 유신 병합 원본: `origin/Yushin` `ba459d9` (`dbdbd2f` 포함)
+- 승범 병합 원본: `origin/Seungbum` `929dfbe` (`2ec3cfb`~`6241846` 포함)
+- 병합 커밋: `95b9d86` (9/4 00:34). 기준 씬에 승범 UiObjectPool 연결
+- 원격 추가 커밋: `72ed1b0` `.gitignore`, `70b8ea7` TMP Examples & Extras (다른 작업본에서 푸시)
+- 범위 컷: PD 승인 A안(융합 최소 보존)을 Docs 5개·README에 반영. 기준은 [GameDesignBrief.md](GameDesignBrief.md) 「콘텐츠 목표와 제출 약속」
+- 미완 배선: `SpawnDirector.EnemySpawned`→`Enemy.ApplyDifficulty`, Tank 슬롯, `MvpIntegrationEditor` `Enemy_A/B` 경로(파일명 변경으로 깨짐)
+- Unity 검증: 이 병합에 대한 검증 기록 없음. 태환 QA02 baseline 대기

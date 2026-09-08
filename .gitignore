@@ -105,3 +105,8 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Third-party Asset Store packages (team-owned, distributed via Google Drive as .unitypackage).
+# Never commit them: the repository is public. Everyone imports the same packages locally.
+/Assets/04.ThirdParty/
+/Assets/04.ThirdParty.meta
