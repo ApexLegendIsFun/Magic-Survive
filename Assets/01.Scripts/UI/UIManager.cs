@@ -67,5 +67,10 @@ public class UIManager : MonoBehaviour
         
     }
 
+    public void LevelupOpenPopupUi() // 레벨업 시 호출 
+    {
+        popupUi.gameObject.SetActive(true);
+    }
+
 
 }
