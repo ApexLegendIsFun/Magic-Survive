@@ -890,6 +890,7 @@ GameObject:
   - component: {fileID: 2046186189}
   - component: {fileID: 2046186188}
   - component: {fileID: 2046186187}
+  - component: {fileID: 2046186196}
   m_Layer: 0
   m_Name: GameSystems
   m_TagString: Untagged
@@ -1045,6 +1046,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2046186196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2046186186}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1082541d54aded342bfcbb053d4f6106, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossSpawner
+  runDirector: {fileID: 2046186190}
+  enemyManager: {fileID: 1220391823}
+  bossData: {fileID: 11400000, guid: fe7ddd726bd19c946bfd50e3607bb71f, type: 2}
+  spawnCamera: {fileID: 0}
+  spawnMargin: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
