@@ -62,5 +62,10 @@ public class UIManager : MonoBehaviour
         damageUi.Show(damage, position);
     }
 
+    public void HudStaticUiFirstWeaponUpdate(int index, Sprite icon, string weaponName) // UiManager에서도 아래 현재 무기확인 HUD 호출 가능함.
+    {
+        
+    }
+
 
 }
