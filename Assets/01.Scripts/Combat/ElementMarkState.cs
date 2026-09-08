@@ -25,6 +25,24 @@ public class ElementMarkState
         return new ElementMarkSnapshot(element, stacks[index], remainingDurations[index]);
 
 
+
+
+    }
+
+    // 표식 공통 효과용. 원소 구분 없이 현재 중첩을 전부 더함
+    public int TotalStacks
+    {
+        get
+        {
+            int total = 0;
+
+            for (int index = 0; index < ElementCount; index++)
+            {
+                total += stacks[index];
+            }
+
+            return total;
+        }
     }
 
 
