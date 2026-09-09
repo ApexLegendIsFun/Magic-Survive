@@ -119,8 +119,21 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
         multiplier += darkStacks * DarkDamageTakenPerStack;
 
+        // [연동:UI] Damage Number는 요청량이 아니라 실제로 깎인 양을 받음
+        // 이미 죽었거나 오버킬이면 요청량보다 작거나 0
+        float healthBeforeDamage = health.CurrentHealth;
+
         health.TakeDamage(amount * multiplier);
+
+        float appliedDamage = healthBeforeDamage - health.CurrentHealth;
+
+        if (appliedDamage > 0f)
+        {
+            GameEvents.RaiseEnemyDamaged(transform.position, appliedDamage);
+        }
+
     }
+
 
     // EnemyData의 수치를 실제 적에게 적용
     // EnemyManager.Spawn()에서 호출
