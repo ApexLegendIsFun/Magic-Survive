@@ -5,46 +5,88 @@ using UnityEngine.EventSystems;
 
 public class PopupUi : MonoBehaviour
 {
+    // ─────────────────────────────────────────────
+    // 원소 슬롯
+    // ─────────────────────────────────────────────
+    [System.Serializable]
+    public class ElementSlot
+    {
+        public MagicElement element;
+        public Button button;
+        public Image icon;
+        public TextMeshProUGUI nameLabel;
+        public TextMeshProUGUI statusLabel;
+
+        public GameObject lockIcon;
+        public GameObject checkmark;
+        public GameObject pendingHighlight;
+    }
+
+    // ─────────────────────────────────────────────
+    // 융합 슬롯
+    // ─────────────────────────────────────────────
+    [System.Serializable]
+    public class FusionSlot
+    {
+        public FusionKind fusion;
+        public Button button;
+        public Image icon;
+        public TextMeshProUGUI statusLabel;
+
+        public GameObject lockIcon;
+        public GameObject checkmark;
+        public GameObject pendingHighlight;
+    }
+
+    // ─────────────────────────────────────────────
+    // Controller
+    // ─────────────────────────────────────────────
     [Header("Level Up Controller")]
     [SerializeField] private LevelUpController levelUpController;
 
-    [Header("Fusion Line")]
-    [SerializeField] private FusionLineManager fusionLineManager;
+    // ─────────────────────────────────────────────
+    // 시작 원소 선택
+    // 기존 구조 최대한 유지
+    // ─────────────────────────────────────────────
+    [Header("Start Select")]
+    [SerializeField] private Button[] startItemButtons;
+    [SerializeField] private Image[] startItemOutline;
 
-    [Header("Item")]
-    [SerializeField] private TextMeshProUGUI itemNameText;
-    [SerializeField] private TextMeshProUGUI itemDescriptionText;
-
-    [Header("Item Button")]
-    [SerializeField] private Button[] itemButtons;
-
-    [Header("Item Info")]
-    [SerializeField] private string[] itemNames;
-    [SerializeField] private string[] itemDescriptions;
-
-    [Header("Item Outline")]
-    [SerializeField] private Image[] itemOutline;
-
-    [Header("Title")]
     [SerializeField] private GameObject startTitle;
-    [SerializeField] private GameObject levelupTitle;
-
-    [Header("Start Button (원소 선택 전용)")]
     [SerializeField] private Button startButton;
-
-    [Header("LevelUp Button Group (획득/취소)")]
-    [SerializeField] private GameObject levelUpButtonGroup; // gainButton + cancelButton을 담는 부모
-    [SerializeField] private Button gainButton;
-    [SerializeField] private Button cancelButton;
 
     private readonly Color normalColor = Color.white;
     private readonly Color hoverColor = Color.red;
 
-    private MagicElement selectedElement;
-    private bool hasSelection = false;
+    private MagicElement selectedStartElement;
 
-    // 해당 팝업 Ui는 처음엔 "시작 선택"이었다가, 한 번 확정되면 이후로는 영구히 레벨업 팝업으로 남는다.
+    // 레벨업
+    [Header("LevelUp")]
+    [SerializeField] private GameObject levelupTitle;
+    [SerializeField] private GameObject levelUpButtonGroup;
+
+    [SerializeField] private Button gainButton;
+    [SerializeField] private Button cancelButton;
+
+    // 레벨업 원소 슬롯
+    [Header("LevelUp Element Slots")]
+    [SerializeField] private ElementSlot[] elementSlots;
+
+    // 레벨업 융합 슬롯
+    [Header("LevelUp Fusion Slots")]
+    [SerializeField] private FusionSlot[] fusionSlots;
+
+    // 중앙 미리보기
+    [Header("Selected Node Preview")]
+    [SerializeField] private TextMeshProUGUI previewNameText;
+    [SerializeField] private TextMeshProUGUI previewDescriptionText;
+
+    private PlayerSkillSystem currentSkillSystem;
+
     private bool isLevelUpMode = false;
+
+
+    // 초기화
 
     private void Awake()
     {
@@ -52,108 +94,133 @@ public class PopupUi : MonoBehaviour
         {
             levelUpController = FindFirstObjectByType<LevelUpController>();
         }
-        if (fusionLineManager == null)
-        {
-            fusionLineManager = FindFirstObjectByType<FusionLineManager>();
-        }
     }
+
 
     private void Start()
     {
-        for (int i = 0; i < itemButtons.Length; i++)
+        SetupStartSelect();
+
+        // 레벨업 버튼
+        gainButton.onClick.AddListener(OnClickGain);
+        cancelButton.onClick.AddListener(OnClickCancel);
+
+        // 원소 슬롯
+        foreach (var slot in elementSlots)
+        {
+            var captured = slot;
+
+            captured.button.onClick.AddListener(
+                () => OnClickElementSlot(captured)
+            );
+        }
+
+        // 융합 슬롯
+        foreach (var slot in fusionSlots)
+        {
+            var captured = slot;
+
+            captured.button.onClick.AddListener(
+                () => OnClickFusionSlot(captured)
+            );
+        }
+    }
+
+
+    // 시작 원소 선택
+
+    private void SetupStartSelect()
+    {
+        for (int i = 0; i < startItemButtons.Length; i++)
         {
             int index = i;
-            itemButtons[i].onClick.AddListener(() => SelectItem(index));
 
-            EventTrigger trigger = itemButtons[i].gameObject.GetComponent<EventTrigger>();
+            // 클릭
+            startItemButtons[i].onClick.AddListener(
+                () => SelectStartElement(index)
+            );
+
+            // 호버
+            EventTrigger trigger =
+                startItemButtons[i].gameObject.GetComponent<EventTrigger>();
+
             if (trigger == null)
             {
-                trigger = itemButtons[i].gameObject.AddComponent<EventTrigger>();
+                trigger =
+                    startItemButtons[i].gameObject.AddComponent<EventTrigger>();
             }
 
-            //오브젝트 호버, 드래그 감지 
-            EventTrigger.Entry pointerEnter = new EventTrigger.Entry();
-            pointerEnter.eventID = EventTriggerType.PointerEnter;
-            pointerEnter.callback.AddListener((data) => OnPointerEnter(index));
+            EventTrigger.Entry pointerEnter =
+                new EventTrigger.Entry();
 
-            EventTrigger.Entry pointerExit = new EventTrigger.Entry();
-            pointerExit.eventID = EventTriggerType.PointerExit;
-            pointerExit.callback.AddListener((data) => OnPointerExit(index));
+            pointerEnter.eventID =
+                EventTriggerType.PointerEnter;
+
+            pointerEnter.callback.AddListener(
+                (_) => startItemOutline[index].color = hoverColor
+            );
+
+
+            EventTrigger.Entry pointerExit =
+                new EventTrigger.Entry();
+
+            pointerExit.eventID =
+                EventTriggerType.PointerExit;
+
+            pointerExit.callback.AddListener(
+                (_) => startItemOutline[index].color = normalColor
+            );
 
             trigger.triggers.Add(pointerEnter);
             trigger.triggers.Add(pointerExit);
         }
 
         startButton.onClick.AddListener(OnClickStart);
-        gainButton.onClick.AddListener(OnClickGain);
-        cancelButton.onClick.AddListener(OnClickCancel);
 
-        hasSelection = false;
-        SelectItem(0, applySelectionVisual: false);
-        fusionLineManager?.SetActiveElement(null);
+        // 처음에는 0번 원소 선택
+        SelectStartElement(0);
     }
 
-    private void SelectItem(int index) => SelectItem(index, applySelectionVisual: true);
 
-    private void SelectItem(int index, bool applySelectionVisual)
+    private void SelectStartElement(int index)
     {
-        selectedElement = (MagicElement)index;
-        itemNameText.text = itemNames[index];
-        itemDescriptionText.text = itemDescriptions[index];
+        selectedStartElement = (MagicElement)index;
 
-        if (applySelectionVisual)
-        {
-            hasSelection = true;
-            fusionLineManager?.SetActiveElement(selectedElement);
-        }
+        var chain =
+            LevelUpSlotMapper.GetElementChain(selectedStartElement);
+
+        var def = chain[0];
+
+        previewNameText.text = def.DisplayName;
+        previewDescriptionText.text = def.Description;
     }
 
-    private void OnPointerEnter(int index)
-    {
-        itemOutline[index].color = hoverColor;
-        fusionLineManager?.SetActiveElement((MagicElement)index);
-    }
-
-    private void OnPointerExit(int index)
-    {
-        itemOutline[index].color = normalColor;
-        fusionLineManager?.SetActiveElement(hasSelection ? selectedElement : (MagicElement?)null);
-    }
-
-    // 시작 원소 확정 (최초 1회)
+    // 시작 원소 확정
     private void OnClickStart()
     {
-        if (levelUpController == null) return;
+        if (levelUpController == null)
+        {
+            return;
+        }
 
-        levelUpController.TryChooseStartingElement(selectedElement);
-        Debug.Log($"{selectedElement} 시작 원소로 선택됨");
+        levelUpController.TryChooseStartingElement(
+            selectedStartElement
+        );
+
+        Debug.Log(
+            $"{selectedStartElement} 시작 원소로 선택됨"
+        );
 
         SwitchToLevelUpMode();
+
+        //시작 선택 팝업 닫기.
         gameObject.SetActive(false);
     }
 
 
 
-    // 레벨업 확정
-    private void OnClickGain()
-    {
-        if (levelUpController == null) return;
-
-        // TODO:실제 레벨업 확정 로직 연결
-        Debug.Log($"{selectedElement} 레벨업으로 획득됨");
-
-        gameObject.SetActive(false);
-    }
-
-    // 레벨업 취소 (스킬포인트 적립)
-    private void OnClickCancel()
-    {
-        // TODO: 스킬포인트 +1 연결 => HudStaticUi에서 연결 가능 
-
-        gameObject.SetActive(false);
-    }
-
-    private void SwitchToLevelUpMode() //Ui를 레벨업 모드로 전환 
+    // 레벨업 모드 전환
+    private void SwitchToLevelUpMode()
     {
         isLevelUpMode = true;
 
@@ -162,5 +229,267 @@ public class PopupUi : MonoBehaviour
 
         levelupTitle.SetActive(true);
         levelUpButtonGroup.SetActive(true);
+    }
+
+    // 레벨업 UI 표시
+    public void ShowSkillTree(PlayerSkillSystem skillSystem)
+    {
+        currentSkillSystem = skillSystem;
+
+        RefreshSkillTree(skillSystem);
+    }
+
+
+    public void RefreshSkillTree(PlayerSkillSystem skillSystem)
+    {
+        if (skillSystem == null)
+        {
+            return;
+        }
+
+        currentSkillSystem = skillSystem;
+
+        var pending =
+            skillSystem.Tree.PendingSelection;
+
+
+        // 원소
+        foreach (var slot in elementSlots)
+        {
+            var chain =
+                LevelUpSlotMapper.GetElementChain(slot.element);
+
+            var (node, maxed) =
+                LevelUpSlotMapper.GetRepresentativeNode(
+                    chain,
+                    skillSystem.Tree
+                );
+
+            var state =
+                skillSystem.GetNodePreview(node.Id).State;
+
+            ApplySlotVisual(
+                node,
+                maxed,
+                pending,
+                state,
+                slot.button,
+                slot.statusLabel,
+                slot.lockIcon,
+                slot.checkmark,
+                slot.pendingHighlight
+            );
+        }
+
+
+ 
+        //융합 아직은 미정. => (추후 가능하다면 추가 )
+        foreach (var slot in fusionSlots)
+        {
+            var chain =
+                LevelUpSlotMapper.GetFusionChain(slot.fusion);
+
+            var (node, maxed) =
+                LevelUpSlotMapper.GetRepresentativeNode(
+                    chain,
+                    skillSystem.Tree
+                );
+
+            var state =
+                skillSystem.GetNodePreview(node.Id).State;
+
+
+            // 아직 융합 조건이 안 되면 숨김
+            slot.button.gameObject.SetActive(
+                state != SkillTreeNodeState.Hidden
+            );
+
+            if (state == SkillTreeNodeState.Hidden)
+            {
+                continue;
+            }
+
+
+            ApplySlotVisual(
+                node,
+                maxed,
+                pending,
+                state,
+                slot.button,
+                slot.statusLabel,
+                slot.lockIcon,
+                slot.checkmark,
+                slot.pendingHighlight
+            );
+        }
+
+
+        // 선택된 노드가 있을 때만 획득 가능
+        gainButton.interactable =
+            pending.HasValue;
+    }
+
+
+    // 슬롯 UI 갱신
+
+    private void ApplySlotVisual(
+        SkillTreeNodeDefinition node,
+        bool maxed,
+        SkillTreeNodeId? pending,
+        SkillTreeNodeState state,
+        Button button,
+        TextMeshProUGUI statusLabel,
+        GameObject lockIcon,
+        GameObject checkmark,
+        GameObject pendingHighlight)
+    {
+        bool isPending =
+            pending.HasValue &&
+            pending.Value.Equals(node.Id);
+
+
+        button.interactable =
+            state == SkillTreeNodeState.Available;
+
+        lockIcon.SetActive(
+            state == SkillTreeNodeState.Locked
+        );
+
+        checkmark.SetActive(
+            state == SkillTreeNodeState.Owned
+        );
+
+        pendingHighlight.SetActive(
+            isPending
+        );
+
+
+        statusLabel.text =
+            maxed
+                ? "완료"
+                : state == SkillTreeNodeState.Owned
+                    ? "보유"
+                    : state == SkillTreeNodeState.Locked
+                        ? "잠김"
+                        : string.Empty;
+    }
+
+
+    // =========================================================
+    // 원소 슬롯 클릭
+    // =========================================================
+
+    private void OnClickElementSlot(ElementSlot slot)
+    {
+        if (currentSkillSystem == null)
+        {
+            return;
+        }
+
+        var chain =
+            LevelUpSlotMapper.GetElementChain(slot.element);
+
+        var (node, maxed) =
+            LevelUpSlotMapper.GetRepresentativeNode(
+                chain,
+                currentSkillSystem.Tree
+            );
+
+        TrySelectAndPreview(node, maxed);
+    }
+
+
+    // 융합 슬롯 클릭
+    private void OnClickFusionSlot(FusionSlot slot)
+    {
+        if (currentSkillSystem == null)
+        {
+            return;
+        }
+
+        var chain =
+            LevelUpSlotMapper.GetFusionChain(slot.fusion);
+
+        var (node, maxed) =
+            LevelUpSlotMapper.GetRepresentativeNode(
+                chain,
+                currentSkillSystem.Tree
+            );
+
+        TrySelectAndPreview(node, maxed);
+    }
+
+
+    // 노드 선택
+
+    private void TrySelectAndPreview(
+        SkillTreeNodeDefinition node,
+        bool maxed)
+    {
+        if (maxed)
+        {
+            return;
+        }
+
+        if (levelUpController == null)
+        {
+            return;
+        }
+
+        bool success =
+            levelUpController.TrySelectNode(node.Id);
+
+        if (!success)
+        {
+            return;
+        }
+
+
+        // 중앙 미리보기
+        previewNameText.text =
+            node.DisplayName;
+
+        previewDescriptionText.text =
+            node.Description;
+
+
+        // 슬롯 상태 갱신
+        RefreshSkillTree(currentSkillSystem);
+    }
+
+
+    // 레벨업 획득
+
+    private void OnClickGain()
+    {
+        if (levelUpController == null)
+        {
+            return;
+        }
+
+        levelUpController.ConfirmSelectedNode();
+
+        // 실제 팝업 닫기 / 다음 레벨업 처리 등은
+        // LevelUpController에서 담당
+    }
+
+
+    // 레벨업 취소
+
+    private void OnClickCancel()
+    {
+
+        //아직은 캔슬기능이 존재하지 않음. 
+
+        Debug.LogWarning(
+            "레벨업 스킵 로직이 LevelUpController에 아직 없음"
+        );
+    }
+
+    // 레벨업 UI 숨김
+
+    public void HideLevelUp()
+    {
+        currentSkillSystem = null;
     }
 }
