@@ -948,7 +948,7 @@ MonoBehaviour:
   normalEnemies:
   - {fileID: 11400000, guid: 2d195561561a83840a68ca7f80c5fa6d, type: 2}
   - {fileID: 11400000, guid: fb05251c9d772f347910531787b68646, type: 2}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: dc52cd02647d1944cbf172cbf12fdedc, type: 2}
   - {fileID: 0}
   spawnMargin: 1
 --- !u!114 &2046186190

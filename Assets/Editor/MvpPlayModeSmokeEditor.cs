@@ -136,6 +136,7 @@ public static class MvpPlayModeSmokeEditor
                 Assert(Mathf.Approximately(Time.timeScale, 0f),
                     "Element selection must pause time.");
                 Assert(skills.CurrentMagic == null, "Magic must wait for element selection.");
+                AssertNormalSpawningPaused();
                 Assert(IsActive("ElementSelectPanel"), "Element selection panel missing.");
                 Click("Element_Fire");
                 Advance(1);
@@ -153,6 +154,7 @@ public static class MvpPlayModeSmokeEditor
                 AssertApproximately(skills.CurrentMagic.Cooldown, 0.8f, "Starting cooldown");
                 Assert(!skills.TrySelectNode(SkillTreeNodeId.CommonPower),
                     "Skill nodes must not be selectable outside a level-up.");
+                ValidateNormalSpawnIntegration();
 
                 health.SetMaxHealth(10000f, true);
                 Image healthBar = FindImage("HpBar");
@@ -237,8 +239,10 @@ public static class MvpPlayModeSmokeEditor
                 Assert(flow.State == GameFlowState.LevelUp, "Level-up must pause game flow.");
                 Assert(Mathf.Approximately(Time.timeScale, 0f),
                     "Level-up must set time scale to 0.");
+                AssertNormalSpawningPaused();
                 AssertApproximately(FindImage("Level").fillAmount, 1f / 3f, "EXP bar");
-                Assert(FindLevelText().text == "Lv/3", "Level HUD must display Lv/3.");
+                Assert(FindLevelText().text == "레벨3",
+                    $"Level HUD must display 레벨3, got '{FindLevelText().text}'.");
                 Assert(skills.TrySelectNode(SkillTreeNodeId.CommonPower),
                     "Public skill API could not select during level-up.");
                 Assert(skills.ConfirmSelectedNode(),
@@ -286,6 +290,7 @@ public static class MvpPlayModeSmokeEditor
                 Assert(!player.enabled, "Player movement must be disabled on death.");
                 Assert(flow.State == GameFlowState.GameOver,
                     "PlayerDied must force GameOver over LevelUp.");
+                AssertNormalSpawningPaused();
                 Assert(levelUp.PendingLevelUps == 0,
                     "GameOver must clear pending level-ups.");
                 int levelAtDeath = progression.Level;
@@ -319,6 +324,7 @@ public static class MvpPlayModeSmokeEditor
                     "Restart must reset skill tree and magic runtime.");
                 Assert(runDirector.ElapsedCombatTime == 0f && runDirector.KillCount == 0,
                     "Restart must reset run statistics.");
+                AssertNormalSpawningPaused();
                 Click("Element_Fire");
                 Advance(10);
                 break;
@@ -329,8 +335,107 @@ public static class MvpPlayModeSmokeEditor
                 AssertApproximately(skills.CurrentMagic.Damage, 6f, "Restarted damage");
                 AssertApproximately(skills.CurrentMagic.Cooldown, 0.8f, "Restarted cooldown");
                 Assert(skills.CurrentMagic.PierceCount == 0, "Restart must reset pierce.");
+                ValidateNormalSpawnIntegration();
                 Succeed();
                 break;
+        }
+    }
+
+    private static void ValidateNormalSpawnIntegration()
+    {
+        SpawnDirector director = Require<SpawnDirector>();
+        EnemyManager manager = Require<EnemyManager>();
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        FieldInfo clock = typeof(RunDirector).GetField("<ElapsedCombatTime>k__BackingField", flags);
+        FieldInfo timer = typeof(SpawnDirector).GetField("spawnTimer", flags);
+        MethodInfo update = typeof(SpawnDirector).GetMethod("Update", flags);
+        EnemyData[] data = (EnemyData[])typeof(SpawnDirector).GetField("normalEnemies", flags).GetValue(director);
+        Assert(data.Length == 4 && data[0] != null && data[1] != null && data[2] != null,
+            "Basic, Fast and delivered Tank data must be assigned.");
+        Assert(data[2] == AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Tank.asset"),
+            "Tank must reuse the contributor asset.");
+
+        float savedTime = runDirector.ElapsedCombatTime;
+        float savedTimer = (float)timer.GetValue(director);
+        UnityEngine.Random.State savedRandom = UnityEngine.Random.state;
+        Enemy[] pooledByRole = new Enemy[4];
+        bool[] observedRoles = new bool[4];
+        int eventCount = 0;
+
+        void Observe(Enemy enemy, NormalEnemyRole role, DifficultySnapshot difficulty)
+        {
+            int index = (int)role;
+            float elapsed = runDirector.ElapsedCombatTime;
+            Assert(elapsed > 90f || role == NormalEnemyRole.Basic, "Fast spawned before its ramp begins.");
+            Assert(elapsed > 180f || role != NormalEnemyRole.Tank, "Tank spawned before its ramp begins.");
+            Assert(enemy.SourcePrefab == data[index].Prefab, "Spawned prefab does not match the selected role.");
+            Health enemyHealth = enemy.GetComponent<Health>();
+            float expectedHealth = data[index].MaxHealth * difficulty.HealthMultiplier;
+            AssertApproximately(enemyHealth.MaxHealth, expectedHealth, "Spawned maximum HP");
+            AssertApproximately(enemyHealth.CurrentHealth, expectedHealth, "Spawned current HP");
+            AssertApproximately(enemy.ContactDamage, data[index].ContactDamage * difficulty.DamageMultiplier,
+                "Spawned contact damage before EnemySpawned publication");
+            if (pooledByRole[index] != null)
+            {
+                Assert(enemy == pooledByRole[index], "Sequential spawns must reuse the existing role pool.");
+            }
+
+            pooledByRole[index] = enemy;
+            observedRoles[index] = true;
+            eventCount++;
+        }
+
+        director.EnemySpawned += Observe;
+        try
+        {
+            UnityEngine.Random.InitState(20260909);
+            manager.DespawnAll();
+            // Skip only the test clock; use the real Update, manager, assets and pool.
+            foreach (float elapsed in new[] { 0f, 179.99f, 180f, 225f, 479f, 0f })
+            {
+                clock.SetValue(runDirector, elapsed);
+                for (int sample = 0; sample < 64; sample++)
+                {
+                    int previousCount = eventCount;
+                    timer.SetValue(director, 0f);
+                    update.Invoke(director, null);
+                    Assert(eventCount == previousCount + 1 && manager.ActiveCount == 1,
+                        "A ready Playing tick must spawn exactly one normal enemy.");
+                    manager.DespawnAll();
+                }
+            }
+
+            Assert(observedRoles[0] && observedRoles[1] && observedRoles[2],
+                "The scheduled samples must include Basic, Fast and Tank.");
+            Debug.Log("[Spawn Integration] PASS: Tank boundary, HP/contact scaling, pooled reuse and reset to base scaling.");
+        }
+        finally
+        {
+            director.EnemySpawned -= Observe;
+            manager.DespawnAll();
+            clock.SetValue(runDirector, savedTime);
+            timer.SetValue(director, savedTimer);
+            UnityEngine.Random.state = savedRandom;
+        }
+    }
+
+    private static void AssertNormalSpawningPaused()
+    {
+        SpawnDirector director = Require<SpawnDirector>();
+        EnemyManager manager = Require<EnemyManager>();
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        FieldInfo timer = typeof(SpawnDirector).GetField("spawnTimer", flags);
+        float savedTimer = (float)timer.GetValue(director);
+        int activeBefore = manager.ActiveCount;
+        try
+        {
+            timer.SetValue(director, 0f);
+            typeof(SpawnDirector).GetMethod("Update", flags).Invoke(director, null);
+            Assert(manager.ActiveCount == activeBefore, $"Normal spawning must stop in {flow.State}.");
+        }
+        finally
+        {
+            timer.SetValue(director, savedTimer);
         }
     }
 

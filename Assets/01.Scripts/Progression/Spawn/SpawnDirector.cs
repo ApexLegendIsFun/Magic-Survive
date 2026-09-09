@@ -66,6 +66,7 @@ public sealed class SpawnDirector : MonoBehaviour
         Enemy enemy = enemyManager.Spawn(data, GetRandomOffScreenPosition());
         if (enemy != null)
         {
+            enemy.ApplyDifficulty(difficulty.HealthMultiplier, difficulty.DamageMultiplier);
             EnemySpawned?.Invoke(enemy, role, difficulty);
         }
     }

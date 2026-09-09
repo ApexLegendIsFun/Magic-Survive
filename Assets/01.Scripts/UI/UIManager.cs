@@ -10,6 +10,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] HudStatcUi hudStatcUi;
     [SerializeField] HudDynamicUi hudDynamicUi;
     [SerializeField] PopupUi popupUi;
+    [SerializeField] ResultUi resultUi;
 
     private void Awake()
     {
@@ -65,6 +66,11 @@ public class UIManager : MonoBehaviour
     public void HudStaticUiFirstWeaponUpdate(int index, Sprite icon, string weaponName) // UiManager에서도 아래 현재 무기확인 HUD 호출 가능함.
     {
         
+    }
+
+    public void LevelupOpenPopupUi() // 레벨업 시 호출 
+    {
+        popupUi.gameObject.SetActive(true);
     }
 
 

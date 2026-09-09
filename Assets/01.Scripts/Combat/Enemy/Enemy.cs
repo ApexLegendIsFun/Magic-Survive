@@ -19,10 +19,16 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // Initialize가 비활성 상태에서 호출돼도 이미 살아 있음
     private readonly ElementMarkState markState = new ElementMarkState();
 
-    // Combat 계약에 효과 수치 경로가 없어 카탈로그의 확정값을 임시로 미러링
+    // 표식 공통 효과(YS04', P0). 원소 구분 없이 총 중첩당 받는 피해 증가
+    // 카탈로그,계약에 상수가 없어 GameDesignBrief 값을 임시 미러링
+    private const float DamageTakenPerTotalStack = 0.05f;
+
+    // 원소별 고유 효과. 카탈로그 확정값 임시 미러링
     private const float FireDotDamagePerStack = 1f;
     private const float DarkDamageTakenPerStack = 0.05f;
     private const float FrostMovementSpeedReductionPerStack = 0.10f;
+
+
 
     // 매 프레임 HealthChanged가 발행되는 것을 피하기 위해 1초 단위로 처리
     private const float FireDotIntervalSeconds = 1f;
@@ -105,9 +111,15 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 부를 수 있게 되면 적의 생명주기가 EnemyManager 밖에서 흔들림
     public void TakeDamage(float amount)
     {
+        // 공통 효과. 원소별이 아니라 모든 원소 중첩의 합이다
+        float multiplier = 1f + markState.TotalStacks * DamageTakenPerTotalStack;
+
+        // 암흑 고유 효과. TenMinuteRunPlan이 공통 1종과 고유 5종을 별개로 두므로 가산
         int darkStacks = markState.Get(MagicElement.Dark).Stacks;
 
-        health.TakeDamage(amount * (1f + darkStacks * DarkDamageTakenPerStack));
+        multiplier += darkStacks * DarkDamageTakenPerStack;
+
+        health.TakeDamage(amount * multiplier);
     }
 
     // EnemyData의 수치를 실제 적에게 적용
@@ -149,6 +161,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
         // markState.Tick보다 앞이어야 함
         // 뒤에 두면 표식이 만료되는 프레임에 스택이 이미 0이라 마지막 도트 틱이 사라짐
+
         TickFireDot(deltaTime);
 
         markState.Tick(deltaTime);
@@ -170,9 +183,11 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         transform.position = currentPosition + direction * currentSpeed * deltaTime;
     }
 
-    // 화염표식 지속피해. Enemy.TakeDamage를 지나므로 암흑 배율도 함께 적용
+    // 화염표식 지속피해. Enemy.TakeDamage를 지나므로 공통 표식 효과가 함께 적용
+    // 자기 화염 스택도 총 중첩에 포함되므로 도트가 스스로를 증폭
     private void TickFireDot(float deltaTime)
     {
+
         int fireStacks = markState.Get(MagicElement.Fire).Stacks;
 
         if (fireStacks <= 0)

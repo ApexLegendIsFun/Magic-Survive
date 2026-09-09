@@ -16,8 +16,9 @@ public static class MvpIntegrationEditor
     private const string GameplayUiPrefabPath = "Assets/02.Prefabs/UI/GameplayUI.prefab";
     private const string ProjectilePrefabPath = "Assets/02.Prefabs/Projectile/Projectile.prefab";
     private const string MagicDataFolder = "Assets/03.Data/Magic";
-    private const string BasicEnemyPath = "Assets/03.Data/Enemy/Enemy_A.asset";
-    private const string FastEnemyPath = "Assets/03.Data/Enemy/Enemy_B.asset";
+    private const string BasicEnemyPath = "Assets/03.Data/Enemy/Enemy_Basic.asset";
+    private const string FastEnemyPath = "Assets/03.Data/Enemy/Enemy_Fast.asset";
+    private const string TankEnemyPath = "Assets/03.Data/Enemy/Enemy_Tank.asset";
 
     [MenuItem("Tools/Magic Survive/Build MVP Integration Scene")]
     public static void Run()
@@ -466,7 +467,7 @@ public static class MvpIntegrationEditor
             {
                 AssetDatabase.LoadAssetAtPath<EnemyData>(BasicEnemyPath),
                 AssetDatabase.LoadAssetAtPath<EnemyData>(FastEnemyPath),
-                null,
+                AssetDatabase.LoadAssetAtPath<EnemyData>(TankEnemyPath),
                 null
             });
 
@@ -632,6 +633,7 @@ public static class MvpIntegrationEditor
             "gameFlowController",
             "runDirector",
             "spawnCamera");
+        ValidateNormalEnemies(gameSystems.GetComponent<SpawnDirector>());
         ValidateObjectReferences(
             gameSystems.GetComponent<GameplayHudBinder>(),
             "hud",
@@ -663,6 +665,26 @@ public static class MvpIntegrationEditor
         if (gameplayUi.GetComponentInChildren<UnityEngine.EventSystems.EventSystem>(true) == null)
         {
             throw new InvalidOperationException("GameplayUI prefab missing EventSystem.");
+        }
+    }
+
+    private static void ValidateNormalEnemies(SpawnDirector director)
+    {
+        SerializedProperty enemies = new SerializedObject(director).FindProperty("normalEnemies");
+        if (enemies == null || enemies.arraySize != 4)
+        {
+            throw new InvalidOperationException("SpawnDirector must retain four role slots.");
+        }
+
+        string[] paths = { BasicEnemyPath, FastEnemyPath, TankEnemyPath };
+        for (int index = 0; index < paths.Length; index++)
+        {
+            EnemyData expected = AssetDatabase.LoadAssetAtPath<EnemyData>(paths[index]);
+            if (expected == null || expected.Prefab == null ||
+                enemies.GetArrayElementAtIndex(index).objectReferenceValue != expected)
+            {
+                throw new InvalidOperationException($"SpawnDirector role {index} must reference {paths[index]}.");
+            }
         }
     }
 

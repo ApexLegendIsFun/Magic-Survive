@@ -16,6 +16,10 @@ public class HudStatcUi : MonoBehaviour
     [Header("Fusion Weapon Text")]
     [SerializeField] private TextMeshProUGUI FusionweaponText;
 
+    [Header("LevelUp PointText & Button")]
+    [SerializeField] private TextMeshProUGUI levelupPoint;
+    [SerializeField] private Button levelUpButton;
+
     public void SetWeapon(int index, Sprite icon, string weaponName)
     {
         weaponImages[index].sprite = icon;
@@ -29,4 +33,7 @@ public class HudStatcUi : MonoBehaviour
         FusionweaponImages.sprite = icon;
         FusionweaponText.text = weaponName;
     }
+
+
+    
 }
