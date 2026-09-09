@@ -5,9 +5,7 @@ using UnityEngine.EventSystems;
 
 public class PopupUi : MonoBehaviour
 {
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
     // ¿ø¼Ò ½½·Ô
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
     [System.Serializable]
     public class ElementSlot
     {
@@ -22,32 +20,31 @@ public class PopupUi : MonoBehaviour
         public GameObject pendingHighlight;
     }
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    // À¶ÇÕ ½½·Ô
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    [System.Serializable]
-    public class FusionSlot
-    {
-        public FusionKind fusion;
-        public Button button;
-        public Image icon;
-        public TextMeshProUGUI statusLabel;
+    // PS. À¶ÇÕºÎºÐÀº ÀüºÎ ÁÖ¼®Ã³¸®Çß½À´Ï´Ù.
 
-        public GameObject lockIcon;
-        public GameObject checkmark;
-        public GameObject pendingHighlight;
-    }
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    // Controller
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    // À¶ÇÕ (ÇöÀç ¹ÌÁ¤ÀÌ¹Ç·Î ÁÖ¼®Ã³¸®)
+    //[System.Serializable]
+    //public class FusionSlot
+    //{
+    //    public FusionKind fusion;
+    //    public Button button;
+    //    public Image icon;
+    //    public TextMeshProUGUI statusLabel;
+
+    //    public GameObject lockIcon;
+    //    public GameObject checkmark;
+    //    public GameObject pendingHighlight;
+    //}
+
+
+    //  LevelUpController
     [Header("Level Up Controller")]
     [SerializeField] private LevelUpController levelUpController;
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+ 
     // ½ÃÀÛ ¿ø¼Ò ¼±ÅÃ
-    // ±âÁ¸ ±¸Á¶ ÃÖ´ëÇÑ À¯Áö
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+
     [Header("Start Select")]
     [SerializeField] private Button[] startItemButtons;
     [SerializeField] private Image[] startItemOutline;
@@ -73,8 +70,8 @@ public class PopupUi : MonoBehaviour
     [SerializeField] private ElementSlot[] elementSlots;
 
     // ·¹º§¾÷ À¶ÇÕ ½½·Ô
-    [Header("LevelUp Fusion Slots")]
-    [SerializeField] private FusionSlot[] fusionSlots;
+    //[Header("LevelUp Fusion Slots")]
+    //[SerializeField] private FusionSlot[] fusionSlots;
 
     // Áß¾Ó ¹Ì¸®º¸±â
     [Header("Selected Node Preview")]
@@ -116,14 +113,14 @@ public class PopupUi : MonoBehaviour
         }
 
         // À¶ÇÕ ½½·Ô
-        foreach (var slot in fusionSlots)
-        {
-            var captured = slot;
+        //foreach (var slot in fusionSlots)
+        //{
+        //    var captured = slot;
 
-            captured.button.onClick.AddListener(
-                () => OnClickFusionSlot(captured)
-            );
-        }
+        //    captured.button.onClick.AddListener(
+        //        () => OnClickFusionSlot(captured)
+        //    );
+        //}
     }
 
 
@@ -284,44 +281,44 @@ public class PopupUi : MonoBehaviour
 
  
         //À¶ÇÕ ¾ÆÁ÷Àº ¹ÌÁ¤. => (ÃßÈÄ °¡´ÉÇÏ´Ù¸é Ãß°¡ )
-        foreach (var slot in fusionSlots)
-        {
-            var chain =
-                LevelUpSlotMapper.GetFusionChain(slot.fusion);
+        //foreach (var slot in fusionSlots)
+        //{
+        //    var chain =
+        //        LevelUpSlotMapper.GetFusionChain(slot.fusion);
 
-            var (node, maxed) =
-                LevelUpSlotMapper.GetRepresentativeNode(
-                    chain,
-                    skillSystem.Tree
-                );
+        //    var (node, maxed) =
+        //        LevelUpSlotMapper.GetRepresentativeNode(
+        //            chain,
+        //            skillSystem.Tree
+        //        );
 
-            var state =
-                skillSystem.GetNodePreview(node.Id).State;
-
-
-            // ¾ÆÁ÷ À¶ÇÕ Á¶°ÇÀÌ ¾È µÇ¸é ¼û±è
-            slot.button.gameObject.SetActive(
-                state != SkillTreeNodeState.Hidden
-            );
-
-            if (state == SkillTreeNodeState.Hidden)
-            {
-                continue;
-            }
+        //    var state =
+        //        skillSystem.GetNodePreview(node.Id).State;
 
 
-            ApplySlotVisual(
-                node,
-                maxed,
-                pending,
-                state,
-                slot.button,
-                slot.statusLabel,
-                slot.lockIcon,
-                slot.checkmark,
-                slot.pendingHighlight
-            );
-        }
+        //    // ¾ÆÁ÷ À¶ÇÕ Á¶°ÇÀÌ ¾È µÇ¸é ¼û±è
+        //    slot.button.gameObject.SetActive(
+        //        state != SkillTreeNodeState.Hidden
+        //    );
+
+        //    if (state == SkillTreeNodeState.Hidden)
+        //    {
+        //        continue;
+        //    }
+
+
+        //    ApplySlotVisual(
+        //        node,
+        //        maxed,
+        //        pending,
+        //        state,
+        //        slot.button,
+        //        slot.statusLabel,
+        //        slot.lockIcon,
+        //        slot.checkmark,
+        //        slot.pendingHighlight
+        //    );
+        //}
 
 
         // ¼±ÅÃµÈ ³ëµå°¡ ÀÖÀ» ¶§¸¸ È¹µæ °¡´É
@@ -375,9 +372,8 @@ public class PopupUi : MonoBehaviour
     }
 
 
-    // =========================================================
     // ¿ø¼Ò ½½·Ô Å¬¸¯
-    // =========================================================
+
 
     private void OnClickElementSlot(ElementSlot slot)
     {
@@ -400,24 +396,24 @@ public class PopupUi : MonoBehaviour
 
 
     // À¶ÇÕ ½½·Ô Å¬¸¯
-    private void OnClickFusionSlot(FusionSlot slot)
-    {
-        if (currentSkillSystem == null)
-        {
-            return;
-        }
+    //private void OnClickFusionSlot(FusionSlot slot)
+    //{
+    //    if (currentSkillSystem == null)
+    //    {
+    //        return;
+    //    }
 
-        var chain =
-            LevelUpSlotMapper.GetFusionChain(slot.fusion);
+    //    var chain =
+    //        LevelUpSlotMapper.GetFusionChain(slot.fusion);
 
-        var (node, maxed) =
-            LevelUpSlotMapper.GetRepresentativeNode(
-                chain,
-                currentSkillSystem.Tree
-            );
+    //    var (node, maxed) =
+    //        LevelUpSlotMapper.GetRepresentativeNode(
+    //            chain,
+    //            currentSkillSystem.Tree
+    //        );
 
-        TrySelectAndPreview(node, maxed);
-    }
+    //    TrySelectAndPreview(node, maxed);
+    //}
 
 
     // ³ëµå ¼±ÅÃ
@@ -469,8 +465,7 @@ public class PopupUi : MonoBehaviour
 
         levelUpController.ConfirmSelectedNode();
 
-        // ½ÇÁ¦ ÆË¾÷ ´Ý±â / ´ÙÀ½ ·¹º§¾÷ Ã³¸® µîÀº
-        // LevelUpController¿¡¼­ ´ã´ç
+        // ½ÇÁ¦ ÆË¾÷ ´Ý
     }
 
 
@@ -481,9 +476,7 @@ public class PopupUi : MonoBehaviour
 
         //¾ÆÁ÷Àº Äµ½½±â´ÉÀÌ Á¸ÀçÇÏÁö ¾ÊÀ½. 
 
-        Debug.LogWarning(
-            "·¹º§¾÷ ½ºÅµ ·ÎÁ÷ÀÌ LevelUpController¿¡ ¾ÆÁ÷ ¾øÀ½"
-        );
+      
     }
 
     // ·¹º§¾÷ UI ¼û±è
