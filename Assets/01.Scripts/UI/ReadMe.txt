@@ -32,8 +32,8 @@ Canvas_Popup    => 레벨업 시 스킬 고르는 Ui 창, 게임오버 => 씬 �
 
 
 09_09
-Title Scene 작업 시작.
-PopupUi_Canavas 수정 
+PopupUi_Canavas 수정 및 보완
+
 
 PopupUi 클래스 리팩토리 진행했으며 융합관련부분은 작성했지만 전부 주석처리해놨습니다.
  

@@ -99,7 +99,7 @@ public class HudStatcUi : MonoBehaviour
         var entry = elementIcons?.FirstOrDefault(e => e.element.Equals(element));
         if (entry == null)
         {
-            Debug.Log($"[HudStatcUi] {element} 아이콘이 elementIcons에 등록되어 있지 않음");
+            Debug.Log($" {element}");
         }
         return entry?.icon;
     }
@@ -108,7 +108,7 @@ public class HudStatcUi : MonoBehaviour
     {
         if (index < 0 || index >= weaponImages.Length)
         {
-            Debug.Log($"[HudStatcUi] 유효하지 않은 무기 슬롯 index: {index}");
+            Debug.Log($"{index}");
             return;
         }
         weaponImages[index].sprite = icon;
