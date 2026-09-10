@@ -30,7 +30,7 @@ Canvas_Popup    => 레벨업 시 스킬 고르는 Ui 창, 게임오버 => 씬 �
 ├── GameOver
 └── Option
 
-
+09_09 x 
 09_10
 PopupUi_Canavas 수정 및 보완
 
