@@ -548,6 +548,7 @@ MonoBehaviour:
   hpBar: {fileID: 3846219043674815089}
   levelupBar: {fileID: 8943367377044032938}
   lvText: {fileID: 4753084593655367955}
+  boshpBarkGroup: {fileID: 0}
 --- !u!1 &2393205084153292694
 GameObject:
   m_ObjectHideFlags: 0
@@ -943,6 +944,7 @@ MonoBehaviour:
   hudStatcUi: {fileID: 0}
   hudDynamicUi: {fileID: 8410462459829026172}
   popupUi: {fileID: 0}
+  resultUi: {fileID: 0}
 --- !u!1 &4771772647585489506
 GameObject:
   m_ObjectHideFlags: 0

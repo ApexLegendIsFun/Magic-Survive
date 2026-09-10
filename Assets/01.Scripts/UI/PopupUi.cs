@@ -455,7 +455,7 @@ public class PopupUi : MonoBehaviour
 
 
     // 레벨업 획득
-
+    // 레벨업 Ui는  현재 만들어놓고 연동만 하면됨.
     private void OnClickGain()
     {
         if (levelUpController == null)
@@ -463,9 +463,6 @@ public class PopupUi : MonoBehaviour
             return;
         }
 
-        levelUpController.ConfirmSelectedNode();
-
-        // 실제 팝업 닫
     }
 
 

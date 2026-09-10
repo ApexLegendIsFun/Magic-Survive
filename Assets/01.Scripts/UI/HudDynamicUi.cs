@@ -12,10 +12,13 @@ public class HudDynamicUi : MonoBehaviour
     [Header("Count")]
     [SerializeField] private TextMeshProUGUI killCount;
   
-    [Header("Bar/lvText")]
+    [Header("Bar/lvText/Boss_Hp_Bar")]
     [SerializeField] private Image hpBar;
     [SerializeField] private Image levelupBar;
     [SerializeField] private TextMeshProUGUI lvText;
+    [SerializeField] private GameObject boshpBarkGroup;
+
+  
 
 
     private float currentTime;
@@ -84,6 +87,7 @@ public class HudDynamicUi : MonoBehaviour
         levelupBar.fillAmount = currentExp / nextLevelUp;
     }
 
+    
 
     //이하 일단 생략 
 
