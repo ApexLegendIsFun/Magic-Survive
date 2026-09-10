@@ -9606,7 +9606,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 342763017939109334, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 605283701627262637, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: m_Name
@@ -10010,8 +10010,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PopupUi
   levelUpController: {fileID: 0}
-  startItemButtons: []
-  startItemOutline: []
+  startItemButtons:
+  - {fileID: 700432158402672540}
+  - {fileID: 1059828503499213922}
+  - {fileID: 2251301736469801699}
+  - {fileID: 544700008852722544}
+  - {fileID: 7009918106850031141}
+  startItemOutline:
+  - {fileID: 4782539674999595581}
+  - {fileID: 7044706781419119756}
+  - {fileID: 2716816738385358032}
+  - {fileID: 2271805869603400983}
+  - {fileID: 4488306538673621767}
   startTitle: {fileID: 4717906533820481841}
   startButton: {fileID: 7400761544457354596}
   levelupTitle: {fileID: 4391267042400213434}
