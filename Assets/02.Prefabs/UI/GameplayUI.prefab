@@ -9311,8 +9311,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: fe77317d74ffffb41a4f8a31d30dbafa, type: 2}
+  m_sharedMaterial: {fileID: -2116911126255042879, guid: fe77317d74ffffb41a4f8a31d30dbafa, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -9606,7 +9606,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 342763017939109334, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 605283701627262637, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: m_Name
@@ -10109,10 +10109,18 @@ MonoBehaviour:
   weaponTexts:
   - {fileID: 7183877573507981821}
   - {fileID: 6365860212157386864}
-  FusionweaponImages: {fileID: 6123565826186999207}
-  FusionweaponText: {fileID: 6058253761630638295}
-  levelupPoint: {fileID: 0}
-  levelUpButton: {fileID: 0}
+  playerSkillSystem: {fileID: 0}
+  elementIcons:
+  - element: 0
+    icon: {fileID: 3563714690819521456, guid: 9732ee78ef9781c43a832e0a62bcf9cc, type: 3}
+  - element: 1
+    icon: {fileID: -6434799496147694636, guid: a62e9f08b87beb849876857780b6cb26, type: 3}
+  - element: 2
+    icon: {fileID: 0}
+  - element: 3
+    icon: {fileID: 0}
+  - element: 4
+    icon: {fileID: 0}
 --- !u!224 &8542559810272268417 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8412947513590874729, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class DamageUi : MonoBehaviour
 {
-    // TODO: Enemy 머리위에 데미지 Text 출력 예정 
+   
 
     [SerializeField] private TextMeshProUGUI damageText;
 
