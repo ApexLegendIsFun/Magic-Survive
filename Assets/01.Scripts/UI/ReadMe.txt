@@ -10,6 +10,7 @@ Enemy가 받은 데미지,(Player가 가한 데미지) 위치정보(Transform.po
 
 Canvas_HUD_Static(가장 변동이 적은 )
 └── 아이템/스킬아이콘(상시 확인가능한)
+  + 스킬포인트
 
 
 Canvas_HUD_Dynamic (가장 변동이 많은)
@@ -29,16 +30,17 @@ Canvas_Popup    => 레벨업 시 스킬 고르는 Ui 창, 게임오버 => 씬 �
 ├── GameOver
 └── Option
 
-VFX, SFX
 
-VFX를 담당할경우 풀링할 예정이며, 
+09_09
+Title Scene 작업 시작.
+PopupUi_Canavas 수정 
 
-SFX는 풀링 X
+PopupUi 클래스 리팩토리 진행했으며 융합관련부분은 작성했지만 전부 주석처리해놨습니다.
+ 
+Levelupslotmapper 클래스를 추가했으며 해당 클래스는 오각형의 계산처리를 도와주는 클래스입니다.
 
-마찬가지로 VfxManager를 만들어 중계기처럼 쓸 예정
+선동님의 levelUpController와 PlayerSkillSystem을 참조하여
+스킬의 설명 등을 Ui에 반영하였습니다.
+레벨업 부분은 명확하지 않아 아직 융합부분은 처리하지 않았습니다.
 
-
-현재 레벨업Ui는 만들어었으며 아직은 레벨업과 연동하지 않았습니다.
-레벨업Ui 또한 PopupUi의 스크립트를 활용하였으며, PopUpUi 클래스는 첫 실행시 원소선택 Ui로써 기능을 하며, 첫 원소선택 이후부터는 레벨업 Ui로 변합니다.
-또한, 레벨업 Ui에서 원소를 획득하지 않고 취소하면 하단 HUD의 스킬포인트가 증가하게 만들어 해당 Hud를 클릭하면 레벨업 Ui가 다시 뜨는 방향으로 진행중입니다.
 

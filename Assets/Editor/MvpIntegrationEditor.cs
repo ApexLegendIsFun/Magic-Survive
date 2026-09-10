@@ -12,6 +12,7 @@ public static class MvpIntegrationEditor
 {
     private const string MainScenePath = "Assets/00.Scenes/SampleScene.unity";
     private const string TitleScenePath = "Assets/01.Scripts/UI/TitleScene.unity";
+    private static readonly string[] GameStartButtonNames = { "GameStart", "Game_Start" };
     private const string UiSourceScenePath = "Assets/01.Scripts/UI/UI_SampleScene.unity";
     private const string GameplayUiPrefabPath = "Assets/02.Prefabs/UI/GameplayUI.prefab";
     private const string ProjectilePrefabPath = "Assets/02.Prefabs/Projectile/Projectile.prefab";
@@ -220,7 +221,7 @@ public static class MvpIntegrationEditor
         GameObject[] roots = titleScene.GetRootGameObjects();
         Transform startTransform = roots
             .SelectMany(root => root.GetComponentsInChildren<Transform>(true))
-            .FirstOrDefault(candidate => candidate.name == "GameStart");
+            .FirstOrDefault(candidate => GameStartButtonNames.Contains(candidate.name));
 
         if (startTransform == null)
         {
@@ -280,7 +281,7 @@ public static class MvpIntegrationEditor
 
         Button startButton = titleScene.GetRootGameObjects()
             .SelectMany(root => root.GetComponentsInChildren<Button>(true))
-            .FirstOrDefault(button => button.name == "GameStart");
+            .FirstOrDefault(button => GameStartButtonNames.Contains(button.name));
         if (startButton == null)
         {
             throw new InvalidOperationException("TitleScene GameStart button is missing.");

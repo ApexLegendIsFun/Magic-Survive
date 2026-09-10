@@ -15,6 +15,7 @@ public static class TitlePlayModeSmokeEditor
     private const string BatchKey = "MagicSurvive.TitleSmoke.Batch";
     private const string RequestedAtKey = "MagicSurvive.TitleSmoke.RequestedAt";
     private const string TitleScenePath = "Assets/01.Scripts/UI/TitleScene.unity";
+    private static readonly string[] GameStartButtonNames = { "GameStart", "Game_Start" };
 
     private static bool clicked;
     private static bool finishing;
@@ -84,7 +85,7 @@ public static class TitlePlayModeSmokeEditor
                 Button startButton = UnityEngine.Object.FindObjectsByType<Button>(
                         FindObjectsInactive.Include,
                         FindObjectsSortMode.None)
-                    .FirstOrDefault(button => button.name == "GameStart");
+                    .FirstOrDefault(button => GameStartButtonNames.Contains(button.name));
                 Canvas canvas = UnityEngine.Object.FindFirstObjectByType<Canvas>();
 
                 Require(controller != null, "TitleSceneController missing.");
