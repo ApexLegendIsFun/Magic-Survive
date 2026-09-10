@@ -99,6 +99,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     private void OnDisable()
     {
         health.Died -= HandleDied;
+
+        // 풀 반환 시 표식과 화염 도트 주기를 초기화
+        markState.Reset();
+        fireDotTimer = FireDotIntervalSeconds;
     }
 
 
