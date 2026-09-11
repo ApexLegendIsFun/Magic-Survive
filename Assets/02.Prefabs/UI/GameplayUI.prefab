@@ -66,7 +66,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: -2725409094516215763, guid: a294e4a9116803f4ab682907afbead7c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -9744,7 +9744,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 342763017939109334, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 605283701627262637, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: m_Name
@@ -10066,6 +10066,22 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 8410462459829026172, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
+      propertyPath: bossHpbar
+      value: 
+      objectReference: {fileID: 1693338280187343965}
+    - target: {fileID: 8410462459829026172, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
+      propertyPath: bossTimer
+      value: 
+      objectReference: {fileID: 3903583415535980779}
+    - target: {fileID: 8410462459829026172, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
+      propertyPath: bossNameText
+      value: 
+      objectReference: {fileID: 765711806742349203}
+    - target: {fileID: 8410462459829026172, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
+      propertyPath: boshpBarkGroup
+      value: 
+      objectReference: {fileID: 720226788553825349}
     - target: {fileID: 8412947513590874729, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: m_Pivot.y
       value: 0
@@ -10934,6 +10950,14 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6518850240362733892, guid: 711e4904882235541a1219050ed117f9, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: -2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6518850240362733892, guid: 711e4904882235541a1219050ed117f9, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 320
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -10959,9 +10983,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af6dbc947d5bb504080e6c902bb24773, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossHpbar
-  bossNameText: {fileID: 765711806742349203}
-  bossTimer: {fileID: 3903583415535980779}
-  bossHabar: {fileID: 1693338280187343965}
 --- !u!114 &765711806742349203 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3935628123274627305, guid: 711e4904882235541a1219050ed117f9, type: 3}

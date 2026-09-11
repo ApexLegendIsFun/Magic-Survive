@@ -63,15 +63,25 @@ public class UIManager : MonoBehaviour
         damageUi.Show(damage, position);
     }
 
-    public void HudStaticUiFirstWeaponUpdate(int index, Sprite icon, string weaponName) // UiManager에서도 아래 현재 무기확인 HUD 호출 가능함.
-    {
-        
-    }
-
     public void LevelupOpenPopupUi() // Player 레벨업 시 호출 
     {
         popupUi.gameObject.SetActive(true);
     }
+
+
+
+
+    public void BossSpawn() //보스가 스폰될때 호출 / 
+    {
+        hudDynamicUi.EnableBossGroup();
+    }
+
+    public void BossHpbarUpdate(float currentHp, float maxHp) //보스의 현재체력, 최대체력
+    {
+        hudDynamicUi.UpdateBossHp(currentHp, maxHp);
+    }
+
+
 
 
 }

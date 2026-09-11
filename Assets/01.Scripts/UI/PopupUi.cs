@@ -62,8 +62,8 @@ public class PopupUi : MonoBehaviour
     [SerializeField] private GameObject levelupTitle;
     [SerializeField] private GameObject levelUpButtonGroup;
 
-    [SerializeField] private Button gainButton;
-    [SerializeField] private Button cancelButton;
+    [SerializeField] private Button gainButton; //획득 버튼
+    [SerializeField] private Button cancelButton; //취소 버튼 
 
     // 레벨업 원소 슬롯
     [Header("LevelUp Element Slots")]
@@ -455,7 +455,7 @@ public class PopupUi : MonoBehaviour
 
 
     // 레벨업 획득
-    // 레벨업 Ui는  현재 만들어놓고 연동만 하면됨.
+    // 레벨업 Ui는  현재 만들어놓은상태. 연동만 하면됨.
     private void OnClickGain()
     {
         if (levelUpController == null)
