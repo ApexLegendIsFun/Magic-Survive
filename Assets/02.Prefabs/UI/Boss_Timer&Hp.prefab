@@ -146,6 +146,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3138833958906590741}
+  - component: {fileID: 5418942018223776477}
   m_Layer: 0
   m_Name: Boss_Timer&Hp
   m_TagString: Untagged
@@ -169,6 +170,21 @@ Transform:
   - {fileID: 6518850240362733892}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5418942018223776477
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3873289515969384767}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af6dbc947d5bb504080e6c902bb24773, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossHpbar
+  bossNameText: {fileID: 3935628123274627305}
+  bossTimer: {fileID: 725680246963166609}
+  bossHabar: {fileID: 3116913191075068199}
 --- !u!1 &5295603723772277758
 GameObject:
   m_ObjectHideFlags: 0

@@ -12,13 +12,23 @@ public class HudDynamicUi : MonoBehaviour
     [Header("Count")]
     [SerializeField] private TextMeshProUGUI killCount;
   
-    [Header("Bar/lvText/Boss_Hp_Bar")]
+
+    //플레이어 Hud
+    [Header("Bar/lvText")]
     [SerializeField] private Image hpBar;
     [SerializeField] private Image levelupBar;
     [SerializeField] private TextMeshProUGUI lvText;
-    [SerializeField] private GameObject boshpBarkGroup;
 
-  
+
+
+    //보스 Hpbar
+    [Header("Boss_Hud_Group")]
+    [SerializeField] private GameObject bossHpBarGroup;
+    [SerializeField] private TextMeshProUGUI bossNameText;
+    [SerializeField] private TextMeshProUGUI bossTimer;
+    [SerializeField] private Image bossHpbar;
+
+
 
 
     private float currentTime;
@@ -87,7 +97,25 @@ public class HudDynamicUi : MonoBehaviour
         levelupBar.fillAmount = currentExp / nextLevelUp;
     }
 
-    
+
+    //보스 Hpbar 그룹 활성화 
+    public void EnableBossGroup()
+    {
+        bossHpBarGroup.gameObject.SetActive(true);
+    }
+
+
+    public void SetbossNameText(string name) //보스 이름 
+    {
+        bossNameText.text = $"{name}";
+    }
+
+    public void UpdateBossHp(float currentHp, float maxHp) //보스 현재 체력 / 보스 최대 체력 
+    {
+        bossHpbar.fillAmount = currentHp / maxHp;
+    }
+
+
 
     //이하 일단 생략 
 
