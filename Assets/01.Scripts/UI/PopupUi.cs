@@ -188,6 +188,9 @@ public class PopupUi : MonoBehaviour
     {
         if (levelUpController != null) levelUpController.ConfirmSelectedSkill();
     }
+
+
+
     private void OnClickCancel()
     {
         if (currentSkillSystem == null) return;
@@ -196,6 +199,11 @@ public class PopupUi : MonoBehaviour
         if (previewDescriptionText != null) previewDescriptionText.text = string.Empty;
         RefreshSkillTree(currentSkillSystem);
     }
+
+
+
+
+
     public void HideLevelUp()
     {
         currentSkillSystem = null;
