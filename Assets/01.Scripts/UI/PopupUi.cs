@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -26,13 +27,25 @@ public class PopupUi : MonoBehaviour
     public class SpecializationCardSlot
     {
         public GameObject root;        // 카드 통짜 오브젝트 (없는 카드일 때 꺼야 하니까)
-        public Image icon;             // 현재는 원소 아이콘 재사용 (SpecializationDefinition엔 아이콘 필드가 없음)
-        public TextMeshProUGUI nameLabel;        // 예:집중 화염
-        public TextMeshProUGUI effectLabel;      // 예:화염탄 피해 +10%
-        public TextMeshProUGUI countLabel;       // 예:선택 0회 · 누적 +0%
+        public Image icon;             // 원소 아이콘 재사용 (SpecializationDefinition엔 아이콘 필드가 없음)
+        public TextMeshProUGUI nameLabel;        // "집중 화염"
+        public TextMeshProUGUI effectLabel;      // "화염탄 피해 +10%"
+        public TextMeshProUGUI countLabel;       // "선택 0회 · 누적 +0%"
         public Button selectButton;
 
         [System.NonSerialized] public SpecializationId assignedId;
+    }
+
+    // 원소 해금 시(Lv.0 → Lv.1) 뜨는 단일 카드 — 특화 카드 3장이 없는 특수 케이스
+    [System.Serializable]
+    public class UnlockCardSlot
+    {
+        public GameObject root;
+        public Image icon;
+        public TextMeshProUGUI titleLabel;       // "원소 해금"
+        public TextMeshProUGUI descriptionLabel; // "기본 번개탄 · 피해 5 / 0.7초"
+        public TextMeshProUGUI noteLabel;        // "첫 획득 · 특화 선택 없음"
+        public Button confirmButton;             // "원소 획득" — 기존 gainButton과 동일한 확정 경로 재사용
     }
 
     //  LevelUpController
@@ -74,6 +87,16 @@ public class PopupUi : MonoBehaviour
     [Header("Growth Cards (오른쪽 패널)")]
     [SerializeField] private TextMeshProUGUI baseGainLabel;
     [SerializeField] private SpecializationCardSlot[] cardSlots; // 3개 고정
+    [SerializeField] private UnlockCardSlot unlockCardSlot;      // Lv.0 → Lv.1 전용
+
+    [Header("Open Animation")]
+    [SerializeField] private RectTransform panelRoot; // 스케일 애니메이션 대상 (팝업 전체를 감싸는 RectTransform)
+    [SerializeField] private CanvasGroup canvasGroup;  // 없으면 페이드는 생략되고 스케일만 적용됨
+    [SerializeField] private float openDuration = 0.22f;
+    [SerializeField] private float openStartScale = 0.85f;
+    [SerializeField] private AnimationCurve openCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
+    private Coroutine openRoutine;
 
     private PlayerSkillSystem currentSkillSystem;
     private MagicElement previewedElement;
@@ -117,13 +140,21 @@ public class PopupUi : MonoBehaviour
             }
         }
 
-        if (cardSlots == null) return;
-        foreach (var slot in cardSlots)
+        if (cardSlots != null)
         {
-            var captured = slot;
-            if (captured.selectButton == null) continue;
-            // assignedId는 RefreshGrowthCards가 매번 갱신해두므로, 클릭 시점의 값을 그대로 읽으면 됨
-            captured.selectButton.onClick.AddListener(() => OnClickSpecializationCard(captured));
+            foreach (var slot in cardSlots)
+            {
+                var captured = slot;
+                if (captured.selectButton == null) continue;
+                // assignedId는 RefreshGrowthCards가 매번 갱신해두므로, 클릭 시점의 값을 그대로 읽으면 됨
+                captured.selectButton.onClick.AddListener(() => OnClickSpecializationCard(captured));
+            }
+        }
+
+        if (unlockCardSlot?.confirmButton != null)
+        {
+            // "원소 획득"은 특화 선택이 아니라 기존 gainButton과 같은 확정 경로(ConfirmSelectedSkill)를 그대로 씀
+            unlockCardSlot.confirmButton.onClick.AddListener(OnClickGain);
         }
     }
     private void SetOutline(int index, Color color)
@@ -148,6 +179,7 @@ public class PopupUi : MonoBehaviour
         InitializeButtons();
         gameObject.SetActive(true);
         SetMode(false);
+        PlayOpenAnimation();
         foreach (var slot in elementSlots)
         {
             if (slot.button != null)
@@ -167,8 +199,39 @@ public class PopupUi : MonoBehaviour
     private void HideGrowthCards()
     {
         if (baseGainLabel != null) baseGainLabel.text = string.Empty;
-        if (cardSlots == null) return;
-        foreach (var slot in cardSlots) SetVisible(slot.root, false);
+        if (cardSlots != null)
+        {
+            foreach (var slot in cardSlots) SetVisible(slot.root, false);
+        }
+        SetVisible(unlockCardSlot?.root, false);
+    }
+
+    private void PlayOpenAnimation()
+    {
+        if (panelRoot == null) return;
+        if (openRoutine != null) StopCoroutine(openRoutine);
+        openRoutine = StartCoroutine(AnimateOpen());
+    }
+
+    private IEnumerator AnimateOpen()
+    {
+        panelRoot.localScale = Vector3.one * openStartScale;
+        if (canvasGroup != null) canvasGroup.alpha = 0f;
+
+        float t = 0f;
+        while (t < openDuration)
+        {
+            // 레벨업 중 Time.timeScale이 0으로 멈춰있을 수도 있어서 unscaled 사용
+            t += Time.unscaledDeltaTime;
+            float p = openCurve.Evaluate(Mathf.Clamp01(t / openDuration));
+            panelRoot.localScale = Vector3.one * Mathf.Lerp(openStartScale, 1f, p);
+            if (canvasGroup != null) canvasGroup.alpha = p;
+            yield return null;
+        }
+
+        panelRoot.localScale = Vector3.one;
+        if (canvasGroup != null) canvasGroup.alpha = 1f;
+        openRoutine = null;
     }
     private void OnClickElement(MagicElement element)
     {
@@ -198,11 +261,19 @@ public class PopupUi : MonoBehaviour
             baseGainLabel.text = BuildBaseGainText(preview);
         }
 
+        bool isUnlockCase = preview.State == ElementGrowthState.Unlock;
+
+        SetVisible(unlockCardSlot?.root, isUnlockCase);
+        if (isUnlockCase)
+        {
+            RefreshUnlockCard(element, preview);
+        }
+
         if (cardSlots == null) return;
         for (int i = 0; i < cardSlots.Length; i++)
         {
             var slot = cardSlots[i];
-            bool hasCard = i < preview.Cards.Count;
+            bool hasCard = !isUnlockCase && i < preview.Cards.Count;
 
             SetVisible(slot.root, hasCard);
             if (!hasCard) continue;
@@ -218,13 +289,29 @@ public class PopupUi : MonoBehaviour
         }
     }
 
+    private void RefreshUnlockCard(MagicElement element, GrowthPreview preview)
+    {
+        if (unlockCardSlot == null) return;
+
+        if (unlockCardSlot.icon != null) unlockCardSlot.icon.sprite = GetElementIcon(element);
+        if (unlockCardSlot.titleLabel != null) unlockCardSlot.titleLabel.text = "원소 해금";
+        if (unlockCardSlot.noteLabel != null) unlockCardSlot.noteLabel.text = "첫 획득 · 특화 선택 없음";
+        if (unlockCardSlot.descriptionLabel != null)
+        {
+            int level = preview.NextLevel ?? 1;
+            unlockCardSlot.descriptionLabel.text = MagicContentCatalog.GetLevelDescription(element, level);
+        }
+        if (unlockCardSlot.confirmButton != null) unlockCardSlot.confirmButton.interactable = preview.CanSelect;
+    }
+
     private string BuildBaseGainText(GrowthPreview preview)
     {
-        // 레벨 0(미보유) → 다음 레벨 수치만 있음, 퍼센트 비교 불가
+        // 레벨 0(미보유) → 다음 레벨 수치만 있음, 퍼센트 비교 불가. previewDescriptionText/unlock 카드와 동일한 소스 재사용.
         if (!preview.CurrentStats.HasValue)
         {
+            int level = preview.NextLevel ?? 1;
             return preview.NextStats.HasValue
-                ? $"기본 획득: 피해 {preview.NextStats.Value.Damage:0.#}"
+                ? MagicContentCatalog.GetLevelDescription(preview.Element, level)
                 : string.Empty;
         }
 
@@ -253,7 +340,8 @@ public class PopupUi : MonoBehaviour
         bool success = levelUpController.TryConfirmSpecialization(previewedElement, slot.assignedId);
         Debug.Log($"특화 카드 확정: {slot.assignedId}, 성공: {success}");
 
-        // 성공 시 TryConfirmSpecialization 
+        // 성공 시 TryConfirmSpecialization 내부에서 이미 동기적으로
+        // (재열림 또는 닫힘까지 포함해) 화면 갱신이 끝난 상태라 여기서 추가로 손댈 게 없음.
     }
     private void ShowPreview(MagicElement element, int level)
     {
@@ -271,6 +359,7 @@ public class PopupUi : MonoBehaviour
         currentSkillSystem = skillSystem;
         gameObject.SetActive(true);
         SetMode(true);
+        PlayOpenAnimation();
         if (previewNameText != null) previewNameText.text = string.Empty;
         if (previewDescriptionText != null) previewDescriptionText.text = string.Empty;
         HideGrowthCards();
