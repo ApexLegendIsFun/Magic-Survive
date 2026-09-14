@@ -28,6 +28,7 @@ public class PopupUi : MonoBehaviour
     {
         public GameObject root;        // 카드 통짜 오브젝트 (없는 카드일 때 꺼야 하니까)
         public Image icon;             // 원소 아이콘 재사용 (SpecializationDefinition엔 아이콘 필드가 없음)
+                                                 // 아래 주석은 예시.
         public TextMeshProUGUI nameLabel;        // "집중 화염"
         public TextMeshProUGUI effectLabel;      // "화염탄 피해 +10%"
         public TextMeshProUGUI countLabel;       // "선택 0회 · 누적 +0%"
@@ -42,6 +43,7 @@ public class PopupUi : MonoBehaviour
     {
         public GameObject root;
         public Image icon;
+                                                 //아래 주석은 예시.
         public TextMeshProUGUI titleLabel;       // "원소 해금"
         public TextMeshProUGUI descriptionLabel; // "기본 번개탄 · 피해 5 / 0.7초"
         public TextMeshProUGUI noteLabel;        // "첫 획득 · 특화 선택 없음"
@@ -85,6 +87,7 @@ public class PopupUi : MonoBehaviour
 
     // "레벨 상승 시 기본 획득 / 피해 +15%" 텍스트
     [Header("Growth Cards (오른쪽 패널)")]
+    [SerializeField] private TextMeshProUGUI growthLevelRangeLabel; // "Lv 1 => Lv 2"
     [SerializeField] private TextMeshProUGUI baseGainLabel;
     [SerializeField] private SpecializationCardSlot[] cardSlots; // 3개 고정
     [SerializeField] private UnlockCardSlot unlockCardSlot;      // Lv.0 → Lv.1 전용
@@ -120,7 +123,8 @@ public class PopupUi : MonoBehaviour
         {
             var captured = slot;
             if (captured.button == null) continue;
-            // The authored prefab shares each button between starting selection and level-up.
+        
+
             captured.button.onClick.AddListener(() => OnClickElement(captured.element));
         }
         if (startItemButtons != null)
@@ -146,7 +150,8 @@ public class PopupUi : MonoBehaviour
             {
                 var captured = slot;
                 if (captured.selectButton == null) continue;
-                // assignedId는 RefreshGrowthCards가 매번 갱신해두므로, 클릭 시점의 값을 그대로 읽으면 됨
+               
+
                 captured.selectButton.onClick.AddListener(() => OnClickSpecializationCard(captured));
             }
         }
@@ -198,6 +203,7 @@ public class PopupUi : MonoBehaviour
 
     private void HideGrowthCards()
     {
+        if (growthLevelRangeLabel != null) growthLevelRangeLabel.text = string.Empty;
         if (baseGainLabel != null) baseGainLabel.text = string.Empty;
         if (cardSlots != null)
         {
@@ -255,6 +261,12 @@ public class PopupUi : MonoBehaviour
         previewedElement = element;
 
         GrowthPreview preview = currentSkillSystem.GetGrowthPreview(element);
+
+        if (growthLevelRangeLabel != null)
+        {
+            int nextLevel = preview.NextLevel ?? preview.CurrentLevel; // MAX면 다음 레벨 없음 → 현재 레벨 그대로
+            growthLevelRangeLabel.text = $"Lv {preview.CurrentLevel} => Lv {nextLevel}";
+        }
 
         if (baseGainLabel != null)
         {
@@ -340,8 +352,7 @@ public class PopupUi : MonoBehaviour
         bool success = levelUpController.TryConfirmSpecialization(previewedElement, slot.assignedId);
         Debug.Log($"특화 카드 확정: {slot.assignedId}, 성공: {success}");
 
-        // 성공 시 TryConfirmSpecialization 내부에서 이미 동기적으로
-        // (재열림 또는 닫힘까지 포함해) 화면 갱신이 끝난 상태라 여기서 추가로 손댈 게 없음.
+        // 성공 시 TryConfirmSpecialization
     }
     private void ShowPreview(MagicElement element, int level)
     {
@@ -381,8 +392,15 @@ public class PopupUi : MonoBehaviour
             SetVisible(slot.lockIcon, !offered && !maxed);
             SetVisible(slot.checkmark, maxed);
             SetVisible(slot.pendingHighlight, skillSystem.Tree.PendingSelection == slot.element);
-            if (slot.statusLabel != null) slot.statusLabel.text = maxed ? "MAX" :
-                $"Lv.{skillSystem.GetSkillLevel(slot.element)} → {LevelUpSlotMapper.GetPreviewLevel(slot.element, skillSystem.Tree)}";
+
+            if (slot.statusLabel != null)
+            {
+                int level = skillSystem.GetSkillLevel(slot.element);
+                slot.statusLabel.text = maxed ? "MAX"
+                    : level > 0 ? $"Lv.{level}"       // 보유 중 => 현재 레벨 표시
+                    : offered ? "New!"                 // 미보유 + 선택 가능(인접) => New!
+                    : string.Empty;                    // 미보유 + 잠김 → 자물쇠만, 텍스트 없음
+            }
         }
         if (gainButton != null) gainButton.interactable = skillSystem.Tree.PendingSelection.HasValue;
     }
