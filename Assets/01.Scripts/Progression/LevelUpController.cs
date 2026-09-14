@@ -114,7 +114,13 @@ public sealed class LevelUpController : MonoBehaviour
         return playerSkillSystem.ConfirmSelectedSkill();
     }
 
-    private void HandleSkillPointSpent(MagicElement _)
+    public bool TryConfirmSpecialization(MagicElement element, SpecializationId id)
+    {
+        return CanSpendSkillPoint && playerSkillSystem != null &&
+            playerSkillSystem.TryConfirmSpecialization(element, id);
+    }
+
+    internal void CompleteGrowth()
     {
         if (!CanSpendSkillPoint)
         {
@@ -338,7 +344,6 @@ public sealed class LevelUpController : MonoBehaviour
         if (playerSkillSystem != null)
         {
             playerSkillSystem.TreeChanged += HandleTreeChanged;
-            playerSkillSystem.SkillPointSpent += HandleSkillPointSpent;
         }
 
         if (gameFlowController != null)
@@ -378,7 +383,6 @@ public sealed class LevelUpController : MonoBehaviour
         if (playerSkillSystem != null)
         {
             playerSkillSystem.TreeChanged -= HandleTreeChanged;
-            playerSkillSystem.SkillPointSpent -= HandleSkillPointSpent;
         }
 
         if (gameFlowController != null)

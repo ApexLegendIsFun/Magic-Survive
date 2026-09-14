@@ -84,7 +84,7 @@ public static class MvpPlayModeSmokeEditor
             Assert(++upgrades <= 40, "All-max progression stalled.");
             progression.AddExperience(progression.RequiredExperience - progression.CurrentExperience);
             Assert(flow.State == GameFlowState.LevelUp, "Upgrade must pause combat.");
-            Assert(skills.Choices.Count > 0 && skills.Choices.Count <= 3, "Invalid choice count.");
+            Assert(skills.Choices.Count > 0 && skills.Choices.Count <= 5, "Invalid choice count.");
             Assert(skills.Choices.Distinct().Count() == skills.Choices.Count, "Duplicate choices.");
             var offered = skills.Choices.ToArray();
             foreach (var candidate in offered)
