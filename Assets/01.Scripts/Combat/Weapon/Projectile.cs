@@ -8,6 +8,11 @@ public class Projectile : MonoBehaviour
     // 반경 질의 결과 버퍼. 인스턴스 필드
     private readonly List<Enemy> hitBuffer = new List<Enemy>(16);
 
+    // 3중첩 반응(점화 폭발)용 별도 버퍼
+    // hitBuffer를 재사용하면 CheckHits가 for로 순회하는 중에 목록이 덮여
+    // 명중 처리가 깨짐. 반드시 따로 두기
+    private readonly List<Enemy> reactionBuffer = new List<Enemy>(16);
+
     // 관통 중 같은 적을 매 프레임 다시 때리기 방지
     private readonly List<Enemy> alreadyHit = new List<Enemy>(4);
 
@@ -84,6 +89,49 @@ public class Projectile : MonoBehaviour
     }
 
 
+    // 표식 3중첩 도달 시의 원소별 반응
+    //
+    // 실행 위치가 Enemy가 아니라 투사체인 이유는
+    // 1. 반응 해금 판정에 필요한 스킬 레벨은 적이 아니라 이 투사체가 들고 있음
+    // 2. 점화 폭발은 EnemyManager의 활성 적 목록이 필요한데 Enemy는 Manager를 모름
+    private void TriggerMarkReaction(Enemy origin, EnemyManager enemyManager)
+    {
+        if (spec.SkillLevel < ElementReactionValues.ReactionUnlockLevel)
+        {
+            return;
+        }
+
+        Vector2 center = origin.transform.position;
+
+        switch (spec.Element)
+        {
+            case MagicElement.Fire:
+
+                // 점화. 중심 적 자신도 반경 안에 들어가므로 함께 피해를 받는다
+                enemyManager.FindOverlappingEnemies(center, ElementReactionValues.IgniteRadius, reactionBuffer);
+
+                for (int i = 0; i < reactionBuffer.Count; i++)
+                {
+                    // 폭발 피해는 표식을 걸지 않는다. 연쇄 점화가 생기지 않음
+                    reactionBuffer[i].TakeDamage(ElementReactionValues.IgniteDamage);
+                }
+
+                GameEvents.RaiseElementReaction(
+                    MagicElement.Fire, center, ElementReactionValues.IgniteRadius);
+
+                break;
+
+            case MagicElement.Frost:
+
+                // 빙결. 단일 대상이라 반경 0으로 알린다
+                origin.ApplyFreeze(ElementReactionValues.FreezeDurationSeconds);
+
+                GameEvents.RaiseElementReaction(MagicElement.Frost, center, 0f);
+
+                break;
+        }
+    }
+
     private bool CheckHits(Vector2 position, EnemyManager enemyManager)
     {
         enemyManager.FindOverlappingEnemies(position, spec.HitRadius, hitBuffer);
@@ -102,6 +150,25 @@ public class Projectile : MonoBehaviour
 
             enemy.TakeDamage(spec.Damage);
 
+            // 원소 공격 적중 시 해당 원소 표식 1중첩
+            //
+            // SkillLevel 0 = 표식을 걸지 않는 투사체
+            //   (보스 투사체, _Test/SimpleProjectileAttack, MagicRuntime 미반영 상태)
+            if (spec.SkillLevel > 0 && enemy.IsAlive)
+            {
+                int stacksBefore = enemy.GetElementMark(spec.Element).Stacks;
+
+                enemy.ApplyElementMark(spec.Element, 1, ElementMarkRules.Duration);
+
+                int stacksAfter = enemy.GetElementMark(spec.Element).Stacks;
+
+                // 2 -> 3 전이에서만 반응.
+                if (ElementMarkRules.ShouldTriggerMastery(stacksBefore, stacksAfter))
+                {
+                    TriggerMarkReaction(enemy, enemyManager);
+                }
+            }
+
             // PierceCount 0이며 첫 명중 시 소멸
             if (remainingPierce <= 0)
             {
@@ -115,10 +182,8 @@ public class Projectile : MonoBehaviour
 
 
         return false;
-
-
-
-
     }
 
 }
+
+

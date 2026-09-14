@@ -34,6 +34,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     private const float FireDotIntervalSeconds = 1f;
 
     private float fireDotTimer = FireDotIntervalSeconds;
+
+    // 냉기 3중첩 빙결. 남은 시간이 있으면 이동x
+    private float freezeRemainingSeconds;
+
     private float baseMaxHealth;
     private float baseContactDamage;
 
@@ -46,6 +50,12 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     public float CrowdControlDurationMultiplier => 1f;
 
     public bool IsKnockbackImmune => false;
+
+    // [연동:UI] 빙결 상태 변화. true=시작, false=해제
+    // 구독은 활성화 뒤에, 해제는 비활성화될 때
+    public event Action<bool> FrozenChanged;
+
+    public bool IsFrozen => freezeRemainingSeconds > 0f;
 
     // 구독을 markState로 그대로 넘김
     public event Action<ElementMarkChange> ElementMarkChanged
@@ -73,10 +83,38 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     }
 
 
+    // 냉기 표식 3중첩 반응. Projectile이 호출
+    // 지속시간에 CrowdControlDurationMultiplier를 곱하는 이유는 보스 제어 면역.
+    // 현재 이 값은 1f 고정이고, 보스 작업에서 보스만 0f를 반환하게 하면
+    // 여기와 호출부는 바뀌지 않음
+    public void ApplyFreeze(float durationSeconds)
+    {
+        float applied = durationSeconds * CrowdControlDurationMultiplier;
+
+        if (applied <= 0f)
+        {
+            return;
+        }
+
+        // 짧은 빙결이 남아 있는 긴 빙결을 덮어쓰지 않게 최댓값 유지
+        if (applied > freezeRemainingSeconds)
+        {
+            bool wasFrozen = freezeRemainingSeconds > 0f;
+
+            freezeRemainingSeconds = applied;
+
+            if (!wasFrozen)
+            {
+                FrozenChanged?.Invoke(true);
+            }
+        }
+    }
+
     public void SetSourcePrefab(Enemy prefab)
     {
         sourcePrefab = prefab;
     }
+
 
     // EnemyManager에서 생존 여부 확인용
     public bool IsAlive => health != null && health.IsAlive;
@@ -100,9 +138,16 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     {
         health.Died -= HandleDied;
 
-        // 풀 반환 시 표식과 화염 도트 주기를 초기화
+        // 풀 반환 시 표식과 화염 도트 주기, 빙결을 초기화
         markState.Reset();
         fireDotTimer = FireDotIntervalSeconds;
+
+        // 빙결 중 반환되면 해제를 알림
+        if (freezeRemainingSeconds > 0f)
+        {
+            freezeRemainingSeconds = 0f;
+            FrozenChanged?.Invoke(false);
+        }
     }
 
 
@@ -182,6 +227,22 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         TickFireDot(deltaTime);
 
         markState.Tick(deltaTime);
+
+        // 빙결 중에는 이동만 멈추기
+        // TickFireDot과 markState.Tick보다 뒤에 있어야 도트와 표식 만료가 계속 돌아감
+        if (freezeRemainingSeconds > 0f)
+        {
+            freezeRemainingSeconds -= deltaTime;
+
+            // 해제되는 프레임에 알린다. 이 프레임의 이동은 그대로 막는다
+            if (freezeRemainingSeconds <= 0f)
+            {
+                freezeRemainingSeconds = 0f;
+                FrozenChanged?.Invoke(false);
+            }
+
+            return;
+        }
 
         Vector2 currentPosition = transform.position;
         Vector2 toPlayer = playerPosition - currentPosition;
