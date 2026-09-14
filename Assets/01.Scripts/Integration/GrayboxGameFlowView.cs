@@ -20,10 +20,10 @@ public sealed class GrayboxGameFlowView : MonoBehaviour
     private static readonly Color OwnedColor = new Color(0.22f, 0.45f, 0.27f, 1f);
     private static readonly Color LockedColor = new Color(0.20f, 0.20f, 0.20f, 1f);
 
-    private readonly Dictionary<SkillTreeNodeId, Button> nodeButtons =
-        new Dictionary<SkillTreeNodeId, Button>(28);
-    private readonly Dictionary<SkillTreeNodeId, TextMeshProUGUI> nodeLabels =
-        new Dictionary<SkillTreeNodeId, TextMeshProUGUI>(28);
+    private readonly Dictionary<MagicElement, Button> nodeButtons =
+        new Dictionary<MagicElement, Button>(5);
+    private readonly Dictionary<MagicElement, TextMeshProUGUI> nodeLabels =
+        new Dictionary<MagicElement, TextMeshProUGUI>(5);
 
     private GameObject elementPanel;
     private GameObject skillTreePanel;
@@ -37,7 +37,7 @@ public sealed class GrayboxGameFlowView : MonoBehaviour
     private bool built;
 
     public event Action<MagicElement> StartingElementSelected;
-    public event Action<SkillTreeNodeId> NodeSelected;
+    public event Action<MagicElement> SkillSelected;
     public event Action ConfirmRequested;
     public event Action RestartRequested;
     public event Action TitleRequested;
@@ -89,37 +89,23 @@ public sealed class GrayboxGameFlowView : MonoBehaviour
         EnsureBuilt();
         displayedSkillSystem = skillSystem;
 
-        IReadOnlyList<SkillTreeNodeDefinition> definitions = skillSystem.GetTreeDefinitions();
-        SkillTreeNodeId? pending = skillSystem.Tree.PendingSelection;
+        MagicElement? pending = skillSystem.Tree.PendingSelection;
         Button firstAvailable = null;
-
-        for (int index = 0; index < definitions.Count; index++)
+        foreach (MagicElement element in MagicContentCatalog.PentagonElements)
         {
-            SkillTreeNodeDefinition definition = definitions[index];
-            Button button = nodeButtons[definition.Id];
-            SkillTreeNodePreview preview = skillSystem.GetNodePreview(definition.Id);
-            SkillTreeNodeState state = preview.State;
-            bool hidden = state == SkillTreeNodeState.Hidden;
-
-            button.gameObject.SetActive(!hidden);
-            if (hidden)
-            {
-                continue;
-            }
-
-            bool selected = pending.HasValue && pending.Value == definition.Id;
-            button.interactable = state == SkillTreeNodeState.Available;
-            button.image.color = selected
-                ? PendingColor
-                : GetNodeColor(state);
-            nodeLabels[definition.Id].text =
-                $"{definition.DisplayName}\n<size=16>{definition.Description}\n" +
-                $"{preview.CurrentValue} → {preview.AppliedValue}</size>";
-
-            if (firstAvailable == null && button.interactable)
-            {
-                firstAvailable = button;
-            }
+            Button button = nodeButtons[element];
+            // TreeChanged fires before the spent choice is cleared. A newly maxed node
+            // must not request the nonexistent level 9 description during that refresh.
+            bool offered = skillSystem.IsOffered(element) && skillSystem.Tree.CanUpgrade(element);
+            button.gameObject.SetActive(offered);
+            button.interactable = offered;
+            if (!offered) continue;
+            bool selected = pending == element;
+            button.image.color = selected ? PendingColor : ButtonColor;
+            int level = skillSystem.GetSkillLevel(element) + 1;
+            nodeLabels[element].text = $"{MagicContentCatalog.GetDisplayName(element)}\n<size=16>" +
+                MagicContentCatalog.GetLevelDescription(element, level) + "</size>";
+            if (firstAvailable == null) firstAvailable = button;
         }
 
         confirmButton.interactable = pending.HasValue;
@@ -223,7 +209,7 @@ public sealed class GrayboxGameFlowView : MonoBehaviour
             new Vector2(0f, 130f),
             new Vector2(1200f, 70f));
 
-        IReadOnlyList<MagicElement> elements = SkillTreeCatalog.PentagonElements;
+        IReadOnlyList<MagicElement> elements = MagicContentCatalog.PentagonElements;
         for (int index = 0; index < elements.Count; index++)
         {
             MagicElement element = elements[index];
@@ -244,28 +230,22 @@ public sealed class GrayboxGameFlowView : MonoBehaviour
         CreateText(
             skillTreePanel.transform,
             "Title",
-            "SKILL TREE — SELECT ONE NODE",
+            "ELEMENT SKILLS — SELECT ONE",
             36f,
             new Vector2(0f, 435f),
             new Vector2(1450f, 60f));
 
-        IReadOnlyList<SkillTreeNodeDefinition> definitions = SkillTreeCatalog.Nodes;
-        for (int index = 0; index < definitions.Count; index++)
+        for (int index = 0; index < MagicContentCatalog.PentagonElements.Count; index++)
         {
-            SkillTreeNodeDefinition definition = definitions[index];
-            int column = index % 5;
-            int row = index / 5;
+            MagicElement element = MagicContentCatalog.PentagonElements[index];
+            float angle = (90f - index * 72f) * Mathf.Deg2Rad;
             Button button = CreateButton(
-                skillTreePanel.transform,
-                $"Node_{definition.Id}",
-                new Vector2(-580f + column * 290f, 335f - row * 125f),
-                new Vector2(270f, 105f),
-                out TextMeshProUGUI label);
-
-            SkillTreeNodeId capturedId = definition.Id;
-            button.onClick.AddListener(() => NodeSelected?.Invoke(capturedId));
-            nodeButtons.Add(definition.Id, button);
-            nodeLabels.Add(definition.Id, label);
+                skillTreePanel.transform, $"Skill_{element}",
+                new Vector2(Mathf.Cos(angle) * 510f, Mathf.Sin(angle) * 285f),
+                new Vector2(310f, 145f), out TextMeshProUGUI label);
+            button.onClick.AddListener(() => SkillSelected?.Invoke(element));
+            nodeButtons.Add(element, button);
+            nodeLabels.Add(element, label);
         }
 
         confirmButton = CreateButton(
@@ -341,9 +321,7 @@ public sealed class GrayboxGameFlowView : MonoBehaviour
             .Append("\nLEVEL  ")
             .Append(result.Level)
             .Append("\nELEMENTS  ")
-            .Append(Join(result.Elements))
-            .Append("\nFUSIONS  ")
-            .Append(Join(result.Fusions));
+            .Append(Join(result.Elements));
         return builder.ToString();
     }
 
@@ -366,19 +344,6 @@ public sealed class GrayboxGameFlowView : MonoBehaviour
         }
 
         return builder.ToString();
-    }
-
-    private static Color GetNodeColor(SkillTreeNodeState state)
-    {
-        switch (state)
-        {
-            case SkillTreeNodeState.Owned:
-                return OwnedColor;
-            case SkillTreeNodeState.Locked:
-                return LockedColor;
-            default:
-                return ButtonColor;
-        }
     }
 
     private static GameObject CreatePanel(Transform parent, string name, Vector2 size)

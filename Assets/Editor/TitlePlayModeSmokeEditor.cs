@@ -89,7 +89,7 @@ public static class TitlePlayModeSmokeEditor
                 Canvas canvas = UnityEngine.Object.FindFirstObjectByType<Canvas>();
 
                 Require(controller != null, "TitleSceneController missing.");
-                Require(startButton != null && startButton.interactable,
+                Require(startButton != null && startButton.isActiveAndEnabled && startButton.IsInteractable(),
                     "GameStart button missing or disabled.");
                 Require(canvas != null && canvas.transform.lossyScale.sqrMagnitude > 0.01f,
                     "Title canvas has zero scale.");
@@ -143,10 +143,13 @@ public static class TitlePlayModeSmokeEditor
         List<RaycastResult> hits = new List<RaycastResult>();
         eventSystem.RaycastAll(pointer, hits);
 
-        Require(
-            hits.Any(hit => hit.gameObject == button.gameObject ||
-                            hit.gameObject.transform.IsChildOf(button.transform)),
-            "GameStart cannot receive a pointer raycast.");
+        // Unity dispatches to the first raycast hit, not any matching hit behind it.
+        GameObject firstHit = hits.Count > 0 ? hits[0].gameObject : null;
+        GameObject clickHandler = firstHit != null
+            ? ExecuteEvents.GetEventHandler<IPointerClickHandler>(firstHit)
+            : null;
+        Require(clickHandler == button.gameObject,
+            $"GameStart is blocked or cannot receive pointer clicks. First hit: {firstHit?.name ?? "none"}.");
     }
 
     private static void HandleLog(string condition, string stackTrace, LogType type)

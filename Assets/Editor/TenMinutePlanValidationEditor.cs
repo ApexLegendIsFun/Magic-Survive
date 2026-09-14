@@ -5,110 +5,109 @@ using UnityEngine;
 
 public static class TenMinutePlanValidationEditor
 {
-    [MenuItem("Tools/Magic Survive/Validate 10 Minute Plan Rules")]
+    [MenuItem("Tools/Magic Survive/Validate Element Level Rules")]
     public static void Run()
     {
-        ValidateCatalogs();
-        ValidatePentagonForEveryStart();
-        ValidateFusionPath();
-        ValidateSimultaneousFusionReactions();
+        ValidateGrowth();
+        ValidateSerializedReferences();
+        ValidateMarksAndResult();
         ValidateDifficulty();
         ValidateTimeline();
-        ValidateProgressionRules();
-        Debug.Log("[10 Minute Rules] PASS: catalogs, pentagon, fusion path, difficulty, progression.");
+        Debug.Log("[Element Level Rules] PASS: five starts, adjacency, levels, caps, marks, result, timeline.");
     }
-
-    private static void ValidateCatalogs()
+    private static void ValidateSerializedReferences()
     {
-        Require(SkillTreeCatalog.Nodes.Count == 28, "Skill tree must contain 28 nodes.");
-        Require(SkillTreeCatalog.Fusions.Count == 5, "Skill tree must contain 5 fusions.");
-        Require(MagicContentCatalog.AllBaseMagics.Count == 10,
-            "Magic catalog must contain 10 base magics.");
-        Require(MagicContentCatalog.AllFusions.Count == 5,
-            "Magic catalog must contain 5 fusion magics.");
-        Require(MagicContentCatalog.AllElementRules.Count == 5,
-            "Magic catalog must contain 5 element rules.");
-        Require(MagicContentCatalog.MaxMarkStacks == 3, "Marks must cap at 3.");
-        RequireApproximately(MagicContentCatalog.MarkDurationSeconds, 5f, "Mark duration");
-
-        MagicDefinition fireBolt = MagicContentCatalog.GetMagic(MagicId.FireBolt);
-        RequireApproximately(fireBolt.Attack.Damage, 6f, "FireBolt damage");
-        RequireApproximately(fireBolt.Attack.CooldownSeconds, 0.8f, "FireBolt cooldown");
-
-        FusionContentDefinition plasma = MagicContentCatalog.GetFusion(FusionKind.Plasma);
-        RequireApproximately(plasma.Reaction.Damage, 24f, "Plasma reaction damage");
-        Require(plasma.Reaction.ChainTargetCount == 3, "Plasma chain target count must be 3.");
-        Require(plasma.RequiredMarkStacksPerParent == 3 &&
-                plasma.ConsumedMarkStacksPerParent == 3,
-            "Fusion reaction must require and consume 3+3 marks.");
-    }
-
-    private static void ValidatePentagonForEveryStart()
-    {
-        MagicElement[] expectedOrder =
+        foreach (string guid in AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/02.Prefabs" }))
         {
-            MagicElement.Fire,
-            MagicElement.Lightning,
-            MagicElement.Frost,
-            MagicElement.Earth,
-            MagicElement.Dark
-        };
-
-        Require(SkillTreeCatalog.PentagonElements.Count == expectedOrder.Length,
-            "Pentagon must contain five elements.");
-
-        for (int index = 0; index < expectedOrder.Length; index++)
-        {
-            MagicElement start = expectedOrder[index];
-            Require(SkillTreeCatalog.PentagonElements[index] == start,
-                "Pentagon order does not match the design.");
-
-            PlayerSkillTree tree = new PlayerSkillTree();
-            Require(tree.TryChooseStartingElement(start), $"Could not choose {start}.");
-            Require(tree.OwnedElements.Count == 1 && tree.OwnedElements[0] == start,
-                $"{start} must be the only free element.");
-
-            for (int candidateIndex = 0; candidateIndex < expectedOrder.Length; candidateIndex++)
-            {
-                MagicElement candidate = expectedOrder[candidateIndex];
-                if (candidate == start)
-                {
-                    continue;
-                }
-
-                SkillTreeNodeState state = tree.GetNodeState(
-                    SkillTreeCatalog.GetTargetNode(candidate));
-                SkillTreeNodeState expected = SkillTreeCatalog.AreAdjacent(start, candidate)
-                    ? SkillTreeNodeState.Available
-                    : SkillTreeNodeState.Locked;
-                Require(state == expected,
-                    $"{start} -> {candidate} adjacency state expected {expected}, got {state}.");
-            }
+            string path = AssetDatabase.GUIDToAssetPath(guid);
+            var root = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            foreach (var child in root.GetComponentsInChildren<Transform>(true))
+                Require(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(child.gameObject) == 0,
+                    $"Missing script: {path}/{child.name}");
         }
+        foreach (string path in new[] { "Assets/00.Scenes/SampleScene.unity", "Assets/01.Scripts/UI/TitleScene.unity" })
+        {
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.OpenScene(path,
+                UnityEditor.SceneManagement.OpenSceneMode.Additive);
+            try
+            {
+                foreach (var root in scene.GetRootGameObjects())
+                    foreach (var child in root.GetComponentsInChildren<Transform>(true))
+                        Require(GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(child.gameObject) == 0,
+                            $"Missing script: {path}/{child.name}");
+            }
+            finally { UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene, true); }
+        }
+        Debug.Log("[Element Assets] PASS: main/title scenes and gameplay prefabs have no Missing Script.");
     }
 
-    private static void ValidateFusionPath()
+    private static void ValidateGrowth()
     {
-        PlayerSkillTree tree = new PlayerSkillTree();
-        Require(tree.TryChooseStartingElement(MagicElement.Fire), "Fire start failed.");
-        Require(tree.GetNodeState(SkillTreeNodeId.PlasmaMagic) == SkillTreeNodeState.Hidden,
-            "Plasma branch must start hidden.");
-
-        Own(tree, SkillTreeNodeId.LightningTarget);
-        Require(tree.GetNodeState(SkillTreeNodeId.PlasmaMagic) == SkillTreeNodeState.Locked,
-            "Plasma branch must become visible but locked after two roots.");
-        Own(tree, SkillTreeNodeId.FireArea);
-        Own(tree, SkillTreeNodeId.FireMastery);
-        Own(tree, SkillTreeNodeId.LightningArea);
-        Own(tree, SkillTreeNodeId.LightningMastery);
-        Require(tree.GetNodeState(SkillTreeNodeId.PlasmaMagic) == SkillTreeNodeState.Available,
-            "Plasma must unlock after both masteries.");
-        Own(tree, SkillTreeNodeId.PlasmaMagic);
-        Require(tree.HasFusion(FusionKind.Plasma), "Plasma fusion ownership missing.");
-        Require(tree.GetNodeState(SkillTreeNodeId.PlasmaMastery) == SkillTreeNodeState.Available,
-            "Plasma mastery must follow plasma magic.");
+        var order = MagicContentCatalog.PentagonElements;
+        Require(order.Count == 5, "Exactly five elements required.");
+        foreach (MagicElement start in order)
+        {
+            var tree = new PlayerSkillTree();
+            int changes = 0;
+            tree.SkillLevelChanged += (element, level) => changes++;
+            Require(!tree.TrySelectSkill(start), "Cannot upgrade before starting.");
+            Require(!tree.TryChooseStartingElement((MagicElement)99), "Invalid element accepted.");
+            Require(tree.TryChooseStartingElement(start), "Start failed.");
+            Require(tree.GetSkillLevel(start) == 1 && changes == 1, "Start must grant one level.");
+            Require(!tree.TryChooseStartingElement(start), "Start cannot repeat.");
+            foreach (MagicElement candidate in order)
+            {
+                bool expected = candidate == start || MagicContentCatalog.AreAdjacent(start, candidate);
+                Require(tree.CanUpgrade(candidate) == expected, "Adjacency mismatch.");
+            }
+            Require(tree.TrySelectSkill(start) && tree.Cancel(), "Cancel selection failed.");
+            Require(!tree.Confirm() && tree.GetSkillLevel(start) == 1, "Cancel spent a level.");
+            Require(tree.TrySelectSkill(start) && tree.Confirm(), "Upgrade failed.");
+            Require(tree.GetSkillLevel(start) == 2 && changes == 2, "Upgrade must increment once.");
+            Require(!tree.Confirm(), "Double confirm must not spend twice.");
+            // Follow the ring from every starting element, then cap each skill.
+            while (!tree.IsMaxed)
+            {
+                bool advanced = false;
+                foreach (MagicElement element in order)
+                {
+                    if (!tree.CanUpgrade(element)) continue;
+                    Require(tree.TrySelectSkill(element) && tree.Confirm(), "Growth failed.");
+                    advanced = true;
+                }
+                Require(advanced, "Growth deadlocked.");
+            }
+            Require(changes == 40, "All skills need exactly 40 levels including the free start.");
+            foreach (MagicElement element in order)
+                Require(tree.GetSkillLevel(element) == 8 && !tree.TrySelectSkill(element), "Max level failed.");
+            Require(!new PlayerSkillTree().HasStartingElement, "Fresh run leaked skill state.");
+        }
+        var fire2 = MagicContentCatalog.GetStats(MagicElement.Fire, 2);
+        RequireApproximately(fire2.Damage, 6.9f, "Level 2 damage");
+        RequireApproximately(MagicContentCatalog.GetStats(MagicElement.Fire, 4).Cooldown, 0.72f, "Level 4 cooldown");
+        Require(MagicContentCatalog.GetStats(MagicElement.Frost, 6).PierceCount == 2, "Frost level 6 pierce");
+        RequireApproximately(MagicContentCatalog.GetStats(MagicElement.Lightning, 1).Damage, 5f, "Lightning base damage");
     }
-
+    private static void ValidateMarksAndResult()
+    {
+        var marks = new ElementMarkState();
+        marks.Apply(MagicElement.Fire, 4, 5f);
+        marks.Apply(MagicElement.Frost, 1, 5f);
+        Require(marks.Get(MagicElement.Fire).Stacks == 3, "Mark cap failed.");
+        marks.Tick(4f);
+        marks.Apply(MagicElement.Fire, 1, 5f);
+        marks.Tick(1f);
+        Require(marks.Get(MagicElement.Fire).Stacks == 3 && marks.Get(MagicElement.Frost).Stacks == 0,
+            "Independent mark expiry/refresh failed.");
+        marks.Reset();
+        Require(marks.TotalStacks == 0, "Pool mark reset failed.");
+        Require(PlayerProgression.GetRequiredExperience(1) == 5, "Initial EXP requirement changed.");
+        var source = new List<MagicElement> { MagicElement.Fire };
+        var result = new RunResult(RunOutcome.Victory, 480f, 100, 13, source);
+        source.Clear();
+        Require(result.Elements.Count == 1 && ((IList<MagicElement>)result.Elements).IsReadOnly,
+            "Result must own an immutable snapshot.");
+    }
     private static void ValidateDifficulty()
     {
         DifficultySnapshot start = DifficultyRules.Evaluate(0f);
@@ -136,61 +135,6 @@ public static class TenMinutePlanValidationEditor
             "Final ranged weight");
     }
 
-    private static void ValidateSimultaneousFusionReactions()
-    {
-        PlayerSkillTree tree = new PlayerSkillTree();
-        Require(tree.TryChooseStartingElement(MagicElement.Lightning), "Lightning start failed.");
-        Own(tree, SkillTreeNodeId.LightningArea);
-        Own(tree, SkillTreeNodeId.LightningMastery);
-
-        Own(tree, SkillTreeNodeId.FireTarget);
-        Own(tree, SkillTreeNodeId.FireArea);
-        Own(tree, SkillTreeNodeId.FireMastery);
-        Own(tree, SkillTreeNodeId.PlasmaMagic);
-
-        Own(tree, SkillTreeNodeId.FrostTarget);
-        Own(tree, SkillTreeNodeId.FrostArea);
-        Own(tree, SkillTreeNodeId.FrostMastery);
-        Own(tree, SkillTreeNodeId.StormMagic);
-
-        FakeElementMarkTarget target = new FakeElementMarkTarget();
-        target.ApplyElementMark(MagicElement.Fire, 3, 5f);
-        target.ApplyElementMark(MagicElement.Lightning, 3, 5f);
-        target.ApplyElementMark(MagicElement.Frost, 3, 5f);
-
-        FusionKind[] buffer = new FusionKind[5];
-        int count = FusionReactionRules.CollectEligibleReactions(tree, target, buffer);
-        Require(count == 2, "Two simultaneously eligible fusion reactions must both be collected.");
-        Require(Contains(buffer, count, FusionKind.Plasma), "Plasma reaction missing.");
-        Require(Contains(buffer, count, FusionKind.Storm), "Storm reaction missing.");
-    }
-
-    private static void ValidateProgressionRules()
-    {
-        Require(PlayerProgression.GetRequiredExperience(1) == 5,
-            "Level 1 requirement must be 5.");
-        Require(PlayerProgression.GetRequiredExperience(13) == 65,
-            "Level 13 requirement must be 65.");
-        Require(ElementMarkRules.ShouldTriggerMastery(2, 3),
-            "Mastery must trigger on 2 to 3 stacks.");
-        Require(!ElementMarkRules.ShouldTriggerMastery(3, 3),
-            "Mastery must not retrigger while staying at 3 stacks.");
-
-        RunResult result = new RunResult(
-            RunOutcome.Victory,
-            480f,
-            100,
-            13,
-            new[] { MagicElement.Fire, MagicElement.Lightning },
-            new[] { FusionKind.Plasma });
-        IList<MagicElement> elements = result.Elements as IList<MagicElement>;
-        IList<FusionKind> fusions = result.Fusions as IList<FusionKind>;
-        Require(elements != null && elements.IsReadOnly,
-            "RunResult element snapshot must be read-only.");
-        Require(fusions != null && fusions.IsReadOnly,
-            "RunResult fusion snapshot must be read-only.");
-    }
-
     private static void ValidateTimeline()
     {
         Require(!RunTimelineRules.Reached(179.99f, RunTimelineRules.FirstEliteTime),
@@ -203,12 +147,6 @@ public static class TenMinutePlanValidationEditor
             "Boss phase must begin at 8 minutes.");
         Require(RunTimelineRules.Reached(600f, RunTimelineRules.TimeLimit),
             "Timeout must occur at 10 minutes.");
-    }
-
-    private static void Own(PlayerSkillTree tree, SkillTreeNodeId node)
-    {
-        Require(tree.TrySelectNode(node), $"Could not select {node}.");
-        Require(tree.Confirm(), $"Could not confirm {node}.");
     }
 
     private static void Require(bool condition, string message)
@@ -227,55 +165,4 @@ public static class TenMinutePlanValidationEditor
         }
     }
 
-    private static bool Contains(FusionKind[] values, int count, FusionKind expected)
-    {
-        for (int index = 0; index < count; index++)
-        {
-            if (values[index] == expected)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private sealed class FakeElementMarkTarget : IElementMarkTarget
-    {
-        private readonly Dictionary<MagicElement, ElementMarkSnapshot> marks =
-            new Dictionary<MagicElement, ElementMarkSnapshot>();
-
-        public float CrowdControlDurationMultiplier => 1f;
-        public bool IsKnockbackImmune => false;
-        public event Action<ElementMarkChange> ElementMarkChanged;
-
-        public ElementMarkSnapshot GetElementMark(MagicElement element)
-        {
-            return marks.TryGetValue(element, out ElementMarkSnapshot mark)
-                ? mark
-                : new ElementMarkSnapshot(element, 0, 0f);
-        }
-
-        public void ApplyElementMark(MagicElement element, int amount, float duration)
-        {
-            ElementMarkSnapshot previous = GetElementMark(element);
-            ElementMarkSnapshot current = new ElementMarkSnapshot(
-                element,
-                previous.Stacks + amount,
-                duration);
-            marks[element] = current;
-            ElementMarkChanged?.Invoke(new ElementMarkChange(previous, current));
-        }
-
-        public void ConsumeElementMarks(MagicElement element, int amount)
-        {
-            ElementMarkSnapshot previous = GetElementMark(element);
-            ElementMarkSnapshot current = new ElementMarkSnapshot(
-                element,
-                Math.Max(0, previous.Stacks - amount),
-                previous.RemainingDuration);
-            marks[element] = current;
-            ElementMarkChanged?.Invoke(new ElementMarkChange(previous, current));
-        }
-    }
 }

@@ -14,11 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileMagicDefinition
   magicId: 4
   element: 1
-  projectilePrefab: {fileID: -463991746816620303, guid: 94d58a5c5d8b0124ba44326a3075ec3c, type: 3}
-  cooldown: 0.9
+  projectilePrefab: {fileID: 7166513281574627306, guid: d6bb69278fa1b1f498fc235bd76cd891, type: 3}
   range: 8
-  damage: 5
   speed: 12
   maxDistance: 10
   hitRadius: 0.25
-  pierceCount: 1

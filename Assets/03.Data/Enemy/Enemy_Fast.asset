@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59e51575cf8a42a4b9388fb65d985290, type: 3}
   m_Name: Enemy_Fast
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
-  prefab: {fileID: 7377819187996129501, guid: 491990533a6f9bf43a3d2aea5b0d826b, type: 3}
+  prefab: {fileID: 3938883926920358822, guid: 0e3f0519f2b334f408ae004a4a38746f, type: 3}
   maxHealth: 6
   moveSpeed: 3.8
   contactDamage: 8

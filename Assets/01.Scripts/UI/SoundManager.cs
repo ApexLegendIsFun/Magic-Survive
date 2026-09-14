@@ -67,6 +67,11 @@ public class SoundManager : MonoBehaviour
 
     public void ChangeBgm(BgmType type)
     {
+        int index = (int)type;
+        if (bgmAudioSurce == null || bgmClip == null ||
+            index < 0 || index >= bgmClip.Length || bgmClip[index] == null)
+            return;
+
         if (bgmAudioSurce.clip == bgmClip[(int)type])
             return;
 

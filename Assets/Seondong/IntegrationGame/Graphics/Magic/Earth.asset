@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fff96ce429a24df588dbf35581f79f21, type: 3}
+  m_Name: Earth
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileMagicDefinition
+  magicId: 6
+  element: 4
+  projectilePrefab: {fileID: 4243851172280451117, guid: 35505495f8a9e1a48a1518ec8cfdc52b, type: 3}
+  range: 8
+  speed: 12
+  maxDistance: 10
+  hitRadius: 0.25

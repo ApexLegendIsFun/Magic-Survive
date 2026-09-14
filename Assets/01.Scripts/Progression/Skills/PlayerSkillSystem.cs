@@ -5,354 +5,99 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public sealed class PlayerSkillSystem : MonoBehaviour
 {
-    private static readonly SkillTreeNodeId[] LegacyCommonChoices =
-    {
-        SkillTreeNodeId.CommonPower,
-        SkillTreeNodeId.CommonRapidFire,
-        SkillTreeNodeId.CommonPierce
-    };
-
     [SerializeField] private WeaponRunner weaponRunner;
     [SerializeField] private GameFlowController gameFlowController;
     [SerializeField] private LevelUpController levelUpController;
     [SerializeField] private ProjectileMagicDefinition startingMagic;
-    [SerializeField] private ProjectileMagicDefinition[] targetedMagicDefinitions =
-        Array.Empty<ProjectileMagicDefinition>();
-
+    [SerializeField] private ProjectileMagicDefinition[] targetedMagicDefinitions = Array.Empty<ProjectileMagicDefinition>();
     private readonly PlayerSkillTree tree = new PlayerSkillTree();
-    private readonly Dictionary<MagicId, ProjectileMagicDefinition> definitions =
-        new Dictionary<MagicId, ProjectileMagicDefinition>();
-    private readonly Dictionary<MagicId, MagicRuntime> activeMagicLookup =
-        new Dictionary<MagicId, MagicRuntime>();
-    private readonly List<MagicRuntime> activeMagics = new List<MagicRuntime>(15);
-
+    private readonly Dictionary<MagicElement, ProjectileMagicDefinition> definitions = new Dictionary<MagicElement, ProjectileMagicDefinition>();
+    private readonly Dictionary<MagicElement, MagicRuntime> runtimes = new Dictionary<MagicElement, MagicRuntime>();
+    private readonly List<MagicRuntime> activeMagics = new List<MagicRuntime>(5);
+    private readonly List<MagicElement> choices = new List<MagicElement>(3);
+    private IReadOnlyList<MagicElement> choicesView;
+    private IReadOnlyList<MagicRuntime> activeMagicsView;
     public IReadOnlyPlayerSkillTree Tree => tree;
     public MagicRuntime CurrentMagic { get; private set; }
-    public IReadOnlyList<MagicRuntime> ActiveMagics => activeMagics;
-    public float GlobalDamageMultiplier { get; private set; } = 1f;
-    public float GlobalCooldownMultiplier { get; private set; } = 1f;
-    public int BonusPierce { get; private set; }
-    public int BonusChainTargets { get; private set; }
-
-    public event Action TreeChanged
-    {
-        add => tree.TreeChanged += value;
-        remove => tree.TreeChanged -= value;
-    }
-
-    public event Action<SkillTreeNodeId> NodeOwned
-    {
-        add => tree.NodeOwned += value;
-        remove => tree.NodeOwned -= value;
-    }
-
-    public event Action<MagicElement> ElementUnlocked
-    {
-        add => tree.ElementUnlocked += value;
-        remove => tree.ElementUnlocked -= value;
-    }
-
-    public event Action<FusionKind> FusionUnlocked
-    {
-        add => tree.FusionUnlocked += value;
-        remove => tree.FusionUnlocked -= value;
-    }
-
-    public event Action<MagicId> MagicUnlocked;
-    public event Action<SkillChoice> ChoiceApplied;
-    public event Action<SkillTreeNodeId> SkillPointSpent;
+    public IReadOnlyList<MagicRuntime> ActiveMagics => activeMagicsView ?? (activeMagicsView = activeMagics.AsReadOnly());
+    public IReadOnlyList<MagicElement> Choices => choicesView ?? (choicesView = choices.AsReadOnly());
+    public event Action TreeChanged { add => tree.TreeChanged += value; remove => tree.TreeChanged -= value; }
+    public event Action<MagicElement> ElementUnlocked { add => tree.ElementUnlocked += value; remove => tree.ElementUnlocked -= value; }
+    public event Action<MagicElement, int> SkillLevelChanged;
+    public event Action<MagicElement> SkillPointSpent;
 
     private void Awake()
     {
-        if (gameFlowController == null)
-        {
-            gameFlowController = GetComponent<GameFlowController>();
-        }
-
-        if (levelUpController == null)
-        {
-            levelUpController = GetComponent<LevelUpController>();
-        }
-
+        if (gameFlowController == null) gameFlowController = GetComponent<GameFlowController>();
+        if (levelUpController == null) levelUpController = GetComponent<LevelUpController>();
         if (weaponRunner == null)
         {
-            Debug.LogError("PlayerSkillSystem에 WeaponRunner가 연결되지 않았습니다.", this);
+            Debug.LogError("PlayerSkillSystem: WeaponRunner missing.", this);
             enabled = false;
             return;
         }
-
-        IndexDefinitions();
-        tree.MagicUnlocked += HandleMagicUnlocked;
-        tree.NodeOwned += HandleNodeOwned;
+        if (startingMagic != null) definitions[startingMagic.Element] = startingMagic;
+        if (targetedMagicDefinitions != null)
+            foreach (var definition in targetedMagicDefinitions)
+                if (definition != null) definitions[definition.Element] = definition;
+        tree.SkillLevelChanged += HandleSkillLevelChanged;
     }
-
     private void OnDestroy()
     {
-        tree.MagicUnlocked -= HandleMagicUnlocked;
-        tree.NodeOwned -= HandleNodeOwned;
+        tree.SkillLevelChanged -= HandleSkillLevelChanged;
+        if (weaponRunner != null)
+            foreach (var runtime in activeMagics) weaponRunner.Unregister(runtime);
+    }
+    private bool HasDefinition(MagicElement element) =>
+        definitions.TryGetValue(element, out var definition) && definition.ProjectilePrefab != null;
+    public int GetSkillLevel(MagicElement element) => tree.GetSkillLevel(element);
+    public IReadOnlyList<MagicElement> GetOwnedElements() => tree.OwnedElements;
+    public bool TryChooseStartingElement(MagicElement element) =>
+        gameFlowController != null && gameFlowController.State == GameFlowState.ElementSelect &&
+        HasDefinition(element) && tree.TryChooseStartingElement(element);
 
-        if (weaponRunner == null)
+    // 카드는 창을 열 때 한 번 추첨한다. 선택/취소로 재추첨하지 않는다.
+    internal void PrepareChoices()
+    {
+        tree.Cancel();
+        choices.Clear();
+        var candidates = new List<MagicElement>(5);
+        foreach (var element in MagicContentCatalog.PentagonElements)
+            if (tree.CanUpgrade(element) && HasDefinition(element)) candidates.Add(element);
+        while (choices.Count < 3 && candidates.Count > 0)
         {
-            return;
-        }
-
-        for (int index = 0; index < activeMagics.Count; index++)
-        {
-            weaponRunner.Unregister(activeMagics[index]);
+            int index = UnityEngine.Random.Range(0, candidates.Count);
+            choices.Add(candidates[index]);
+            candidates.RemoveAt(index);
         }
     }
-
-    public bool TryChooseStartingElement(MagicElement element)
+    public bool IsOffered(MagicElement element) => choices.Contains(element);
+    public bool TrySelectSkill(MagicElement element) =>
+        CanSpendSkillPoint() && IsOffered(element) && tree.TrySelectSkill(element);
+    public bool CancelSelectedSkill() => tree.Cancel();
+    public bool ConfirmSelectedSkill()
     {
-        if (gameFlowController == null ||
-            gameFlowController.State != GameFlowState.ElementSelect)
-        {
-            return false;
-        }
-
-        return tree.TryChooseStartingElement(element);
-    }
-
-    public SkillTreeNodeState GetNodeState(SkillTreeNodeId id)
-    {
-        return tree.GetNodeState(id);
-    }
-
-    public bool TrySelectNode(SkillTreeNodeId id)
-    {
-        if (!CanSpendSkillPoint())
-        {
-            return false;
-        }
-
-        return tree.TrySelectNode(id);
-    }
-
-    public bool CancelSelectedNode()
-    {
-        return tree.Cancel();
-    }
-
-    public bool ConfirmSelectedNode()
-    {
-        if (!CanSpendSkillPoint() || !tree.PendingSelection.HasValue)
-        {
-            return false;
-        }
-
-        SkillTreeNodeId selectedNode = tree.PendingSelection.Value;
-        if (!tree.Confirm())
-        {
-            return false;
-        }
-
-        SkillPointSpent?.Invoke(selectedNode);
+        if (!CanSpendSkillPoint() || !tree.PendingSelection.HasValue ||
+            !IsOffered(tree.PendingSelection.Value)) return false;
+        MagicElement element = tree.PendingSelection.Value;
+        if (!tree.Confirm()) return false;
+        choices.Clear();
+        SkillPointSpent?.Invoke(element);
         return true;
     }
-
-    public IReadOnlyList<SkillTreeNodeDefinition> GetTreeDefinitions()
+    private bool CanSpendSkillPoint() => gameFlowController != null && levelUpController != null &&
+        gameFlowController.State == GameFlowState.LevelUp && levelUpController.CanSpendSkillPoint;
+    private void HandleSkillLevelChanged(MagicElement element, int level)
     {
-        return SkillTreeCatalog.Nodes;
-    }
-
-    public SkillTreeNodePreview GetNodePreview(SkillTreeNodeId nodeId)
-    {
-        SkillTreeNodeDefinition definition = SkillTreeCatalog.GetNode(nodeId);
-        string currentValue = "미보유";
-        string appliedValue = "획득";
-
-        if (definition.CommonUpgrade.HasValue)
+        if (!runtimes.TryGetValue(element, out var runtime))
         {
-            switch (definition.CommonUpgrade.Value)
-            {
-                case CommonUpgradeKind.Power:
-                    currentValue = $"×{GlobalDamageMultiplier:0.##}";
-                    appliedValue = $"×{GlobalDamageMultiplier * 1.15f:0.##}";
-                    break;
-                case CommonUpgradeKind.RapidFire:
-                    currentValue = $"×{GlobalCooldownMultiplier:0.##}";
-                    appliedValue = $"×{GlobalCooldownMultiplier * 0.9f:0.##}";
-                    break;
-                case CommonUpgradeKind.Pierce:
-                    currentValue = $"관통 {BonusPierce} / 연쇄 {BonusChainTargets}";
-                    appliedValue = $"관통 {BonusPierce + 1} / 연쇄 {BonusChainTargets + 1}";
-                    break;
-            }
-        }
-        else if (definition.Type == SkillTreeNodeType.ElementMastery)
-        {
-            currentValue = "피해·범위 ×1";
-            appliedValue = "피해·범위 ×1.2";
-        }
-        else if (definition.Type == SkillTreeNodeType.FusionMastery)
-        {
-            currentValue = "융합 피해 ×1";
-            appliedValue = "융합 피해 ×1.2 + 고유 효과";
-        }
-
-        return new SkillTreeNodePreview(
-            definition,
-            GetNodeState(nodeId),
-            tree.PendingSelection.HasValue && tree.PendingSelection.Value == nodeId,
-            currentValue,
-            appliedValue);
-    }
-
-    public IReadOnlyList<MagicElement> GetOwnedElements()
-    {
-        return tree.OwnedElements;
-    }
-
-    public IReadOnlyList<FusionKind> GetOwnedFusions()
-    {
-        return tree.OwnedFusions;
-    }
-
-    public IReadOnlyList<MagicId> GetOwnedMagics()
-    {
-        return tree.OwnedMagics;
-    }
-
-    public bool ApplyChoice(int index)
-    {
-        if (index < 0 || index >= LegacyCommonChoices.Length)
-        {
-            return false;
-        }
-
-        SkillTreeNodeId node = LegacyCommonChoices[index];
-        if (!TrySelectNode(node) || !ConfirmSelectedNode())
-        {
-            return false;
-        }
-
-        SkillUpgradeKind kind = (SkillUpgradeKind)index;
-        SkillChoice choice = new SkillChoice(
-            kind,
-            SkillTreeCatalog.GetNode(node).DisplayName,
-            string.Empty);
-        ChoiceApplied?.Invoke(choice);
-        return true;
-    }
-
-    private void IndexDefinitions()
-    {
-        definitions.Clear();
-
-        if (startingMagic != null)
-        {
-            definitions[startingMagic.MagicId] = startingMagic;
-        }
-
-        if (targetedMagicDefinitions == null)
-        {
-            return;
-        }
-
-        for (int index = 0; index < targetedMagicDefinitions.Length; index++)
-        {
-            ProjectileMagicDefinition definition = targetedMagicDefinitions[index];
-            if (definition != null)
-            {
-                definitions[definition.MagicId] = definition;
-            }
-        }
-    }
-
-    private void HandleMagicUnlocked(MagicId magicId)
-    {
-        if (definitions.TryGetValue(magicId, out ProjectileMagicDefinition definition) &&
-            !activeMagicLookup.ContainsKey(magicId))
-        {
-            MagicRuntime runtime = new MagicRuntime(definition);
-            activeMagicLookup.Add(magicId, runtime);
+            runtime = new MagicRuntime(definitions[element]);
+            runtimes.Add(element, runtime);
             activeMagics.Add(runtime);
             CurrentMagic = CurrentMagic ?? runtime;
-            RefreshRuntimeModifiers();
             weaponRunner.Register(runtime);
         }
-
-        MagicUnlocked?.Invoke(magicId);
-    }
-
-    private void HandleNodeOwned(SkillTreeNodeId nodeId)
-    {
-        SkillTreeNodeDefinition definition = SkillTreeCatalog.GetNode(nodeId);
-        if (definition.CommonUpgrade.HasValue)
-        {
-            switch (definition.CommonUpgrade.Value)
-            {
-                case CommonUpgradeKind.Power:
-                    GlobalDamageMultiplier *= 1.15f;
-                    break;
-                case CommonUpgradeKind.RapidFire:
-                    GlobalCooldownMultiplier *= 0.9f;
-                    break;
-                case CommonUpgradeKind.Pierce:
-                    BonusPierce += 1;
-                    BonusChainTargets += 1;
-                    break;
-            }
-        }
-
-        RefreshRuntimeModifiers();
-    }
-
-    private void RefreshRuntimeModifiers()
-    {
-        for (int index = 0; index < activeMagics.Count; index++)
-        {
-            MagicRuntime runtime = activeMagics[index];
-            GetMasteryModifiers(runtime, out float masteryDamage, out float masteryRange);
-            runtime.SetTreeModifiers(
-                GlobalDamageMultiplier,
-                GlobalCooldownMultiplier,
-                BonusPierce,
-                masteryDamage,
-                masteryRange);
-        }
-    }
-
-    private bool CanSpendSkillPoint()
-    {
-        return gameFlowController != null &&
-               levelUpController != null &&
-               gameFlowController.State == GameFlowState.LevelUp &&
-               levelUpController.CanSpendSkillPoint;
-    }
-
-    private void GetMasteryModifiers(
-        MagicRuntime runtime,
-        out float damageMultiplier,
-        out float rangeMultiplier)
-    {
-        MagicDefinition magic = MagicContentCatalog.GetMagic(runtime.Id);
-        if (!magic.IsFusion)
-        {
-            bool mastered = tree.HasNode(SkillTreeCatalog.GetMasteryNode(magic.PrimaryElement));
-            damageMultiplier = mastered
-                ? MagicContentCatalog.BaseMasteryDamageMultiplier
-                : 1f;
-            rangeMultiplier = mastered
-                ? MagicContentCatalog.BaseMasteryRangeMultiplier
-                : 1f;
-            return;
-        }
-
-        bool fusionMastered = false;
-        for (int index = 0; index < SkillTreeCatalog.Fusions.Count; index++)
-        {
-            FusionDefinition fusion = SkillTreeCatalog.Fusions[index];
-            if (fusion.Magic == runtime.Id)
-            {
-                fusionMastered = tree.HasNode(fusion.MasteryNode);
-                break;
-            }
-        }
-
-        damageMultiplier = fusionMastered
-            ? MagicContentCatalog.FusionMasteryDamageMultiplier
-            : 1f;
-        rangeMultiplier = 1f;
+        runtime.SetSkillLevel(level);
+        SkillLevelChanged?.Invoke(element, level);
     }
 }

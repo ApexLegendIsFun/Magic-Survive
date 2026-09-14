@@ -30,18 +30,6 @@ public readonly struct ElementMarkChange
         Current.Stacks);
 }
 
-public readonly struct FusionReactionOccurrence
-{
-    public FusionReactionOccurrence(FusionKind fusion, IElementMarkTarget target)
-    {
-        Fusion = fusion;
-        Target = target;
-    }
-
-    public FusionKind Fusion { get; }
-    public IElementMarkTarget Target { get; }
-}
-
 public interface IElementMarkTarget
 {
     float CrowdControlDurationMultiplier { get; }
@@ -63,56 +51,5 @@ public static class ElementMarkRules
     public static bool ShouldTriggerMastery(int previousStacks, int currentStacks)
     {
         return previousStacks == 2 && currentStacks == MaximumStacks;
-    }
-}
-
-public static class FusionReactionRules
-{
-    public static int CollectEligibleReactions(
-        PlayerSkillTree tree,
-        IElementMarkTarget target,
-        FusionKind[] buffer)
-    {
-        if (tree == null || target == null || buffer == null)
-        {
-            return 0;
-        }
-
-        int count = 0;
-        for (int index = 0; index < SkillTreeCatalog.Fusions.Count && count < buffer.Length; index++)
-        {
-            FusionDefinition fusion = SkillTreeCatalog.Fusions[index];
-            if (!tree.HasFusion(fusion.Kind))
-            {
-                continue;
-            }
-
-            if (target.GetElementMark(fusion.FirstElement).Stacks <
-                    MagicContentCatalog.FusionReactionRequiredStacksPerParent ||
-                target.GetElementMark(fusion.SecondElement).Stacks <
-                    MagicContentCatalog.FusionReactionRequiredStacksPerParent)
-            {
-                continue;
-            }
-
-            buffer[count++] = fusion.Kind;
-        }
-
-        return count;
-    }
-}
-
-public static class ElementCombatEvents
-{
-    public static event Action<FusionReactionOccurrence> FusionReactionOccurred;
-
-    public static void RaiseFusionReaction(FusionReactionOccurrence occurrence)
-    {
-        FusionReactionOccurred?.Invoke(occurrence);
-    }
-
-    public static void Clear()
-    {
-        FusionReactionOccurred = null;
     }
 }

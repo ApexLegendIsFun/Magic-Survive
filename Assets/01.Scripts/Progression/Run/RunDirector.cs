@@ -173,8 +173,7 @@ public sealed class RunDirector : MonoBehaviour
             ElapsedCombatTime,
             KillCount,
             playerProgression != null ? playerProgression.Level : 1,
-            playerSkillSystem != null ? playerSkillSystem.GetOwnedElements() : null,
-            playerSkillSystem != null ? playerSkillSystem.GetOwnedFusions() : null);
+            playerSkillSystem != null ? playerSkillSystem.GetOwnedElements() : null);
 
         resultPublished = true;
         ResultReady?.Invoke(Result);

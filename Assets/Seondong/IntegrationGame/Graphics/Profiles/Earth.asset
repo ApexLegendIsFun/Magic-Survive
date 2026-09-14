@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9fe286f7b311c644b2c4e8f7570bd7f, type: 3}
+  m_Name: Earth
+  m_EditorClassIdentifier: Assembly-CSharp::Seondong.IntegrationGame.MagicVisualProfile
+  element: 4
+  tiers:
+  - {fileID: 1100727965845263853, guid: f19e1be1c317075488dc3aa2be2b82ac, type: 3}
+  - {fileID: 4208214896899212029, guid: 67ff79500284d614c9031e19df812b0b, type: 3}
+  - {fileID: 8438221156394549498, guid: 81f672ee0113b6641aca7efe04a4e78d, type: 3}
+  - {fileID: 1043923723482783147, guid: c5e9952237b33554a9d00261ece993ac, type: 3}

@@ -123,11 +123,11 @@ public static class MvpIntegrationEditor
 
         ProjectileMagicDefinition[] definitions =
         {
-            EnsureTargetedMagic(projectile, MagicId.FireBolt, MagicElement.Fire, 6f, 0.8f, 0),
-            EnsureTargetedMagic(projectile, MagicId.ChainLightning, MagicElement.Lightning, 4f, 0.7f, 0),
-            EnsureTargetedMagic(projectile, MagicId.IceSpear, MagicElement.Frost, 5f, 0.9f, 1),
-            EnsureTargetedMagic(projectile, MagicId.RockSpear, MagicElement.Earth, 8f, 1.1f, 0),
-            EnsureTargetedMagic(projectile, MagicId.ShadowOrb, MagicElement.Dark, 6f, 1f, 1)
+            EnsureTargetedMagic(projectile, MagicId.FireBolt, MagicElement.Fire),
+            EnsureTargetedMagic(projectile, MagicId.ChainLightning, MagicElement.Lightning),
+            EnsureTargetedMagic(projectile, MagicId.IceSpear, MagicElement.Frost),
+            EnsureTargetedMagic(projectile, MagicId.RockSpear, MagicElement.Earth),
+            EnsureTargetedMagic(projectile, MagicId.ShadowOrb, MagicElement.Dark)
         };
 
         AssetDatabase.SaveAssets();
@@ -149,10 +149,7 @@ public static class MvpIntegrationEditor
     private static ProjectileMagicDefinition EnsureTargetedMagic(
         Projectile projectile,
         MagicId magicId,
-        MagicElement element,
-        float damage,
-        float cooldown,
-        int pierceCount)
+        MagicElement element)
     {
         string path = $"{MagicDataFolder}/{magicId}.asset";
         ProjectileMagicDefinition definition =
@@ -174,16 +171,13 @@ public static class MvpIntegrationEditor
         AssetDatabase.CreateAsset(definition, path);
 
         SerializedObject serialized = new SerializedObject(definition);
-        serialized.FindProperty("magicId").enumValueIndex = (int)magicId;
+        serialized.FindProperty("magicId").intValue = (int)magicId;
         serialized.FindProperty("element").enumValueIndex = (int)element;
         serialized.FindProperty("projectilePrefab").objectReferenceValue = projectile;
-        serialized.FindProperty("cooldown").floatValue = cooldown;
         serialized.FindProperty("range").floatValue = 8f;
-        serialized.FindProperty("damage").floatValue = damage;
         serialized.FindProperty("speed").floatValue = 12f;
         serialized.FindProperty("maxDistance").floatValue = 10f;
         serialized.FindProperty("hitRadius").floatValue = 0.25f;
-        serialized.FindProperty("pierceCount").intValue = pierceCount;
         serialized.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(definition);
         return definition;

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9fe286f7b311c644b2c4e8f7570bd7f, type: 3}
+  m_Name: Dark
+  m_EditorClassIdentifier: Assembly-CSharp::Seondong.IntegrationGame.MagicVisualProfile
+  element: 3
+  tiers:
+  - {fileID: 2306591116965980488, guid: d602e7e0a2671124495c1101ac4af58c, type: 3}
+  - {fileID: 3608956586560573428, guid: 2c6e0923d09007a43bb419380707f499, type: 3}
+  - {fileID: 85868873039657071, guid: 35980117f9e9ee04d94f7ee5b7c5fe53, type: 3}
+  - {fileID: 8258484864067558398, guid: 95933ca161353674f941f39eec8ec1e9, type: 3}

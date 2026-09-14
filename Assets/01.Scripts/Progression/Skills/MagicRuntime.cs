@@ -1,56 +1,39 @@
 using System;
 using UnityEngine;
 
-/// <summary>
-/// ProjectileMagicDefinition의 시작값을 복사해 한 판 동안 강화하는 공격 인스턴스입니다.
-/// </summary>
 public sealed class MagicRuntime : IAttackSource
 {
-    private const float DamageUpgradeAmount = 2f;
-    private const float FireRateCooldownMultiplier = 0.9f;
-
     private readonly Projectile projectilePrefab;
-    private float baseCooldown;
-    private float baseRange;
-    private float baseDamage;
-    private float baseMaxDistance;
-    private float baseHitRadius;
-    private int basePierceCount;
-    private float globalDamageMultiplier = 1f;
-    private float globalCooldownMultiplier = 1f;
-    private float masteryDamageMultiplier = 1f;
-    private float masteryRangeMultiplier = 1f;
-    private int bonusPierce;
-
     public MagicRuntime(ProjectileMagicDefinition definition)
     {
-        if (definition == null)
-        {
-            throw new ArgumentNullException(nameof(definition));
-        }
-
+        if (definition == null) throw new ArgumentNullException(nameof(definition));
         Id = definition.MagicId;
         Element = definition.Element;
         projectilePrefab = definition.ProjectilePrefab;
-        baseCooldown = definition.Cooldown;
-        baseRange = definition.Range;
-        baseDamage = definition.Damage;
+        Range = definition.Range;
         Speed = definition.Speed;
-        baseMaxDistance = definition.MaxDistance;
-        baseHitRadius = definition.HitRadius;
-        basePierceCount = definition.PierceCount;
+        MaxDistance = definition.MaxDistance;
+        HitRadius = definition.HitRadius;
+        SetSkillLevel(1);
     }
-
     public MagicId Id { get; }
     public MagicElement Element { get; }
-    public float Cooldown => baseCooldown * globalCooldownMultiplier;
-    public float Range => baseRange * masteryRangeMultiplier;
-    public float Damage => baseDamage * globalDamageMultiplier * masteryDamageMultiplier;
+    public int SkillLevel { get; private set; }
+    public float Cooldown { get; private set; }
+    public float Damage { get; private set; }
+    public int PierceCount { get; private set; }
+    public float Range { get; }
     public float Speed { get; }
-    public float MaxDistance => baseMaxDistance * masteryRangeMultiplier;
-    public float HitRadius => baseHitRadius * masteryRangeMultiplier;
-    public int PierceCount => basePierceCount + bonusPierce;
-
+    public float MaxDistance { get; }
+    public float HitRadius { get; }
+    public void SetSkillLevel(int level)
+    {
+        ElementSkillStats stats = MagicContentCatalog.GetStats(Element, level);
+        SkillLevel = level;
+        Damage = stats.Damage;
+        Cooldown = stats.Cooldown;
+        PierceCount = stats.PierceCount;
+    }
     public bool Execute(in AttackContext context)
     {
         if (context.Target == null || context.Launcher == null)
@@ -80,38 +63,4 @@ public sealed class MagicRuntime : IAttackSource
         return true;
     }
 
-    public void ApplyUpgrade(SkillUpgradeKind kind)
-    {
-        switch (kind)
-        {
-            case SkillUpgradeKind.Damage:
-                baseDamage += DamageUpgradeAmount;
-                break;
-
-            case SkillUpgradeKind.FireRate:
-                baseCooldown *= FireRateCooldownMultiplier;
-                break;
-
-            case SkillUpgradeKind.Pierce:
-                basePierceCount += 1;
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException(nameof(kind), kind, "지원하지 않는 강화 종류입니다.");
-        }
-    }
-
-    public void SetTreeModifiers(
-        float damageMultiplier,
-        float cooldownMultiplier,
-        int additionalPierce,
-        float masteryDamage,
-        float masteryRange)
-    {
-        globalDamageMultiplier = Mathf.Max(0f, damageMultiplier);
-        globalCooldownMultiplier = Mathf.Max(0.05f, cooldownMultiplier);
-        bonusPierce = Mathf.Max(0, additionalPierce);
-        masteryDamageMultiplier = Mathf.Max(0f, masteryDamage);
-        masteryRangeMultiplier = Mathf.Max(0f, masteryRange);
-    }
 }

@@ -1,0 +1,785 @@
+{
+    "note": "Team-owned packages and generated DNPPixel atlas stay local/ignored. Import packages, then run Apply Existing Feature Assets. Do not publish package content.",
+    "dependencies": [
+        {
+            "path": "Assets/01.Scripts/Combat/Enemy/Enemy.cs",
+            "guid": "f765c230892cbe74fba5bbd6fdc4b181"
+        },
+        {
+            "path": "Assets/01.Scripts/Combat/Health.cs",
+            "guid": "e46bfad9defd3ac4f981325b5ac39cb3"
+        },
+        {
+            "path": "Assets/01.Scripts/Combat/Weapon/Projectile.cs",
+            "guid": "36a19f303c05f1e469c4ce77978cded6"
+        },
+        {
+            "path": "Assets/01.Scripts/UI/BossHpbar.cs",
+            "guid": "af6dbc947d5bb504080e6c902bb24773"
+        },
+        {
+            "path": "Assets/01.Scripts/UI/DamageUi.cs",
+            "guid": "f325818d0df05ad449b5b30120ed45de"
+        },
+        {
+            "path": "Assets/01.Scripts/UI/FusionLineManager.cs",
+            "guid": "2bbd22a39700a224d90378b5673a15db"
+        },
+        {
+            "path": "Assets/01.Scripts/UI/HudDynamicUi.cs",
+            "guid": "c1e16bc6c0bfac045a72ad9b9db6aff1"
+        },
+        {
+            "path": "Assets/01.Scripts/UI/HudStatcUi.cs",
+            "guid": "c15c4ed788e4c4148b508bbf9ea0050a"
+        },
+        {
+            "path": "Assets/01.Scripts/UI/PopupUi.cs",
+            "guid": "65434cc7e9694e348a5ea99e7fabb711"
+        },
+        {
+            "path": "Assets/01.Scripts/UI/Prefabs_Ui/DamageText.prefab",
+            "guid": "6d01eeea3a0045140998a5d2f56aa268"
+        },
+        {
+            "path": "Assets/01.Scripts/UI/ResultUi.cs",
+            "guid": "e72e4c8724357454e82372df49094f4e"
+        },
+        {
+            "path": "Assets/01.Scripts/UI/SoundManager.cs",
+            "guid": "378ae50d69af80c469290a85946d2db1"
+        },
+        {
+            "path": "Assets/01.Scripts/UI/UIManager.cs",
+            "guid": "052829ea27d5ebd4eacf9cdd0c1fcd6a"
+        },
+        {
+            "path": "Assets/01.Scripts/UI/UiObjectPool.cs",
+            "guid": "4eb15680bbdc21743b1ff0bd2fdb4258"
+        },
+        {
+            "path": "Assets/02.Prefabs/Enemy/Enemy 2.prefab",
+            "guid": "491990533a6f9bf43a3d2aea5b0d826b"
+        },
+        {
+            "path": "Assets/02.Prefabs/Enemy/Enemy.prefab",
+            "guid": "3515f8b99ea04d542886edd3a6361e89"
+        },
+        {
+            "path": "Assets/02.Prefabs/Enemy/Enemy_Boss.prefab",
+            "guid": "cec2aab6b31419845bbb82eaf5724059"
+        },
+        {
+            "path": "Assets/02.Prefabs/Enemy/Enemy_Tank.prefab",
+            "guid": "ea954d320b3dae044b845d48292dd425"
+        },
+        {
+            "path": "Assets/02.Prefabs/Projectile/Projectile.prefab",
+            "guid": "94d58a5c5d8b0124ba44326a3075ec3c"
+        },
+        {
+            "path": "Assets/02.Prefabs/Sound/Sound.prefab",
+            "guid": "c724b22396bdf4e4690606e7f24bb514"
+        },
+        {
+            "path": "Assets/02.Prefabs/UI/Boss_Timer&Hp.prefab",
+            "guid": "711e4904882235541a1219050ed117f9"
+        },
+        {
+            "path": "Assets/02.Prefabs/UI/Canvas_InGame.prefab",
+            "guid": "f75d705bf36f0eb4e99b38a515ab54dc"
+        },
+        {
+            "path": "Assets/02.Prefabs/UI/GameplayUI.prefab",
+            "guid": "1d2161966ca3f4561a7f80c1a175b301"
+        },
+        {
+            "path": "Assets/02.Prefabs/UI/nanum-gothic/NanumGothic SDF.asset",
+            "guid": "fe77317d74ffffb41a4f8a31d30dbafa"
+        },
+        {
+            "path": "Assets/04.ThirdParty/GeneratedPresentation/DNPPixel SDF.asset",
+            "guid": "299c6c705c4a5954f9ae5ab68808d1fc"
+        },
+        {
+            "path": "Assets/TextMesh Pro/Examples & Extras/Fonts/Anton.ttf",
+            "guid": "997a43b767814dd0a7642ec9b78cba41"
+        },
+        {
+            "path": "Assets/TextMesh Pro/Examples & Extras/Resources/Fonts & Materials/Anton SDF.asset",
+            "guid": "8a89fa14b10d46a99122fd4f73fca9a2"
+        },
+        {
+            "path": "Assets/TextMesh Pro/Fonts/LiberationSans.ttf",
+            "guid": "e3265ab4bf004d28a9537516768c1c75"
+        },
+        {
+            "path": "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Drop Shadow.mat",
+            "guid": "e73a58f6e2794ae7b1b7e50b7fb811b0"
+        },
+        {
+            "path": "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset",
+            "guid": "2e498d1c8094910479dc3e1b768306a4"
+        },
+        {
+            "path": "Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF.asset",
+            "guid": "8f586378b4e144a9851e7b34d9b748ee"
+        },
+        {
+            "path": "Assets/TextMesh Pro/Shaders/TMP_SDF.shader",
+            "guid": "68e6db2ebdc24f95958faec2be5558d6"
+        },
+        {
+            "path": "Assets/TextMesh Pro/Shaders/TMP_SDF-Mobile.shader",
+            "guid": "fe393ace9b354375a9cb14cdbbc28be4"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/FX/Electric/07/07.controller",
+            "guid": "fdda5c666d54b4d00ba9f0d183b2048b"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/FX/Electric/07/07_electric.anim",
+            "guid": "3dec4760c00694634a1b3517f6cda78b"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/FX/Electric/07/Sprites/07.png",
+            "guid": "f1d3ba52864254f46a7cc3b49bad57e0"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/FX/Fire/04/04.controller",
+            "guid": "9986c930e883346928ec9dfe8179ecd8"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/FX/Fire/04/04_fire.anim",
+            "guid": "f748b4f930ae94f32b117ece758187f7"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/FX/Fire/04/Sprites/04.png",
+            "guid": "054c7ee3bbd7146739f6a7a73cb01a36"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/FX/Water&Ice/01/01.controller",
+            "guid": "b2ac4f6023726477bada70e3acf1e21b"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/FX/Water&Ice/01/01_water.anim",
+            "guid": "74fe8d9dd0fb84df58647e05ac744d48"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/FX/Water&Ice/01/Sprites/01.png",
+            "guid": "b0e61d19844444cc1bc6222883c65ba4"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/Prefabs/Electric/Electric_07.prefab",
+            "guid": "059263fbdb7ea4ce7a21960a6219fbb9"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/Prefabs/Fire/Fire_05.prefab",
+            "guid": "a8eecf00682e24c838cd170dbdfd797a"
+        },
+        {
+            "path": "Assets/Untracked Asset/2D_PFX/Prefabs/IceWater/IceWater_01.prefab",
+            "guid": "25338832854da4f03afd68b17c57f09c"
+        },
+        {
+            "path": "Assets/Untracked Asset/Casual Game UI Sound/USER_INTERFACE/USER_INTERFACE_Bubble_Zoom_01.wav",
+            "guid": "5374ad241068c4c07b82ccc323cee8a9"
+        },
+        {
+            "path": "Assets/Untracked Asset/Casual Game UI Sound/USER_INTERFACE/USER_INTERFACE_Button_Click_01.wav",
+            "guid": "5b9f8db31fc5c4e9fa1a788f4e5878e2"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Fonts/Montserrat-ExtraBold SDF BlackShadowMaterial.mat",
+            "guid": "f9bb7e3c92726854d8d4fcc9724fb2cc"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Fonts/Montserrat-ExtraBold SDF.asset",
+            "guid": "4c8045a29d054884c88215333fcbb55a"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Fonts/Montserrat-ExtraBold.ttf",
+            "guid": "a68e44adb2e950049aa5a0b2b5fc595b"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Fonts/Montserrat-SemiBold SDF.asset",
+            "guid": "e5325693bce2aef46aaf6c93bb63ee10"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Fonts/Montserrat-SemiBold.ttf",
+            "guid": "85663258aaca9584eb0f8b69cb1df958"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Prefabs/Common/TMP_ExBold_BlackShadow.prefab",
+            "guid": "4aa5b9036179b094c8b59f9f41224451"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Prefabs/Common/TMP_SemiBold.prefab",
+            "guid": "1b2619b64cd36164695151ea1ca53aea"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_Btn_Black.png",
+            "guid": "944fa25a91987be4b9e4619b28bf2ab6"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_Btn_Blue.png",
+            "guid": "9acc93022d76cc04ca19d802fa544587"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_Btn_Green.png",
+            "guid": "9577d865a8881a54c8bb94ea8e9ef964"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_CheckBox_Squere_Green.png",
+            "guid": "a35e53c2d3c57f140abf8561c9f018c9"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_CheckBox_Squere_Red.png",
+            "guid": "4d3439934044c534ea59211d1c29768a"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_Frame_Profile.png",
+            "guid": "28f8550752373744f82f7292370b3bb8"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_Icon_Check.png",
+            "guid": "2417c820aa2ca124e950dd7c442444fd"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_Icon_HP.png",
+            "guid": "181ea2ac98fd3f44b912c8c0be5bcd61"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_Icon_Lock.png",
+            "guid": "4bd94bc692a24f846b5cd59ddebcbd3d"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_Menu_Chapter.png",
+            "guid": "157d83eac1a85d04eafecc50863682a8"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_Tab_Off.png",
+            "guid": "a6441ad987eabf244bdfccb43c1bb9c7"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Common/Common_WhiteBox_2px.png",
+            "guid": "29ef8a97da031fc4dac34532f2bc0c2c"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Equip/Equip_Name_Box01.png",
+            "guid": "2baa3af22c98b444dba710b1e44c0a2a"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Equip/Equip_Name_Box02.png",
+            "guid": "fe63f2359a230a84b890650f05e72b08"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Equip/Equip_Name_Box06.png",
+            "guid": "ae42b04154066fb4faa7648f0e5d0352"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Popup/Popup_Inner_ListBox.png",
+            "guid": "94592ea5260ba904caaf4b88a9c4739c"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Popup/Popup_Reward_Goods_Frame_On.png",
+            "guid": "534cbcb8146d3b347888f1420b49eca5"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Popup/Popup_Reward_Level_Frame.png",
+            "guid": "eacc116f0bad6c2448ef68917d7b7413"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Popup/Popup_Title_Ribbon_Green.png",
+            "guid": "c65b5ea9744678e4380f1b4979b638ea"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Popup/Popup_Title_Ribbon_Yellow.png",
+            "guid": "2284af860ba28a4498bab32972da8f06"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/Shop/Shop_ListBox_Normal.png",
+            "guid": "ba544a90864c7344b86d3cb6491fc613"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/SubScreen/Levelup_Reward_Goods_Frame.png",
+            "guid": "cd848eb317454684ba0dfab0de48b8fc"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/SubScreen/Levelup_Reward_Goods_Frame_On.png",
+            "guid": "3ad5e771f01587d40b9b62aafd115feb"
+        },
+        {
+            "path": "Assets/Untracked Asset/CasualFantasyGUIPack/Art/Textures/UI/SubScreen/Levelup_Reward_Level_Frame.png",
+            "guid": "f2b8f39aa76fd6d4eb891b877ee5a047"
+        },
+        {
+            "path": "Assets/Untracked Asset/DamageNumbersPro/Fonts/DNPPixel.ttf",
+            "guid": "a6a9e8503517d794a964cf99c9d9a3e8"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Bosses/Titans/Demon/Demon01.png",
+            "guid": "f2510064f8427ea458747f7a16158e55"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Bosses/Titans/Demon/Demon01.prefab",
+            "guid": "475a5b0f6b85f1b4eb362ee18c21d662"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Bosses/Titans/Weapons/Axe.png",
+            "guid": "c9cd7387245f0344198b03415adf6dc1"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Animations/Titan/Attack.anim",
+            "guid": "6a85329a910c9ee40b2b1f15ae61744c"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Animations/Titan/AttackAlt.anim",
+            "guid": "c72c2673b85aef740be01d29443c4b9d"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Animations/Titan/Controller.controller",
+            "guid": "5fae3f7304f2dff41a4920a4a48e0728"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Animations/Titan/Death.anim",
+            "guid": "980694145ed529747ae1b8b0cb445083"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Animations/Titan/Ready.anim",
+            "guid": "e440ab707b13ec044b761e28e5d21ec7"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Animations/Titan/Walk.anim",
+            "guid": "f57e2c3df56903943bfcbd7e0a43cc48"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Animations/Wolf/Walk.anim",
+            "guid": "d02e26bdad3e71d49a659c3e5923bffd"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Scripts/AnchorManager.cs",
+            "guid": "81c8ad34430ec104ea8c1856fce3164b"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Scripts/LayerManager.cs",
+            "guid": "80e7850929f3a324984a5875e3615cbb"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Scripts/Monster.cs",
+            "guid": "62b9a7e211ea2074c83a96a2ab1e590f"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Scripts/SoloState.cs",
+            "guid": "408e227577c5a194ba246d63582e3419"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Scripts/StateHandler.cs",
+            "guid": "57830dc1190df88479e9a6155ff52be7"
+        },
+        {
+            "path": "Assets/Untracked Asset/FantasyMonsters/Common/Sprites/Shadow.png",
+            "guid": "fefe1d76b13a7e14abf83510d6d1eeb6"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_13/Sprites/Skill_13.png",
+            "guid": "a294e4a9116803f4ab682907afbead7c"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_18/Skill_18_color1.controller",
+            "guid": "19f1661a2e9af984db8b16179180a779"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_18/Skill_18_color1_skill.anim",
+            "guid": "84782dbce348ae94f97988945462e49a"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_18/Skill_18_color2.controller",
+            "guid": "7ec13f925a76e1f4b9e7db80794d16a4"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_18/Skill_18_color2_skill.anim",
+            "guid": "8bfe17c7187b89f4899cff7c7571837c"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_18/Sprites/Skill_18_color1.png",
+            "guid": "adb6788103d190244a3f5045493c12d5"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_18/Sprites/Skill_18_color2.png",
+            "guid": "3939dde52156c46428f4b15271cc385c"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_19/Skill_19_color1.controller",
+            "guid": "475b2c28ef1ca6c44b6d84aa3d36dce8"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_19/Skill_19_color1_skill.anim",
+            "guid": "8a896972838889c4798bd28c72f2eebb"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_19/Skill_19_color2.controller",
+            "guid": "3bb59f47ac0bc2a4c9d83b0492a7479b"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_19/Skill_19_color2_skill.anim",
+            "guid": "f1aec75653162ce49a717a49eb2c9de8"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_19/Sprites/Skill_19_color1.png",
+            "guid": "d54bc19e67ed5f84cbb962f64c8b757d"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Animations/Skill/Skill_19/Sprites/Skill_19_color2.png",
+            "guid": "f8efcbe9c8bad7944b29725db73a6ab1"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Prefebs/Skill_18.prefab",
+            "guid": "4155bd969125e27479c681dfb3484b25"
+        },
+        {
+            "path": "Assets/Untracked Asset/PixelAttackFx/Prefebs/Skill_19.prefab",
+            "guid": "2ae6c2b8d7c2afc4a85506df18177a52"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Horse/ATTACK.anim",
+            "guid": "8904524cb1305964a8ade38c0ceebed2"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Horse/DAMAGED.anim",
+            "guid": "05d885f5f1f136d4ab420d8b481613fa"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Horse/DEATH.anim",
+            "guid": "9eb4009baf3dcbf4bb86b27ae28b21eb"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Horse/DEBUFF.anim",
+            "guid": "7deccbbb01b5dce4282412d813b51593"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Horse/IDLE.anim",
+            "guid": "fed9f690c13398a4880b9f06e9c5d2e6"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Horse/MOVE.anim",
+            "guid": "aa0a742983e0279459d3b9b68a0b82a6"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Horse/OTHER.anim",
+            "guid": "60f5db0746506104c80e5f4deccac732"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Horse/SPUMHorseController.controller",
+            "guid": "87250caa4eec27040bc5650f38894ee7"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Unit/ATTACK.anim",
+            "guid": "5fa777919e804474080fad7ccf0cb5b4"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Unit/DAMAGED.anim",
+            "guid": "9cb5dea9706a1964fbb1986cd1d8c4b2"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Unit/DEATH.anim",
+            "guid": "e23bc41dfc64fef439b0a9d4b49d7d6a"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Unit/DEBUFF.anim",
+            "guid": "df7347d9a26250f49a9dab946bc4b0a4"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Unit/IDLE.anim",
+            "guid": "b81ad915777074048bdcc320f687ee1e"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Unit/MOVE.anim",
+            "guid": "b1692a522a645ad488394d241ad662df"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Unit/OTHER.anim",
+            "guid": "7b2a35216b7e533458ba5e38b8621354"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Animator/Unit/SPUMController.controller",
+            "guid": "e9358c226bb09e24da9c5f7064768810"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Ect/Shadow.png",
+            "guid": "acb3bfd86ae6c41b084245f578292734"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Basic_Resources/Materials/SpriteDiffuse.mat",
+            "guid": "c5a65547d1edf4a9d882bd6cff83eda8"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Script/Data/SpritePos.cs",
+            "guid": "7c562f92f3b8b435d98ac3b65547b755"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Script/Data/SPUM_MatchingList.cs",
+            "guid": "5084db87f5a3218479da5aa1e18581d6"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Core/Script/Data/SPUM_Prefabs.cs",
+            "guid": "28ac21711b0ec40a0812d33a586eb7ec"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/0_Sprite/0_Eye/Eye_Close.png",
+            "guid": "36f759892f0769b42aeec738b5a2fce9"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/0_Sprite/0_Eye/Eye1.png",
+            "guid": "317140fbba14844a3b93f39a688ff60a"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/0_Sprite/0_Eye/Eye16.png",
+            "guid": "e0c299db1654542d0a284e53abe2746e"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/0_Sprite/1_Body/Human_1.png",
+            "guid": "d24756e433435b249be5737019648d69"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/0_Sprite/1_Body/Orc_3.png",
+            "guid": "c6a5efa382266954e847098019d55dc9"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/00_Idle/0_idle.anim",
+            "guid": "f28f6b07698afa64788c223754b1f4ff"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/01_Move/0_move.anim",
+            "guid": "5187132de96c18244b62b7d6e2580323"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/02_Attack/00_MeleeAttack/0_Attack_Normal.anim",
+            "guid": "c66e5eb2778574f1abbd40dcb05e1df7"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/02_Attack/00_MeleeAttack/1_Skill_Normal.anim",
+            "guid": "b2c5fb441f4ac42c2a2e051601eea60a"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/02_Attack/01_LongRangeAttack/0_Attack_Bow.anim",
+            "guid": "ccc66609eaae7425f967209ab0b3935f"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/02_Attack/01_LongRangeAttack/1_Skill_Bow.anim",
+            "guid": "473ddbc57c00b45f1a93b0b519bea522"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/02_Attack/02_MagicAttack/0_Attack_Magic.anim",
+            "guid": "6fb0d327821de4ca19ea0fcf940b27ee"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/02_Attack/02_MagicAttack/1_Skill_Magic.anim",
+            "guid": "9a26543e06de846d08fbe01dbfcd13e2"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/03_Damaged/0_Damaged.anim",
+            "guid": "eeb8ba3a0a6cb63499a6fa72e6ad7358"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/04_Death/0_Die.anim",
+            "guid": "d98f7c88116e94c1597806a94b475144"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/05_Debuff/0_Debuff_Stun.anim",
+            "guid": "40f00165003e54cb08d55abfa92b88ef"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/06_Other/00_Concentrate/0_Conecntrate.anim",
+            "guid": "4c70df3312bb83346a1bf065b30d3467"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/06_Other/01_Buff/0_Buff.anim",
+            "guid": "1ef525d53ae254f7d82ef364ced85490"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Legacy/0_Unit/1_Animation/06_Other/02_Etc/0_Sit.anim",
+            "guid": "fabe4f140fdb9cb448bc941c7c93e8b6"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/MS_Orc/0_Unit/0_Sprite/1_FaceHair/Orc_Mouse_04.png",
+            "guid": "2c51e399ded6cf8488a7dc28df6e20c8"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/MS_Orc/0_Unit/0_Sprite/2_Cloth/Orc_Cloth_05.png",
+            "guid": "358b7ae40720a3e4186f7a530a244a58"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/MS_Orc/0_Unit/0_Sprite/4_Helmet/Orc_Helmet_05.png",
+            "guid": "679ecd60a92cea54689834f5c30aea75"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/MS_Orc/0_Unit/0_Sprite/6_Weapons/8_Mace/Orc_Weapon_01.png",
+            "guid": "7e78ee09ca7abbe45a7fb0c48d97d553"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/MS_Orc/2_Prefab/2_BlueOrc/SPUM_20240910225933543.prefab",
+            "guid": "36818ee82f51e4e3ea4a68b495dbe0ee"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/RetroHeroes/0_Unit/0_Sprite/2_Cloth/Cloth_Sorcerer.png",
+            "guid": "b50c5a1c23ea546f98ea5ec3be1337f5"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/RetroHeroes/0_Unit/0_Sprite/3_Pant/Pant_Sorcerer.png",
+            "guid": "32eeb918570e74cdaa08f7f19e7b7455"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/RetroHeroes/0_Unit/0_Sprite/4_Helmet/Helmet_Sorcerer.png",
+            "guid": "f6c344bdabddf4f1d8cc47945cdad909"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/RetroHeroes/0_Unit/0_Sprite/5_Armor/Armor_Sorcerer.png",
+            "guid": "56ac1ccd50a754b648505cc6ea2ef8e5"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/RetroHeroes/0_Unit/0_Sprite/6_Weapons/3_Shield/Shield_Sorcerer.png",
+            "guid": "f3c534b5073be4fcd91b4932cbeef08c"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/RetroHeroes/0_Unit/0_Sprite/6_Weapons/5_Wand/Weapon_Sorcerer.png",
+            "guid": "dcde8ba48bb3a4c7491271853d050e24"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/RetroHeroes/0_Unit/0_Sprite/7_Back/Back_Sorceress.png",
+            "guid": "4fe5fe0ba27ba4c47848552692a118d2"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/RetroHeroes/2_Prefab/0_TeamOriginal/SPUM_20240910232736382.prefab",
+            "guid": "70e7d308b6e8e490da3ec5f66764c4e9"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/0_Unit/0_Sprite/0_Body/Zombie_1.png",
+            "guid": "64bbd45b0b7014f5892c5aa9f0fa187d"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/0_Unit/0_Sprite/0_Body/Zombie_2.png",
+            "guid": "87db9af61d90f4d66b03b21db015e2f0"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/0_Unit/0_Sprite/2_Cloth/Undead_Cloth_02.png",
+            "guid": "c62665575a4814451b0123be49af1b1f"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/0_Unit/0_Sprite/3_Pant/Undead_Pant_01.png",
+            "guid": "b6af9adea5032483e9a3681060fb2ceb"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/0_Unit/0_Sprite/3_Pant/Undead_Pant_02.png",
+            "guid": "c5a0a64cf33784a0f94f57fcc2664c67"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/0_Unit/0_Sprite/4_Helmet/Undead_Helmet_01.png",
+            "guid": "fb3234a590cd144d59bdba060cbfdade"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/0_Unit/0_Sprite/4_Helmet/Undead_Helmet_05.png",
+            "guid": "57b887251f22f4e75974ba2799002c12"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/0_Unit/0_Sprite/5_Armor/Undead_Armor_05.png",
+            "guid": "f64b1deb0a43c469787e32af05fb0685"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/0_Unit/0_Sprite/6_Weapons/5_Wand/Undead_Weapon_01.png",
+            "guid": "df92f07a13c454c97832106e3c061be3"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/0_Unit/0_Sprite/6_Weapons/5_Wand/Undead_Weapon_02.png",
+            "guid": "908d897c33f8d465c9d7b39a534fd8e5"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/2_Prefab/1_NormalZombie/SPUM_20241203205635802.prefab",
+            "guid": "197f2b7f4e0344f9283290fcf715dc2d"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Undead/2_Prefab/2_EliteZomibes/SPUM_20241203205638738.prefab",
+            "guid": "69c0b4860e93b4d6cac2b236f16813aa"
+        },
+        {
+            "path": "Assets/Untracked Asset/SPUM/Resources/Addons/Ver300/0_Unit/0_Sprite/4_Cloth/New_Cloth_01.png",
+            "guid": "0aba1c3d9e6814991b93ff6a9540656b"
+        },
+        {
+            "path": "Packages/com.unity.2d.sprite/Editor/ObjectMenuCreation/DefaultAssets/Textures/v2/Circle.png",
+            "guid": "a86470a33a6bf42c4b3595704624658b"
+        },
+        {
+            "path": "Packages/com.unity.2d.sprite/Editor/ObjectMenuCreation/DefaultAssets/Textures/v2/Square.png",
+            "guid": "311925a002f4447b3a28927169b83ea6"
+        },
+        {
+            "path": "Packages/com.unity.inputsystem/InputSystem/Actions/InputActionAsset.cs",
+            "guid": "39fa3d8997a24136984ca6e2c99902bc"
+        },
+        {
+            "path": "Packages/com.unity.inputsystem/InputSystem/Actions/InputActionReference.cs",
+            "guid": "fc1515ab76e54f068e2f2207940fab32"
+        },
+        {
+            "path": "Packages/com.unity.inputsystem/InputSystem/Editor/AssetImporter/InputActionImporter.cs",
+            "guid": "8404be70184654265930450def6a9037"
+        },
+        {
+            "path": "Packages/com.unity.inputsystem/InputSystem/Editor/Icons/InputSystemUIInputModule@64.png",
+            "guid": "3028dc075ba8c584d9bc7d1e0255e038"
+        },
+        {
+            "path": "Packages/com.unity.inputsystem/InputSystem/Plugins/PlayerInput/DefaultInputActions.inputactions",
+            "guid": "ca9f5fa95ffab41fb9a615ab714db018"
+        },
+        {
+            "path": "Packages/com.unity.inputsystem/InputSystem/Plugins/UI/InputSystemUIInputModule.cs",
+            "guid": "01614664b831546d2ae94a42149d80ac"
+        },
+        {
+            "path": "Packages/com.unity.render-pipelines.universal/Runtime/Materials/Sprite-Lit-Default.mat",
+            "guid": "a97c105638bdf8b4a8650670310a4cd3"
+        },
+        {
+            "path": "Packages/com.unity.render-pipelines.universal/Shaders/2D/Sprite-Lit-Default.shader",
+            "guid": "e260cfa7296ee7642b167f1eb5be5023"
+        },
+        {
+            "path": "Packages/com.unity.ugui/Editor Resources/Gizmos/TMP - Font Asset Icon.psd",
+            "guid": "ee148e281f3c41c5b4ff5f8a5afe5a6c"
+        },
+        {
+            "path": "Packages/com.unity.ugui/Editor Resources/Gizmos/TMP - Text Component Icon.psd",
+            "guid": "2fd6421f253b4ef1a19526541f9ffc0c"
+        },
+        {
+            "path": "Packages/com.unity.ugui/Runtime/TMP/TextMeshProUGUI.cs",
+            "guid": "f4688fdb7df04437aeb418b961361dc5"
+        },
+        {
+            "path": "Packages/com.unity.ugui/Runtime/TMP/TMP_FontAsset.cs",
+            "guid": "71c1514a6bd24e1e882cebbe1904ce04"
+        },
+        {
+            "path": "Packages/com.unity.ugui/Runtime/UGUI/EventSystem/EventSystem.cs",
+            "guid": "76c392e42b5098c458856cdf6ecaaaa1"
+        },
+        {
+            "path": "Packages/com.unity.ugui/Runtime/UGUI/UI/Core/Button.cs",
+            "guid": "4e29b1a8efbd4b44bb3f3716e73f07ff"
+        },
+        {
+            "path": "Packages/com.unity.ugui/Runtime/UGUI/UI/Core/GraphicRaycaster.cs",
+            "guid": "dc42784cf147c0c48a680349fa168899"
+        },
+        {
+            "path": "Packages/com.unity.ugui/Runtime/UGUI/UI/Core/Image.cs",
+            "guid": "fe87c0e1cc204ed48ad3b37840f39efc"
+        },
+        {
+            "path": "Packages/com.unity.ugui/Runtime/UGUI/UI/Core/Layout/CanvasScaler.cs",
+            "guid": "0cd44c1031e13a943bb63640046fad76"
+        }
+    ]
+}

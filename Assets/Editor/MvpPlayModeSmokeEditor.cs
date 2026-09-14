@@ -76,6 +76,85 @@ public static class MvpPlayModeSmokeEditor
         EditorApplication.EnterPlaymode();
     }
 
+    private static void ValidateAllSkillLevels()
+    {
+        int upgrades = 0;
+        while (!skills.Tree.IsMaxed)
+        {
+            Assert(++upgrades <= 40, "All-max progression stalled.");
+            progression.AddExperience(progression.RequiredExperience - progression.CurrentExperience);
+            Assert(flow.State == GameFlowState.LevelUp, "Upgrade must pause combat.");
+            Assert(skills.Choices.Count > 0 && skills.Choices.Count <= 3, "Invalid choice count.");
+            Assert(skills.Choices.Distinct().Count() == skills.Choices.Count, "Duplicate choices.");
+            var offered = skills.Choices.ToArray();
+            foreach (var candidate in offered)
+                Assert(skills.Tree.CanUpgrade(candidate), "Locked/maxed skill was offered.");
+            var selected = offered[0];
+            int before = skills.GetSkillLevel(selected);
+            Assert(skills.TrySelectSkill(selected), "Select failed.");
+            Assert(skills.CancelSelectedSkill(), "Cancel failed.");
+            Assert(offered.SequenceEqual(skills.Choices), "Cancel rerolled cards.");
+            Assert(!skills.ConfirmSelectedSkill(), "Cancelled selection was spent.");
+            Assert(skills.TrySelectSkill(selected) && skills.ConfirmSelectedSkill(), "Confirm failed.");
+            Assert(skills.GetSkillLevel(selected) == before + 1, "Must gain exactly one level.");
+        }
+        Assert(skills.ActiveMagics.Count == 5, "One runtime per element required.");
+        Assert(skills.ActiveMagics.All(m => m.SkillLevel == 8), "Runtime levels disagree.");
+        health.TakeDamage(health.CurrentHealth - health.MaxHealth * 0.25f);
+        float beforeHeal = health.CurrentHealth;
+        progression.AddExperience(progression.RequiredExperience - progression.CurrentExperience);
+        Assert(flow.State == GameFlowState.Playing && levelUp.PendingLevelUps == 0,
+            "All-max level-up must not open a selection or queue points.");
+        AssertApproximately(health.CurrentHealth, beforeHeal + health.MaxHealth * 0.1f,
+            "All-max heal must happen exactly once");
+    }
+
+    private static void ClickStartingFire()
+    {
+        var popup = UnityEngine.Object.FindFirstObjectByType<PopupUi>();
+        if (popup == null) { Click("Element_Fire"); return; }
+        ClickPopupElement(popup, MagicElement.Fire);
+        ClickPopupButton(popup, "startButton");
+    }
+    private static void ClickSkill(MagicElement element)
+    {
+        var popup = UnityEngine.Object.FindFirstObjectByType<PopupUi>();
+        if (popup == null) { Click($"Skill_{element}"); return; }
+        ClickPopupElement(popup, element);
+    }
+    private static void ClickSkillAction(string field)
+    {
+        var popup = UnityEngine.Object.FindFirstObjectByType<PopupUi>();
+        if (popup == null) { Click("ConfirmButton"); return; }
+        ClickPopupButton(popup, field);
+    }
+    private static void ClickPopupButton(PopupUi popup, string field)
+    {
+        var button = new SerializedObject(popup).FindProperty(field).objectReferenceValue as Button;
+        Assert(button != null && button.IsActive() && button.IsInteractable(), $"Inactive button: {field}");
+        button.onClick.Invoke();
+    }
+    private static void ClickPopupElement(PopupUi popup, MagicElement element)
+    {
+        var slots = new SerializedObject(popup).FindProperty("elementSlots");
+        for (int i = 0; i < slots.arraySize; i++)
+        {
+            var slot = slots.GetArrayElementAtIndex(i);
+            if (slot.FindPropertyRelative("element").intValue != (int)element) continue;
+            var button = slot.FindPropertyRelative("button").objectReferenceValue as Button;
+            Assert(button != null && button.IsActive() && button.IsInteractable(), "Element button disabled.");
+            button.onClick.Invoke();
+            return;
+        }
+        throw new InvalidOperationException("Element slot missing.");
+    }
+
+    private static bool IsSelectionVisible()
+    {
+        var popup = UnityEngine.Object.FindFirstObjectByType<PopupUi>();
+        return popup != null && popup.gameObject.activeInHierarchy || IsActive("ElementSelectPanel");
+    }
+
     private static void Hook()
     {
         EditorApplication.update -= Tick;
@@ -137,8 +216,8 @@ public static class MvpPlayModeSmokeEditor
                     "Element selection must pause time.");
                 Assert(skills.CurrentMagic == null, "Magic must wait for element selection.");
                 AssertNormalSpawningPaused();
-                Assert(IsActive("ElementSelectPanel"), "Element selection panel missing.");
-                Click("Element_Fire");
+                Assert(IsSelectionVisible(), "Element selection panel missing.");
+                ClickStartingFire();
                 Advance(1);
                 break;
 
@@ -152,7 +231,7 @@ public static class MvpPlayModeSmokeEditor
                 Assert(skills.CurrentMagic != null, "Starting magic runtime missing.");
                 AssertApproximately(skills.CurrentMagic.Damage, 6f, "Starting damage");
                 AssertApproximately(skills.CurrentMagic.Cooldown, 0.8f, "Starting cooldown");
-                Assert(!skills.TrySelectNode(SkillTreeNodeId.CommonPower),
+                Assert(!skills.TrySelectSkill(MagicElement.Fire),
                     "Skill nodes must not be selectable outside a level-up.");
                 ValidateNormalSpawnIntegration();
 
@@ -243,9 +322,9 @@ public static class MvpPlayModeSmokeEditor
                 AssertApproximately(FindImage("Level").fillAmount, 1f / 3f, "EXP bar");
                 Assert(FindLevelText().text == "레벨3",
                     $"Level HUD must display 레벨3, got '{FindLevelText().text}'.");
-                Assert(skills.TrySelectNode(SkillTreeNodeId.CommonPower),
+                Assert(skills.TrySelectSkill(MagicElement.Fire),
                     "Public skill API could not select during level-up.");
-                Assert(skills.ConfirmSelectedNode(),
+                Assert(skills.ConfirmSelectedSkill(),
                     "Public skill API did not spend the queued skill point.");
                 Advance(5);
                 break;
@@ -255,8 +334,8 @@ public static class MvpPlayModeSmokeEditor
                 Assert(flow.State == GameFlowState.LevelUp,
                     "Queued level-up must stay paused.");
                 AssertApproximately(skills.CurrentMagic.Damage, 6.9f, "Power upgrade");
-                Click("Node_CommonRapidFire");
-                Click("ConfirmButton");
+                ClickSkill(MagicElement.Fire);
+                ClickSkillAction("gainButton");
                 Advance(6);
                 break;
 
@@ -264,20 +343,18 @@ public static class MvpPlayModeSmokeEditor
                 Assert(levelUp.PendingLevelUps == 0, "Level-up queue must be empty.");
                 Assert(flow.State == GameFlowState.Playing,
                     "Game must resume after queued selections.");
-                AssertApproximately(skills.CurrentMagic.Cooldown, 0.72f, "Rapid-fire upgrade");
+                AssertApproximately(skills.CurrentMagic.Cooldown, 0.8f, "Level 3 cooldown");
                 progression.AddExperience(10);
                 Assert(flow.State == GameFlowState.LevelUp, "Third level-up must pause game.");
-                Click("Node_CommonPierce");
-                Click("ConfirmButton");
+                ClickSkill(MagicElement.Fire);
+                ClickSkillAction("gainButton");
                 Advance(7);
                 break;
 
             case 7:
                 Assert(progression.Level == 4, "10 overflow EXP must reach level 4.");
-                Assert(skills.CurrentMagic.PierceCount == 1,
-                    "Pierce upgrade must add one pierce.");
-                Assert(skills.BonusChainTargets == 1,
-                    "Pierce upgrade must add one chain target.");
+                Assert(skills.GetSkillLevel(MagicElement.Fire) == 4, "Fire must reach level 4.");
+                AssertApproximately(skills.CurrentMagic.Cooldown, 0.72f, "Level 4 cooldown");
                 Assert(flow.State == GameFlowState.Playing,
                     "Game must resume after pierce selection.");
                 progression.AddExperience(20);
@@ -325,7 +402,7 @@ public static class MvpPlayModeSmokeEditor
                 Assert(runDirector.ElapsedCombatTime == 0f && runDirector.KillCount == 0,
                     "Restart must reset run statistics.");
                 AssertNormalSpawningPaused();
-                Click("Element_Fire");
+                ClickStartingFire();
                 Advance(10);
                 break;
 
@@ -336,6 +413,7 @@ public static class MvpPlayModeSmokeEditor
                 AssertApproximately(skills.CurrentMagic.Cooldown, 0.8f, "Restarted cooldown");
                 Assert(skills.CurrentMagic.PierceCount == 0, "Restart must reset pierce.");
                 ValidateNormalSpawnIntegration();
+                ValidateAllSkillLevels();
                 Succeed();
                 break;
         }

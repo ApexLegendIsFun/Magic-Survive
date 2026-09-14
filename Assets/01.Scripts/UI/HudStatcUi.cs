@@ -18,17 +18,8 @@ public class HudStatcUi : MonoBehaviour
     [Header("Weapon Text")]
     [SerializeField] private TextMeshProUGUI[] weaponTexts;
 
-    //해당 부분은 아직 주석처리
-    //[Header("Fusion Weapon Image")]
-    //[SerializeField] private Image fusionWeaponImage;
 
-    //[Header("Fusion Weapon Text")]
-    //[SerializeField] private TextMeshProUGUI fusionWeaponText;
 
-    //레벨업 포인트(취소시 생기는) 마찬가지로 해당부분도 주석처리
-    //[Header("LevelUp PointText & Button")]
-    //[SerializeField] private TextMeshProUGUI levelupPoint;
-    //[SerializeField] private Button levelUpButton;
 
     [Header("Data Source")]
     [SerializeField] private PlayerSkillSystem playerSkillSystem;
@@ -49,6 +40,7 @@ public class HudStatcUi : MonoBehaviour
     private void OnEnable()
     {
         Subscribe();
+        RefreshWeapons();
     }
 
     private void OnDisable()
@@ -60,8 +52,7 @@ public class HudStatcUi : MonoBehaviour
     {
         if (isSubscribed || playerSkillSystem == null) return;
 
-        playerSkillSystem.ElementUnlocked += HandleElementUnlocked;
-        //playerSkillSystem.FusionUnlocked += HandleFusionUnlocked; // 융합 미확정이라 주석처리
+        playerSkillSystem.SkillLevelChanged += HandleSkillLevelChanged;
         isSubscribed = true;
     }
 
@@ -69,30 +60,28 @@ public class HudStatcUi : MonoBehaviour
     {
         if (!isSubscribed || playerSkillSystem == null) return;
 
-        playerSkillSystem.ElementUnlocked -= HandleElementUnlocked;
-        //playerSkillSystem.FusionUnlocked -= HandleFusionUnlocked;
+        playerSkillSystem.SkillLevelChanged -= HandleSkillLevelChanged;
         isSubscribed = false;
     }
 
-    private void HandleElementUnlocked(MagicElement element)
+    private void HandleSkillLevelChanged(MagicElement element, int level) { RefreshWeapons(); }
+
+    private void RefreshWeapons()
     {
-       
-        int slotIndex = playerSkillSystem.GetOwnedElements().Count - 1;
-
-        var targetNodeId = SkillTreeCatalog.GetTargetNode(element);
-        var targetNode = SkillTreeCatalog.GetNode(targetNodeId);
-        Sprite icon = GetElementIcon(element);
-
-        SetWeapon(slotIndex, icon, targetNode.DisplayName);
+        if (playerSkillSystem == null || weaponImages == null) return;
+        var elements = playerSkillSystem.GetOwnedElements();
+        for (int i = 0; i < weaponImages.Length; i++)
+        {
+            bool owned = i < elements.Count;
+            if (weaponImages[i] != null) weaponImages[i].enabled = owned;
+            if (weaponTexts != null && i < weaponTexts.Length && weaponTexts[i] != null)
+                weaponTexts[i].text = string.Empty;
+            if (!owned) continue;
+            var element = elements[i];
+            SetWeapon(i, GetElementIcon(element),
+                $"{MagicContentCatalog.GetDisplayName(element)} Lv.{playerSkillSystem.GetSkillLevel(element)}");
+        }
     }
-
-    //융합은 아직 주석처리 
-    //private void HandleFusionUnlocked(FusionKind fusion)
-    //{
-    //    var fusionDef = SkillTreeCatalog.GetFusion(fusion);
-    //    SetFusionWeapon(GetFusionIcon(fusion), fusionDef.DisplayName);
-    //}
-
 
     private Sprite GetElementIcon(MagicElement element)
     {
@@ -111,14 +100,9 @@ public class HudStatcUi : MonoBehaviour
             Debug.Log($"{index}");
             return;
         }
-        weaponImages[index].sprite = icon;
-        weaponTexts[index].text = weaponName;
+        if (weaponImages[index] != null) weaponImages[index].sprite = icon;
+        if (weaponTexts != null && index < weaponTexts.Length && weaponTexts[index] != null)
+            weaponTexts[index].text = weaponName;
     }
 
-    //융합은 아직 주석처리
-    //public void SetFusionWeapon(Sprite icon, string weaponName)
-    //{
-    //    fusionWeaponImage.sprite = icon;
-    //    fusionWeaponText.text = weaponName;
-    //}
 }

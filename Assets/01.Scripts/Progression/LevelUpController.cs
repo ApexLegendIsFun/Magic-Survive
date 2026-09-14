@@ -10,6 +10,9 @@ public sealed class LevelUpController : MonoBehaviour
     [SerializeField] private RunDirector runDirector;
     [SerializeField] private GrayboxGameFlowView view;
 
+    private PopupUi popupView;
+    private bool UsePopup => popupView != null && popupView.IsConfigured;
+
     private int pendingLevelUps;
     private bool isPresenting;
     private bool isSubscribed;
@@ -21,7 +24,7 @@ public sealed class LevelUpController : MonoBehaviour
         pendingLevelUps > 0 &&
         gameFlowController != null &&
         gameFlowController.State == GameFlowState.LevelUp;
-    public SkillTreeNodeId? PendingSelection => playerSkillSystem != null
+    public MagicElement? PendingSelection => playerSkillSystem != null
         ? playerSkillSystem.Tree.PendingSelection
         : null;
 
@@ -55,6 +58,7 @@ public sealed class LevelUpController : MonoBehaviour
         GrayboxGameFlowView gameFlowView)
     {
         Unsubscribe();
+        popupView = FindFirstObjectByType<PopupUi>(FindObjectsInactive.Include);
 
         playerProgression = progression;
         playerSkillSystem = skillSystem;
@@ -78,11 +82,11 @@ public sealed class LevelUpController : MonoBehaviour
             return false;
         }
 
-        view?.HideElementSelect();
+        HideElementSelection();
         return gameFlowController.TryBeginPlaying();
     }
 
-    public bool TrySelectNode(SkillTreeNodeId nodeId)
+    public bool TrySelectSkill(MagicElement element)
     {
         if (!isPresenting || gameFlowController == null || playerSkillSystem == null ||
             gameFlowController.State != GameFlowState.LevelUp)
@@ -90,16 +94,16 @@ public sealed class LevelUpController : MonoBehaviour
             return false;
         }
 
-        bool selected = playerSkillSystem.TrySelectNode(nodeId);
+        bool selected = playerSkillSystem.TrySelectSkill(element);
         if (selected)
         {
-            view?.RefreshSkillTree(playerSkillSystem);
+            RefreshSkillSelection();
         }
 
         return selected;
     }
 
-    public bool ConfirmSelectedNode()
+    public bool ConfirmSelectedSkill()
     {
         if (!isPresenting || gameFlowController == null || playerSkillSystem == null ||
             gameFlowController.State != GameFlowState.LevelUp)
@@ -107,10 +111,10 @@ public sealed class LevelUpController : MonoBehaviour
             return false;
         }
 
-        return playerSkillSystem.ConfirmSelectedNode();
+        return playerSkillSystem.ConfirmSelectedSkill();
     }
 
-    private void HandleSkillPointSpent(SkillTreeNodeId _)
+    private void HandleSkillPointSpent(MagicElement _)
     {
         if (!CanSpendSkillPoint)
         {
@@ -119,7 +123,7 @@ public sealed class LevelUpController : MonoBehaviour
 
         pendingLevelUps = Mathf.Max(0, pendingLevelUps - 1);
         isPresenting = false;
-        view?.HideLevelUp();
+        HideSkillSelection();
         LevelUpClosed?.Invoke();
 
         if (pendingLevelUps > 0)
@@ -151,27 +155,27 @@ public sealed class LevelUpController : MonoBehaviour
         switch (state)
         {
             case GameFlowState.ElementSelect:
-                view?.ShowElementSelect(SkillTreeCatalog.PentagonElements);
+                ShowElementSelection();
                 break;
 
             case GameFlowState.Playing:
             case GameFlowState.Boss:
-                view?.HideElementSelect();
+                HideElementSelection();
                 view?.HideResult();
                 TryPresentNextLevelUp();
                 break;
 
             case GameFlowState.LevelUp:
-                view?.HideElementSelect();
+                HideElementSelection();
                 break;
 
             case GameFlowState.Victory:
             case GameFlowState.GameOver:
                 pendingLevelUps = 0;
                 isPresenting = false;
-                playerSkillSystem?.CancelSelectedNode();
-                view?.HideElementSelect();
-                view?.HideLevelUp();
+                playerSkillSystem?.CancelSelectedSkill();
+                HideElementSelection();
+                HideSkillSelection();
                 if (runDirector == null || runDirector.Result == null)
                 {
                     view?.ShowGameOver();
@@ -184,7 +188,7 @@ public sealed class LevelUpController : MonoBehaviour
     {
         if (isPresenting && playerSkillSystem != null)
         {
-            view?.RefreshSkillTree(playerSkillSystem);
+            RefreshSkillSelection();
         }
     }
 
@@ -217,6 +221,21 @@ public sealed class LevelUpController : MonoBehaviour
             return;
         }
 
+        if (playerSkillSystem.Tree.IsMaxed)
+        {
+            // PlayerProgression already heals 10% once per earned level.
+            pendingLevelUps = 0;
+            if (gameFlowController.State == GameFlowState.LevelUp)
+                gameFlowController.TryResumeActiveState();
+            return;
+        }
+        playerSkillSystem.PrepareChoices();
+        if (playerSkillSystem.Choices.Count == 0)
+        {
+            Debug.LogError("Level-up has no usable skill definitions.", this);
+            return;
+        }
+
         if (gameFlowController.State != GameFlowState.LevelUp &&
             !gameFlowController.TryEnterLevelUp())
         {
@@ -224,25 +243,60 @@ public sealed class LevelUpController : MonoBehaviour
         }
 
         isPresenting = true;
-        view?.ShowSkillTree(playerSkillSystem);
+        ShowSkillSelection();
         LevelUpOpened?.Invoke();
+    }
+
+    private void ShowElementSelection()
+    {
+        if (UsePopup)
+        {
+            view?.HideElementSelect();
+            popupView.ShowElementSelect();
+        }
+        else view?.ShowElementSelect(MagicContentCatalog.PentagonElements);
+    }
+    private void HideElementSelection()
+    {
+        view?.HideElementSelect();
+        if (UsePopup) popupView.HideLevelUp();
+    }
+    private void ShowSkillSelection()
+    {
+        if (UsePopup)
+        {
+            view?.HideLevelUp();
+            popupView.ShowSkillTree(playerSkillSystem);
+        }
+        else view?.ShowSkillTree(playerSkillSystem);
+    }
+    private void RefreshSkillSelection()
+    {
+        if (UsePopup) popupView.RefreshSkillTree(playerSkillSystem);
+        else view?.RefreshSkillTree(playerSkillSystem);
+    }
+    private void HideSkillSelection()
+    {
+        view?.HideLevelUp();
+        if (UsePopup) popupView.HideLevelUp();
     }
 
     private void SyncViewToCurrentState()
     {
-        if (gameFlowController == null || view == null)
+        if (gameFlowController == null)
         {
             return;
         }
 
-        view.HideElementSelect();
-        view.HideLevelUp();
-        view.HideResult();
+        HideElementSelection();
+        HideSkillSelection();
+        view?.HideResult();
         HandleStateChanged(gameFlowController.State);
     }
 
     private void ResolveLocalDependencies()
     {
+        popupView = FindFirstObjectByType<PopupUi>(FindObjectsInactive.Include);
         if (playerProgression == null)
         {
             playerProgression = GetComponent<PlayerProgression>();
@@ -300,7 +354,7 @@ public sealed class LevelUpController : MonoBehaviour
         if (view != null)
         {
             view.StartingElementSelected += HandleStartingElementSelected;
-            view.NodeSelected += HandleNodeSelected;
+            view.SkillSelected += HandleSkillSelected;
             view.ConfirmRequested += HandleConfirmRequested;
             view.RestartRequested += HandleRestartRequested;
             view.TitleRequested += HandleTitleRequested;
@@ -340,7 +394,7 @@ public sealed class LevelUpController : MonoBehaviour
         if (view != null)
         {
             view.StartingElementSelected -= HandleStartingElementSelected;
-            view.NodeSelected -= HandleNodeSelected;
+            view.SkillSelected -= HandleSkillSelected;
             view.ConfirmRequested -= HandleConfirmRequested;
             view.RestartRequested -= HandleRestartRequested;
             view.TitleRequested -= HandleTitleRequested;
@@ -351,7 +405,7 @@ public sealed class LevelUpController : MonoBehaviour
 
     private void HandleConfirmRequested()
     {
-        ConfirmSelectedNode();
+        ConfirmSelectedSkill();
     }
 
     private void HandleStartingElementSelected(MagicElement element)
@@ -359,8 +413,8 @@ public sealed class LevelUpController : MonoBehaviour
         TryChooseStartingElement(element);
     }
 
-    private void HandleNodeSelected(SkillTreeNodeId nodeId)
+    private void HandleSkillSelected(MagicElement element)
     {
-        TrySelectNode(nodeId);
+        TrySelectSkill(element);
     }
 }

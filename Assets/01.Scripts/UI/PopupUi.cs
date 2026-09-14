@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 
 public class PopupUi : MonoBehaviour
 {
-    // ¿ø¼Ò ½½·Ô
+    // ì›ì†Œ ìŠ¬ë¡¯
     [System.Serializable]
     public class ElementSlot
     {
@@ -20,30 +20,12 @@ public class PopupUi : MonoBehaviour
         public GameObject pendingHighlight;
     }
 
-    // PS. À¶ÇÕºÎºÐÀº ÀüºÎ ÁÖ¼®Ã³¸®Çß½À´Ï´Ù.
-
-
-    // À¶ÇÕ (ÇöÀç ¹ÌÁ¤ÀÌ¹Ç·Î ÁÖ¼®Ã³¸®)
-    //[System.Serializable]
-    //public class FusionSlot
-    //{
-    //    public FusionKind fusion;
-    //    public Button button;
-    //    public Image icon;
-    //    public TextMeshProUGUI statusLabel;
-
-    //    public GameObject lockIcon;
-    //    public GameObject checkmark;
-    //    public GameObject pendingHighlight;
-    //}
-
-
     //  LevelUpController
     [Header("Level Up Controller")]
     [SerializeField] private LevelUpController levelUpController;
 
- 
-    // ½ÃÀÛ ¿ø¼Ò ¼±ÅÃ
+
+    // ì‹œìž‘ ì›ì†Œ ì„ íƒ
 
     [Header("Start Select")]
     [SerializeField] private Button[] startItemButtons;
@@ -57,429 +39,166 @@ public class PopupUi : MonoBehaviour
 
     private MagicElement selectedStartElement;
 
-    // ·¹º§¾÷
+    // ë ˆë²¨ì—…
     [Header("LevelUp")]
     [SerializeField] private GameObject levelupTitle;
     [SerializeField] private GameObject levelUpButtonGroup;
 
-    [SerializeField] private Button gainButton; //È¹µæ ¹öÆ°
-    [SerializeField] private Button cancelButton; //Ãë¼Ò ¹öÆ° 
+    [SerializeField] private Button gainButton; //íšë“ ë²„íŠ¼
+    [SerializeField] private Button cancelButton; //ì·¨ì†Œ ë²„íŠ¼
 
-    // ·¹º§¾÷ ¿ø¼Ò ½½·Ô
+    // ë ˆë²¨ì—… ì›ì†Œ ìŠ¬ë¡¯
     [Header("LevelUp Element Slots")]
     [SerializeField] private ElementSlot[] elementSlots;
 
-    // ·¹º§¾÷ À¶ÇÕ ½½·Ô
-    //[Header("LevelUp Fusion Slots")]
-    //[SerializeField] private FusionSlot[] fusionSlots;
-
-    // Áß¾Ó ¹Ì¸®º¸±â
     [Header("Selected Node Preview")]
     [SerializeField] private TextMeshProUGUI previewNameText;
     [SerializeField] private TextMeshProUGUI previewDescriptionText;
 
     private PlayerSkillSystem currentSkillSystem;
+    private bool isLevelUpMode;
+    private bool initialized;
 
-    private bool isLevelUpMode = false;
+    public bool IsConfigured => startButton != null && gainButton != null &&
+        elementSlots != null && elementSlots.Length == 5;
 
-
-    // ÃÊ±âÈ­
-
-    private void Awake()
+    private void Awake() { InitializeButtons(); }
+    private void InitializeButtons()
     {
-        if (levelUpController == null)
-        {
-            levelUpController = FindFirstObjectByType<LevelUpController>();
-        }
-    }
-
-
-    private void Start()
-    {
-        SetupStartSelect();
-
-        // ·¹º§¾÷ ¹öÆ°
-        gainButton.onClick.AddListener(OnClickGain);
-        cancelButton.onClick.AddListener(OnClickCancel);
-
-        // ¿ø¼Ò ½½·Ô
+        if (initialized) return;
+        initialized = true;
+        if (levelUpController == null) levelUpController = FindFirstObjectByType<LevelUpController>();
+        if (startButton != null) startButton.onClick.AddListener(OnClickStart);
+        if (gainButton != null) gainButton.onClick.AddListener(OnClickGain);
+        if (cancelButton != null) cancelButton.onClick.AddListener(OnClickCancel);
+        if (elementSlots == null) return;
         foreach (var slot in elementSlots)
         {
             var captured = slot;
-
-            captured.button.onClick.AddListener(
-                () => OnClickElementSlot(captured)
-            );
+            if (captured.button == null) continue;
+            // The authored prefab shares each button between starting selection and level-up.
+            captured.button.onClick.AddListener(() => OnClickElement(captured.element));
         }
-
-        // À¶ÇÕ ½½·Ô
-        //foreach (var slot in fusionSlots)
-        //{
-        //    var captured = slot;
-
-        //    captured.button.onClick.AddListener(
-        //        () => OnClickFusionSlot(captured)
-        //    );
-        //}
-    }
-
-
-    // ½ÃÀÛ ¿ø¼Ò ¼±ÅÃ
-
-    private void SetupStartSelect()
-    {
+        if (startItemButtons == null) return;
         for (int i = 0; i < startItemButtons.Length; i++)
         {
             int index = i;
-
-            // Å¬¸¯
-            startItemButtons[i].onClick.AddListener(
-                () => SelectStartElement(index)
-            );
-
-            // È£¹ö
-            EventTrigger trigger =
-                startItemButtons[i].gameObject.GetComponent<EventTrigger>();
-
-            if (trigger == null)
-            {
-                trigger =
-                    startItemButtons[i].gameObject.AddComponent<EventTrigger>();
-            }
-
-            EventTrigger.Entry pointerEnter =
-                new EventTrigger.Entry();
-
-            pointerEnter.eventID =
-                EventTriggerType.PointerEnter;
-
-            pointerEnter.callback.AddListener(
-                (_) => startItemOutline[index].color = hoverColor
-            );
-
-
-            EventTrigger.Entry pointerExit =
-                new EventTrigger.Entry();
-
-            pointerExit.eventID =
-                EventTriggerType.PointerExit;
-
-            pointerExit.callback.AddListener(
-                (_) => startItemOutline[index].color = normalColor
-            );
-
-            trigger.triggers.Add(pointerEnter);
-            trigger.triggers.Add(pointerExit);
+            if (startItemButtons[i] == null) continue;
+            EventTrigger trigger = startItemButtons[i].GetComponent<EventTrigger>();
+            if (trigger == null) trigger = startItemButtons[i].gameObject.AddComponent<EventTrigger>();
+            var enter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+            enter.callback.AddListener(_ => SetOutline(index, hoverColor));
+            var exit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+            exit.callback.AddListener(_ => SetOutline(index, normalColor));
+            trigger.triggers.Add(enter);
+            trigger.triggers.Add(exit);
         }
-
-        startButton.onClick.AddListener(OnClickStart);
-
-        // Ã³À½¿¡´Â 0¹ø ¿ø¼Ò ¼±ÅÃ
-        SelectStartElement(0);
     }
-
-
-    private void SelectStartElement(int index)
+    private void SetOutline(int index, Color color)
     {
-        selectedStartElement = (MagicElement)index;
-
-        var chain =
-            LevelUpSlotMapper.GetElementChain(selectedStartElement);
-
-        var def = chain[0];
-
-        previewNameText.text = def.DisplayName;
-        previewDescriptionText.text = def.Description;
+        if (startItemOutline != null && index < startItemOutline.Length && startItemOutline[index] != null)
+            startItemOutline[index].color = color;
     }
-
-    // ½ÃÀÛ ¿ø¼Ò È®Á¤
-    private void OnClickStart()
+    private static void SetVisible(GameObject target, bool visible)
     {
-        if (levelUpController == null)
-        {
-            return;
-        }
-
-        levelUpController.TryChooseStartingElement(
-            selectedStartElement
-        );
-
-        Debug.Log(
-            $"{selectedStartElement} ½ÃÀÛ ¿ø¼Ò·Î ¼±ÅÃµÊ"
-        );
-
-        SwitchToLevelUpMode();
-
-        //½ÃÀÛ ¼±ÅÃ ÆË¾÷ ´Ý±â.
-        gameObject.SetActive(false);
+        if (target != null) target.SetActive(visible);
     }
-
-
-
-    // ·¹º§¾÷ ¸ðµå ÀüÈ¯
-    private void SwitchToLevelUpMode()
+    private void SetMode(bool levelUp)
     {
-        isLevelUpMode = true;
-
-        startTitle.SetActive(false);
-        startButton.gameObject.SetActive(false);
-
-        levelupTitle.SetActive(true);
-        levelUpButtonGroup.SetActive(true);
+        isLevelUpMode = levelUp;
+        SetVisible(startTitle, !levelUp);
+        if (startButton != null) SetVisible(startButton.gameObject, !levelUp);
+        SetVisible(levelupTitle, levelUp);
+        SetVisible(levelUpButtonGroup, levelUp);
     }
-
-    // ·¹º§¾÷ UI Ç¥½Ã
-    public void ShowSkillTree(PlayerSkillSystem skillSystem)
+    public void ShowElementSelect()
     {
-        currentSkillSystem = skillSystem;
-
-        RefreshSkillTree(skillSystem);
-    }
-
-
-    public void RefreshSkillTree(PlayerSkillSystem skillSystem)
-    {
-        if (skillSystem == null)
-        {
-            return;
-        }
-
-        currentSkillSystem = skillSystem;
-
-        var pending =
-            skillSystem.Tree.PendingSelection;
-
-
-        // ¿ø¼Ò
+        InitializeButtons();
+        gameObject.SetActive(true);
+        SetMode(false);
         foreach (var slot in elementSlots)
         {
-            var chain =
-                LevelUpSlotMapper.GetElementChain(slot.element);
-
-            var (node, maxed) =
-                LevelUpSlotMapper.GetRepresentativeNode(
-                    chain,
-                    skillSystem.Tree
-                );
-
-            var state =
-                skillSystem.GetNodePreview(node.Id).State;
-
-            ApplySlotVisual(
-                node,
-                maxed,
-                pending,
-                state,
-                slot.button,
-                slot.statusLabel,
-                slot.lockIcon,
-                slot.checkmark,
-                slot.pendingHighlight
-            );
+            if (slot.button != null)
+            {
+                slot.button.gameObject.SetActive(true);
+                slot.button.interactable = true;
+            }
+            SetVisible(slot.lockIcon, false);
+            SetVisible(slot.checkmark, false);
+            SetVisible(slot.pendingHighlight, false);
+            if (slot.statusLabel != null) slot.statusLabel.text = string.Empty;
         }
-
-
- 
-        //À¶ÇÕ ¾ÆÁ÷Àº ¹ÌÁ¤. => (ÃßÈÄ °¡´ÉÇÏ´Ù¸é Ãß°¡ )
-        //foreach (var slot in fusionSlots)
-        //{
-        //    var chain =
-        //        LevelUpSlotMapper.GetFusionChain(slot.fusion);
-
-        //    var (node, maxed) =
-        //        LevelUpSlotMapper.GetRepresentativeNode(
-        //            chain,
-        //            skillSystem.Tree
-        //        );
-
-        //    var state =
-        //        skillSystem.GetNodePreview(node.Id).State;
-
-
-        //    // ¾ÆÁ÷ À¶ÇÕ Á¶°ÇÀÌ ¾È µÇ¸é ¼û±è
-        //    slot.button.gameObject.SetActive(
-        //        state != SkillTreeNodeState.Hidden
-        //    );
-
-        //    if (state == SkillTreeNodeState.Hidden)
-        //    {
-        //        continue;
-        //    }
-
-
-        //    ApplySlotVisual(
-        //        node,
-        //        maxed,
-        //        pending,
-        //        state,
-        //        slot.button,
-        //        slot.statusLabel,
-        //        slot.lockIcon,
-        //        slot.checkmark,
-        //        slot.pendingHighlight
-        //    );
-        //}
-
-
-        // ¼±ÅÃµÈ ³ëµå°¡ ÀÖÀ» ¶§¸¸ È¹µæ °¡´É
-        gainButton.interactable =
-            pending.HasValue;
+        OnClickElement(MagicElement.Fire);
     }
-
-
-    // ½½·Ô UI °»½Å
-
-    private void ApplySlotVisual(
-        SkillTreeNodeDefinition node,
-        bool maxed,
-        SkillTreeNodeId? pending,
-        SkillTreeNodeState state,
-        Button button,
-        TextMeshProUGUI statusLabel,
-        GameObject lockIcon,
-        GameObject checkmark,
-        GameObject pendingHighlight)
+    private void OnClickElement(MagicElement element)
     {
-        bool isPending =
-            pending.HasValue &&
-            pending.Value.Equals(node.Id);
-
-
-        button.interactable =
-            state == SkillTreeNodeState.Available;
-
-        lockIcon.SetActive(
-            state == SkillTreeNodeState.Locked
-        );
-
-        checkmark.SetActive(
-            state == SkillTreeNodeState.Owned
-        );
-
-        pendingHighlight.SetActive(
-            isPending
-        );
-
-
-        statusLabel.text =
-            maxed
-                ? "¿Ï·á"
-                : state == SkillTreeNodeState.Owned
-                    ? "º¸À¯"
-                    : state == SkillTreeNodeState.Locked
-                        ? "Àá±è"
-                        : string.Empty;
-    }
-
-
-    // ¿ø¼Ò ½½·Ô Å¬¸¯
-
-
-    private void OnClickElementSlot(ElementSlot slot)
-    {
-        if (currentSkillSystem == null)
+        if (!isLevelUpMode)
         {
+            selectedStartElement = element;
+            ShowPreview(element, 1);
             return;
         }
-
-        var chain =
-            LevelUpSlotMapper.GetElementChain(slot.element);
-
-        var (node, maxed) =
-            LevelUpSlotMapper.GetRepresentativeNode(
-                chain,
-                currentSkillSystem.Tree
-            );
-
-        TrySelectAndPreview(node, maxed);
-    }
-
-
-    // À¶ÇÕ ½½·Ô Å¬¸¯
-    //private void OnClickFusionSlot(FusionSlot slot)
-    //{
-    //    if (currentSkillSystem == null)
-    //    {
-    //        return;
-    //    }
-
-    //    var chain =
-    //        LevelUpSlotMapper.GetFusionChain(slot.fusion);
-
-    //    var (node, maxed) =
-    //        LevelUpSlotMapper.GetRepresentativeNode(
-    //            chain,
-    //            currentSkillSystem.Tree
-    //        );
-
-    //    TrySelectAndPreview(node, maxed);
-    //}
-
-
-    // ³ëµå ¼±ÅÃ
-
-    private void TrySelectAndPreview(
-        SkillTreeNodeDefinition node,
-        bool maxed)
-    {
-        if (maxed)
-        {
-            return;
-        }
-
-        if (levelUpController == null)
-        {
-            return;
-        }
-
-        bool success =
-            levelUpController.TrySelectNode(node.Id);
-
-        if (!success)
-        {
-            return;
-        }
-
-
-        // Áß¾Ó ¹Ì¸®º¸±â
-        previewNameText.text =
-            node.DisplayName;
-
-        previewDescriptionText.text =
-            node.Description;
-
-
-        // ½½·Ô »óÅÂ °»½Å
+        if (currentSkillSystem == null || levelUpController == null ||
+            !levelUpController.TrySelectSkill(element)) return;
+        ShowPreview(element, LevelUpSlotMapper.GetPreviewLevel(element, currentSkillSystem.Tree));
         RefreshSkillTree(currentSkillSystem);
     }
-
-
-    // ·¹º§¾÷ È¹µæ
-    // ·¹º§¾÷ Ui´Â  ÇöÀç ¸¸µé¾î³õÀº»óÅÂ. ¿¬µ¿¸¸ ÇÏ¸éµÊ.
+    private void ShowPreview(MagicElement element, int level)
+    {
+        if (previewNameText != null) previewNameText.text = MagicContentCatalog.GetDisplayName(element);
+        if (previewDescriptionText != null)
+            previewDescriptionText.text = MagicContentCatalog.GetLevelDescription(element, level);
+    }
+    private void OnClickStart()
+    {
+        if (levelUpController != null) levelUpController.TryChooseStartingElement(selectedStartElement);
+    }
+    public void ShowSkillTree(PlayerSkillSystem skillSystem)
+    {
+        InitializeButtons();
+        currentSkillSystem = skillSystem;
+        gameObject.SetActive(true);
+        SetMode(true);
+        if (previewNameText != null) previewNameText.text = string.Empty;
+        if (previewDescriptionText != null) previewDescriptionText.text = string.Empty;
+        RefreshSkillTree(skillSystem);
+    }
+    public void RefreshSkillTree(PlayerSkillSystem skillSystem)
+    {
+        if (skillSystem == null) return;
+        currentSkillSystem = skillSystem;
+        foreach (var slot in elementSlots)
+        {
+            bool offered = skillSystem.IsOffered(slot.element);
+            if (slot.button != null)
+            {
+                slot.button.gameObject.SetActive(offered);
+                slot.button.interactable = offered;
+            }
+            bool maxed = LevelUpSlotMapper.IsMaxed(slot.element, skillSystem.Tree);
+            SetVisible(slot.lockIcon, !offered && !maxed);
+            SetVisible(slot.checkmark, maxed);
+            SetVisible(slot.pendingHighlight, skillSystem.Tree.PendingSelection == slot.element);
+            if (slot.statusLabel != null) slot.statusLabel.text = maxed ? "MAX" :
+                $"Lv.{skillSystem.GetSkillLevel(slot.element)} â†’ {LevelUpSlotMapper.GetPreviewLevel(slot.element, skillSystem.Tree)}";
+        }
+        if (gainButton != null) gainButton.interactable = skillSystem.Tree.PendingSelection.HasValue;
+    }
     private void OnClickGain()
     {
-        if (levelUpController == null)
-        {
-            return;
-        }
-
+        if (levelUpController != null) levelUpController.ConfirmSelectedSkill();
     }
-
-
-    // ·¹º§¾÷ Ãë¼Ò
-
     private void OnClickCancel()
     {
-
-        //¾ÆÁ÷Àº Äµ½½±â´ÉÀÌ Á¸ÀçÇÏÁö ¾ÊÀ½. 
-
-      
+        if (currentSkillSystem == null) return;
+        currentSkillSystem.CancelSelectedSkill();
+        if (previewNameText != null) previewNameText.text = string.Empty;
+        if (previewDescriptionText != null) previewDescriptionText.text = string.Empty;
+        RefreshSkillTree(currentSkillSystem);
     }
-
-    // ·¹º§¾÷ UI ¼û±è
-
     public void HideLevelUp()
     {
         currentSkillSystem = null;
+        gameObject.SetActive(false);
     }
 }
