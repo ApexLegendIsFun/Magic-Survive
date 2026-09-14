@@ -2642,7 +2642,7 @@ GameObject:
   - component: {fileID: 3126374031775526771}
   - component: {fileID: 2455562812265742242}
   m_Layer: 0
-  m_Name: Lv_Text
+  m_Name: Lv_Text_Earth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9459,7 +9459,7 @@ GameObject:
   - component: {fileID: 5221527981462197051}
   - component: {fileID: 2135727818344133453}
   m_Layer: 0
-  m_Name: Lv_Text
+  m_Name: Lv_Text_Dark
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10811,7 +10811,7 @@ GameObject:
   - component: {fileID: 6760339804651196296}
   - component: {fileID: 6058253761630638295}
   m_Layer: 0
-  m_Name: Fusion_Item_Text
+  m_Name: Lv_Text_Frozen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11457,7 +11457,7 @@ GameObject:
   - component: {fileID: 7661478249086732623}
   - component: {fileID: 6365860212157386864}
   m_Layer: 0
-  m_Name: Lv_Text
+  m_Name: Lv_Text_Lifhtning
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -14803,7 +14803,7 @@ GameObject:
   - component: {fileID: 7937219426704345866}
   - component: {fileID: 7183877573507981821}
   m_Layer: 0
-  m_Name: Lv_Text
+  m_Name: Lv_Text_Fire
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -15851,20 +15851,26 @@ MonoBehaviour:
   weaponImages:
   - {fileID: 238684624511531788}
   - {fileID: 4812531707465630889}
+  - {fileID: 6123565826186999207}
+  - {fileID: 4114268270267563924}
+  - {fileID: 8923402769477038671}
   weaponTexts:
   - {fileID: 7183877573507981821}
   - {fileID: 6365860212157386864}
+  - {fileID: 6058253761630638295}
+  - {fileID: 2455562812265742242}
+  - {fileID: 2135727818344133453}
   playerSkillSystem: {fileID: 0}
   elementIcons:
   - element: 0
     icon: {fileID: 3563714690819521456, guid: 9732ee78ef9781c43a832e0a62bcf9cc, type: 3}
-  - element: 1
-    icon: {fileID: -6434799496147694636, guid: a62e9f08b87beb849876857780b6cb26, type: 3}
   - element: 2
-    icon: {fileID: 0}
-  - element: 3
+    icon: {fileID: -6434799496147694636, guid: a62e9f08b87beb849876857780b6cb26, type: 3}
+  - element: 1
     icon: {fileID: 0}
   - element: 4
+    icon: {fileID: 0}
+  - element: 3
     icon: {fileID: 0}
 --- !u!224 &8542559810272268417 stripped
 RectTransform:

@@ -18,9 +18,6 @@ public class HudStatcUi : MonoBehaviour
     [Header("Weapon Text")]
     [SerializeField] private TextMeshProUGUI[] weaponTexts;
 
-
-
-
     [Header("Data Source")]
     [SerializeField] private PlayerSkillSystem playerSkillSystem;
 
@@ -66,20 +63,29 @@ public class HudStatcUi : MonoBehaviour
 
     private void HandleSkillLevelChanged(MagicElement element, int level) { RefreshWeapons(); }
 
+    // 보유 여부와 무관하게 5칸 전부 고정 순서로 항상 표시, 레벨만 갱신 (미보유는 Lv.0)
     private void RefreshWeapons()
     {
         if (playerSkillSystem == null || weaponImages == null) return;
-        var elements = playerSkillSystem.GetOwnedElements();
+
+        var elements = MagicContentCatalog.PentagonElements; // 고정 순서 (오각형과 동일)
+
         for (int i = 0; i < weaponImages.Length; i++)
         {
-            bool owned = i < elements.Count;
-            if (weaponImages[i] != null) weaponImages[i].enabled = owned;
-            if (weaponTexts != null && i < weaponTexts.Length && weaponTexts[i] != null)
-                weaponTexts[i].text = string.Empty;
-            if (!owned) continue;
+            bool hasSlotElement = i < elements.Count;
+
+            if (weaponImages[i] != null) weaponImages[i].enabled = hasSlotElement;
+            if (!hasSlotElement)
+            {
+                if (weaponTexts != null && i < weaponTexts.Length && weaponTexts[i] != null)
+                    weaponTexts[i].text = string.Empty;
+                continue;
+            }
+
             var element = elements[i];
-            SetWeapon(i, GetElementIcon(element),
-                $"{MagicContentCatalog.GetDisplayName(element)} Lv.{playerSkillSystem.GetSkillLevel(element)}");
+            int level = playerSkillSystem.GetSkillLevel(element); // 미보유면 0
+
+            SetWeapon(i, GetElementIcon(element), $"Lv.{level}");
         }
     }
 

@@ -127,9 +127,13 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 471808091369723710, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1520250931329899718, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1852801818649451300, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
       propertyPath: m_LocalPosition.x
@@ -174,6 +178,10 @@ PrefabInstance:
     - target: {fileID: 3054636065095016730, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
       propertyPath: m_Name
       value: GameplayUI
+      objectReference: {fileID: 0}
+    - target: {fileID: 3054636065095016730, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3278980860205924781, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
       propertyPath: m_text
@@ -462,7 +470,7 @@ GameObject:
   - component: {fileID: 524199721}
   - component: {fileID: 524199720}
   m_Layer: 0
-  m_Name: 'fifth '
+  m_Name: 'Fifth '
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1246,7 +1254,7 @@ GameObject:
   - component: {fileID: 2000592133}
   - component: {fileID: 2000592132}
   m_Layer: 0
-  m_Name: fourth
+  m_Name: Fourth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
