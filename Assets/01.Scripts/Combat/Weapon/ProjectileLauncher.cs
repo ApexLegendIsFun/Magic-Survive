@@ -17,6 +17,8 @@ public class ProjectileLauncher : MonoBehaviour
     private readonly Dictionary<Projectile, ObjectPool<Projectile>>
         pools = new Dictionary<Projectile, ObjectPool<Projectile>>();
 
+    // 원소별 적중 횟수. 씬이 다시 로드되면 이 컴포넌트와 함께 새로 만들어짐
+    private readonly ElementHitCounter hitCounter = new ElementHitCounter();
 
     public int ActiveCount => activeProjectiles.Count;
 
@@ -38,7 +40,6 @@ public class ProjectileLauncher : MonoBehaviour
     /// Instantiate를 직접 부르지 말 것
     /// </summary>
 
-
     // [연동:성장]
     public void Fire(in ProjectileSpec spec, Vector2 origin, Vector2 direction)
     {
@@ -53,7 +54,6 @@ public class ProjectileLauncher : MonoBehaviour
         }
 
         Projectile projectile = GetPool(prefab).Get();
-
 
         projectile.Launch(spec, origin, direction);
 
@@ -136,7 +136,7 @@ public class ProjectileLauncher : MonoBehaviour
             }
 
             // 개별 Projectile.Update 대신 Launcher에서 Tick 호출
-            projectile.Tick(deltaTime, enemyManager);
+            projectile.Tick(deltaTime, enemyManager, hitCounter);
 
         }
 

@@ -21,7 +21,14 @@ public static class ElementReactionValues
     // 냉기 3레벨 빙결
     public const float FreezeDurationSeconds = 0.6f;
 
+    // 적중 카운터 기반 효과의 발동 주기. 번개 대지 모두 3번째 적중마다
+    public const int HitsPerTrigger = 3;
+
+    // 대지 3레벨 충격파
+    public const float ShockwaveDamage = 10f;
+    public const float ShockwaveRadius = 1.5f;
+
     // 암흑 3레벨. 3중첩 대상이 받는 모든 피해 증가
-    // 1회성이 아니라 대상에 남는 지속 상태
+    // 1회성이 아니라 대상에 남는 지속
     public const float DarkAmplificationBonus = 0.15f;
 }

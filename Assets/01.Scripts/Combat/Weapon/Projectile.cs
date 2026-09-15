@@ -58,8 +58,16 @@ public class Projectile : MonoBehaviour
         transform.right = direction;
     }
 
-    // ProjectileLauncher에서 매 프레임 호출
+    // 기존 2인자 호출부 호환용.
+    // 호출: Assets/Editor/AssetPresentationValidation.cs (선동님 파일, 3곳)
+    // 그쪽이 3인자로 바뀌면 이 오버로드는 제거
     public void Tick(float deltaTime, EnemyManager enemyManager)
+    {
+        Tick(deltaTime, enemyManager, null);
+    }
+
+    // ProjectileLauncher에서 매 프레임 호출
+    public void Tick(float deltaTime, EnemyManager enemyManager, ElementHitCounter hitCounter)
     {
         if (!isActive)
         {
@@ -68,7 +76,7 @@ public class Projectile : MonoBehaviour
 
         // TODO: step이 HitRadius*2보다 커지면 적 통과함. 속도 향상 시에 재검토
         float step = spec.Speed * deltaTime;
- 
+
         Vector2 nextPosition = (Vector2)transform.position + direction * step;
 
         transform.position = nextPosition;
@@ -76,7 +84,7 @@ public class Projectile : MonoBehaviour
         traveledDistance += step;
 
         // 적 명중으로 소멸시 이번 Tick 종료
-        if (CheckHits(nextPosition, enemyManager))
+        if (CheckHits(nextPosition, enemyManager, hitCounter))
         {
             return;
         }
@@ -140,7 +148,35 @@ public class Projectile : MonoBehaviour
         }
     }
 
-    private bool CheckHits(Vector2 position, EnemyManager enemyManager)
+    // 적중마다의 원소별 반응. 3중첩 반응과 발동 조건만 다르고 실행 위치는 동일
+    // 카운터는 원소를 가리지 않고 셈
+    private void TriggerHitCountReaction(Enemy origin, EnemyManager enemyManager)
+    {
+        Vector2 center = origin.transform.position;
+
+        switch (spec.Element)
+        {
+            case MagicElement.Earth:
+
+                // 충격파. 중심 적도 반경 안이라 함께 맞고,
+                // 이 피해는 표식도 적중 카운트도 만들지 않음
+                enemyManager.FindOverlappingEnemies(
+                    center, ElementReactionValues.ShockwaveRadius, reactionBuffer);
+
+                for (int i = 0; i < reactionBuffer.Count; i++)
+                {
+                    reactionBuffer[i].TakeDamage(ElementReactionValues.ShockwaveDamage);
+                }
+
+                GameEvents.RaiseElementReaction(
+                    MagicElement.Earth, center, ElementReactionValues.ShockwaveRadius);
+
+                break;
+        }
+    }
+
+
+    private bool CheckHits(Vector2 position, EnemyManager enemyManager, ElementHitCounter hitCounter)
     {
         enemyManager.FindOverlappingEnemies(position, spec.HitRadius, hitBuffer);
 
@@ -174,6 +210,16 @@ public class Projectile : MonoBehaviour
                 if (ElementMarkRules.ShouldTriggerMastery(stacksBefore, stacksAfter))
                 {
                     TriggerMarkReaction(enemy, enemyManager);
+                }
+
+                // N번째 적중마다 발동하는 효과.
+                // 표식과 같은 IsAlive 가드 안에 두어 막타는 세지 않음
+                // 밖에 두면 죽은 적 위치에서 반응이 터져 승리 전환 뒤에 이벤트가 발행
+                if (spec.SkillLevel >= ElementReactionValues.ReactionUnlockLevel
+                    && hitCounter != null
+                    && hitCounter.RegisterHit(spec.Element))
+                {
+                    TriggerHitCountReaction(enemy, enemyManager);
                 }
             }
 
