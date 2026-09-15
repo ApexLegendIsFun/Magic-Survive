@@ -138,7 +138,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &7481716134969504699
 RectTransform:
   m_ObjectHideFlags: 0
@@ -210,11 +210,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e72e4c8724357454e82372df49094f4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResultUi
-  time: {fileID: 0}
-  killCount: {fileID: 0}
-  level: {fileID: 0}
-  title: {fileID: 0}
-  reStart: {fileID: 0}
+  titleText: {fileID: 3711937575725997505}
+  time: {fileID: 302520196585398087}
+  killCount: {fileID: 3307866316993542064}
+  level: {fileID: 4473553287302152925}
+  elementSlots:
+  - icon: {fileID: 0}
+    levelText: {fileID: 3278980860205924781}
+  - icon: {fileID: 0}
+    levelText: {fileID: 7927603779841246177}
+  - icon: {fileID: 0}
+    levelText: {fileID: 5522622160451284097}
+  - icon: {fileID: 0}
+    levelText: {fileID: 5363708501784678261}
+  - icon: {fileID: 0}
+    levelText: {fileID: 6815247847038156920}
+  elementIcons: []
+  title: {fileID: 3430479563292101119}
+  reStart: {fileID: 518759108221368775}
+  gameFlowController: {fileID: 0}
 --- !u!1 &280464778701785898
 GameObject:
   m_ObjectHideFlags: 0
@@ -1382,7 +1396,7 @@ GameObject:
   - component: {fileID: 1069392679915331043}
   - component: {fileID: 3713852832880386973}
   m_Layer: 0
-  m_Name: Fourth
+  m_Name: Earth
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1436,7 +1450,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: -115729133833028620, guid: adb6788103d190244a3f5045493c12d5, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -3777,7 +3791,7 @@ GameObject:
   - component: {fileID: 1792966023698851052}
   - component: {fileID: 947372259811124799}
   m_Layer: 0
-  m_Name: Fifth
+  m_Name: Dark
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3831,7 +3845,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: -3323422861369188482, guid: d54bc19e67ed5f84cbb962f64c8b757d, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -5375,7 +5389,7 @@ GameObject:
   - component: {fileID: 7157563025879360294}
   - component: {fileID: 6096578779095672334}
   m_Layer: 0
-  m_Name: First
+  m_Name: Fire
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5429,7 +5443,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 3136370947318540187, guid: 054c7ee3bbd7146739f6a7a73cb01a36, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -7777,7 +7791,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2749661595227416698
 RectTransform:
   m_ObjectHideFlags: 0
@@ -8257,7 +8271,7 @@ GameObject:
   - component: {fileID: 5695464117788822260}
   - component: {fileID: 5804520032443561563}
   m_Layer: 0
-  m_Name: Third
+  m_Name: Frozen
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8311,7 +8325,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 5543190848114196659, guid: b0e61d19844444cc1bc6222883c65ba4, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -11087,7 +11101,7 @@ GameObject:
   - component: {fileID: 9210567570291985933}
   - component: {fileID: 2119455400557460765}
   m_Layer: 0
-  m_Name: Second
+  m_Name: Lightning
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11141,7 +11155,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: -5417524880589574630, guid: f1d3ba52864254f46a7cc3b49bad57e0, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -15254,7 +15268,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 342763017939109334, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 605283701627262637, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: m_Name
@@ -15670,6 +15684,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 342763017939109334, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6857223123170221378}
+    - targetCorrespondingSourceObject: {fileID: 342763017939109334, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1673445681773587315}
   m_SourcePrefab: {fileID: 100100000, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
 --- !u!1 &471808091369723710 stripped
 GameObject:
@@ -15806,6 +15823,27 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1673445681773587315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 471808091369723710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e72e4c8724357454e82372df49094f4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ResultUi
+  titleText: {fileID: 0}
+  time: {fileID: 0}
+  killCount: {fileID: 0}
+  level: {fileID: 0}
+  elementSlots: []
+  elementIcons: []
+  title: {fileID: 0}
+  reStart: {fileID: 0}
+  gameFlowController: {fileID: 0}
 --- !u!224 &846885411557677636 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 688261400862296236, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
