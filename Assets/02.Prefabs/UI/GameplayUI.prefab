@@ -15863,15 +15863,15 @@ MonoBehaviour:
   playerSkillSystem: {fileID: 0}
   elementIcons:
   - element: 0
-    icon: {fileID: 3563714690819521456, guid: 9732ee78ef9781c43a832e0a62bcf9cc, type: 3}
+    icon: {fileID: 3136370947318540187, guid: 054c7ee3bbd7146739f6a7a73cb01a36, type: 3}
   - element: 2
-    icon: {fileID: -6434799496147694636, guid: a62e9f08b87beb849876857780b6cb26, type: 3}
+    icon: {fileID: -5417524880589574630, guid: f1d3ba52864254f46a7cc3b49bad57e0, type: 3}
   - element: 1
-    icon: {fileID: 0}
+    icon: {fileID: 5543190848114196659, guid: b0e61d19844444cc1bc6222883c65ba4, type: 3}
   - element: 4
-    icon: {fileID: 0}
+    icon: {fileID: -115729133833028620, guid: adb6788103d190244a3f5045493c12d5, type: 3}
   - element: 3
-    icon: {fileID: 0}
+    icon: {fileID: -3323422861369188482, guid: d54bc19e67ed5f84cbb962f64c8b757d, type: 3}
 --- !u!224 &8542559810272268417 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8412947513590874729, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
