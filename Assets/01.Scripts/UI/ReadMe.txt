@@ -56,4 +56,27 @@ Hud를 수정, 및 보완했습니다.
 현재 Result Panel은 연동 미완료 상태입니다. 
 
 
+09_15
+
+ElementReactionEffectPlayer 클래스  = Player 공격 이펙트 매니저 
+EnemyFrozenVisualController 클래스 = 빙결효과 전문 매니저 
+
+
+Git 병합 전, Git브랜치의 유신님 스크립트의 변동사항을 참고하여 
+
+작업에 맞춰 스크립트를 작성, 이펙트 작업을 진행했습니다.
+빙결효과의 경우 Enemy에 남아있는 일정시간 지속되는 상태이므로, 
+시각적으로 표현하기 위해 EnemyFrozenVisualController를 Enemy에 붙인 후 FrozenChanged 를 구독하는 형태로 제작했습니다.
+
+(Enemy 프리펩에 넣어야 작동하는 스크립트 입니다.)
+
+이펙트 작업의 테스트는 선동님과 유신님의 작업물이 합쳐진 후,  테스트하고 나서  사용방법까지 배포하거나 제가 프리펩화 하겠습니다.
+
+선동님께 요청사항 : ResultUi(결과화면) 에 각 원소에 레벨을 추가해야하므로, Runresult, RunDirector에 추가 부탁드립니다. 
+
+또한, ResultUi는 게임(런) 종료 시,  ShowResult(RunResult result)를 통해 객체를 넘겨주시면 호출 가능합니다. 
+
+작업들 전부 병합되는대로 바로 진행하겠습니다.
+
+
 
