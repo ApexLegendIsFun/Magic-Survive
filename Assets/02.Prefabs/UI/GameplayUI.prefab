@@ -16115,7 +16115,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3873289515969384767, guid: 711e4904882235541a1219050ed117f9, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6518850240362733892, guid: 711e4904882235541a1219050ed117f9, type: 3}
       propertyPath: m_AnchoredPosition.x
@@ -16125,16 +16125,36 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 320
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 5418942018223776477, guid: 711e4904882235541a1219050ed117f9, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3873289515969384767, guid: 711e4904882235541a1219050ed117f9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5217898071524722944}
   m_SourcePrefab: {fileID: 100100000, guid: 711e4904882235541a1219050ed117f9, type: 3}
 --- !u!1 &720226788553825349 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3873289515969384767, guid: 711e4904882235541a1219050ed117f9, type: 3}
   m_PrefabInstance: {fileID: 4341032683441294714}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5217898071524722944
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 720226788553825349}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ad095cf5ed4b31478910745febfea8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossHudUi
+  bossNameText: {fileID: 765711806742349203}
+  bossTimeText: {fileID: 3903583415535980779}
+  bossHpBar: {fileID: 1693338280187343965}
+  runDirector: {fileID: 0}
 --- !u!114 &765711806742349203 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3935628123274627305, guid: 711e4904882235541a1219050ed117f9, type: 3}
