@@ -24,6 +24,12 @@ public static class ElementReactionValues
     // 적중 카운터 기반 효과의 발동 주기. 번개 대지 모두 3번째 적중마다
     public const int HitsPerTrigger = 3;
 
+    // 번개 3레벨 연쇄
+    // ChainRadius는 기획 수치가 없어 정한 임시값. 확인 요청 대상
+    public const float ChainDamageRatio = 0.6f;
+    public const float ChainRadius = 1.5f;
+    public const int ChainMaxTargets = 2;
+
     // 대지 3레벨 충격파
     public const float ShockwaveDamage = 10f;
     public const float ShockwaveRadius = 1.5f;

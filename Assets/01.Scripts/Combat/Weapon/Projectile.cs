@@ -147,6 +147,7 @@ public class Projectile : MonoBehaviour
                 break;
         }
     }
+    
 
     // 적중마다의 원소별 반응. 3중첩 반응과 발동 조건만 다르고 실행 위치는 동일
     // 카운터는 원소를 가리지 않고 셈
@@ -159,7 +160,7 @@ public class Projectile : MonoBehaviour
             case MagicElement.Earth:
 
                 // 충격파. 중심 적도 반경 안이라 함께 맞고,
-                // 이 피해는 표식도 적중 카운트도 만들지 않음
+                // 이 피해는 표식도 적중 카운트도 만들지 않는다
                 enemyManager.FindOverlappingEnemies(
                     center, ElementReactionValues.ShockwaveRadius, reactionBuffer);
 
@@ -170,6 +171,49 @@ public class Projectile : MonoBehaviour
 
                 GameEvents.RaiseElementReaction(
                     MagicElement.Earth, center, ElementReactionValues.ShockwaveRadius);
+
+                break;
+
+            case MagicElement.Lightning:
+
+                // 연쇄. 기획이 주변 적이라 직격을 맞은 적을 제외
+                // 충격파와 반대. 충격파는 중심 적도 함께 맞음
+                enemyManager.FindOverlappingEnemies(
+                    center, ElementReactionValues.ChainRadius, reactionBuffer);
+
+                float chainDamage = spec.Damage * ElementReactionValues.ChainDamageRatio;
+
+                int chainedCount = 0;
+
+                // 대상 우선순위가 기획에 없어 관리 목록 순서를 그대로 씀
+                // 거리순이 아니며 적이 죽으면 목록 순서가 바뀌므로
+                // 같은 배치에서도 대상이 달라질 수 있음
+                // 기획에서 우선순위가 추가로 정해지면 여길 수정
+                for (int i = 0; i < reactionBuffer.Count; i++)
+                {
+                    if (reactionBuffer[i] == origin)
+                    {
+                        continue;
+                    }
+
+                    reactionBuffer[i].TakeDamage(chainDamage);
+
+                    chainedCount++;
+
+                    if (chainedCount >= ElementReactionValues.ChainMaxTargets)
+                    {
+                        break;
+                    }
+                }
+
+                // 연쇄 대상이 0명이면 알리지 않음. 보여줄 연출 x
+                // 이 경우에도 적중 카운트는 이미 소비.
+                // 발동을 보류하지 않으므로 다음 기회는 3번째 적중 뒤
+                if (chainedCount > 0)
+                {
+                    GameEvents.RaiseElementReaction(
+                        MagicElement.Lightning, center, ElementReactionValues.ChainRadius);
+                }
 
                 break;
         }
