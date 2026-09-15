@@ -10,8 +10,10 @@ public enum BgmType
 public enum SFXType
 {
 
-    Attack,
-    LevelUp
+    Attack = 0,
+    LevelUp = 1,
+    Ignite = 2, //점화 3스택
+    Freeze = 3, //빙결 3스택 
 
 }
 
