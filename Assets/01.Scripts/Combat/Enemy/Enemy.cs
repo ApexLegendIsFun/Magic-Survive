@@ -19,13 +19,12 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // Initialize가 비활성 상태에서 호출돼도 이미 살아 있음
     private readonly ElementMarkState markState = new ElementMarkState();
 
-    // 표식 공통 효과(YS04', P0). 원소 구분 없이 총 중첩당 받는 피해 증가
-    // 카탈로그,계약에 상수가 없어 GameDesignBrief 값을 임시 미러링
+    // 표식 공통 효과. 개편 기획서 공통 규칙에는 없으므로 지시가 올 때까지 유지
     private const float DamageTakenPerTotalStack = 0.05f;
 
     // 원소별 고유 효과. 카탈로그 확정값 임시 미러링
+    // 암흑은 중첩당이 아니라 3중첩 문턱 효과가 되어 ElementReactionValues로 옮김
     private const float FireDotDamagePerStack = 1f;
-    private const float DarkDamageTakenPerStack = 0.05f;
     private const float FrostMovementSpeedReductionPerStack = 0.10f;
 
 
@@ -37,6 +36,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     // 냉기 3중첩 빙결. 남은 시간이 있으면 이동x
     private float freezeRemainingSeconds;
+
+    // 암흑 3레벨 해금 여부
+    private bool darkAmplificationUnlocked;
 
     private float baseMaxHealth;
     private float baseContactDamage;
@@ -110,6 +112,15 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         }
     }
 
+
+    // 암흑 표식 3중첩 반응
+    public void SetDarkAmplificationUnlocked()
+    {
+        darkAmplificationUnlocked = true;
+    }
+
+
+
     public void SetSourcePrefab(Enemy prefab)
     {
         sourcePrefab = prefab;
@@ -148,6 +159,8 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             freezeRemainingSeconds = 0f;
             FrozenChanged?.Invoke(false);
         }
+
+        darkAmplificationUnlocked = false;
     }
 
 
@@ -160,13 +173,15 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 부를 수 있게 되면 적의 생명주기가 EnemyManager 밖에서 흔들림
     public void TakeDamage(float amount)
     {
-        // 공통 효과. 원소별이 아니라 모든 원소 중첩의 합이다
+        // 공통 효과 원소별이 아니라 모든 원소 중첩의 합
         float multiplier = 1f + markState.TotalStacks * DamageTakenPerTotalStack;
 
-        // 암흑 고유 효과. TenMinuteRunPlan이 공통 1종과 고유 5종을 별개로 두므로 가산
-        int darkStacks = markState.Get(MagicElement.Dark).Stacks;
-
-        multiplier += darkStacks * DarkDamageTakenPerStack;
+        // 암흑 3레벨. 중첩당 가산이 아니라 3중첩 문턱에서 한 번만
+        if (darkAmplificationUnlocked
+            && markState.Get(MagicElement.Dark).Stacks >= ElementMarkRules.MaximumStacks)
+        {
+            multiplier += ElementReactionValues.DarkAmplificationBonus;
+        }
 
         // [연동:UI] Damage Number는 요청량이 아니라 실제로 깎인 양을 받음
         // 이미 죽었거나 오버킬이면 요청량보다 작거나 0

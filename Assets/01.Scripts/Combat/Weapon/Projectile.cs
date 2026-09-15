@@ -129,6 +129,14 @@ public class Projectile : MonoBehaviour
                 GameEvents.RaiseElementReaction(MagicElement.Frost, center, 0f);
 
                 break;
+
+
+            case MagicElement.Dark:
+
+                // 점화, 빙결은 이 자리에서 끝나는 1회성이지만 암흑은 지속 상태.
+                origin.SetDarkAmplificationUnlocked();
+
+                break;
         }
     }
 
