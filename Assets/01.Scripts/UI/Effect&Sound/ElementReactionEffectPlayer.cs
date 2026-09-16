@@ -23,16 +23,15 @@ public class ElementReactionEffectPlayer : MonoBehaviour
 
     private void OnEnable()
     {
-        //TODO: 연동 후 재확인. 
-        // static 이벤트: GameEvents.Clear() 호출 시 구독이 날아가므로, 재활성화될 때마다 다시 건다
+        //TODO: 현재 애니메이션이 작동이안하는 오류.
 
-        //GameEvents.ElementReactionTriggered += HandleElementReaction;
+        GameEvents.ElementReactionTriggered += HandleElementReaction;
     }
 
     private void OnDisable()
     {
-        //TODO: 연동 후 재확인. 
-        //GameEvents.ElementReactionTriggered -= HandleElementReaction;
+        //TODO: 현재 애니메이션이 작동이안하는 오류.
+        GameEvents.ElementReactionTriggered -= HandleElementReaction;
     }
 
     private void HandleElementReaction(MagicElement element, Vector2 position, float radius)

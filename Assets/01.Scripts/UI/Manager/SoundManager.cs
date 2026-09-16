@@ -13,7 +13,11 @@ public enum SFXType
     Attack = 0,
     LevelUp = 1,
     Ignite = 2, //점화 3스택
-    Freeze = 3, //빙결 3스택 
+    Freeze = 3, //빙결 3스택
+    Chain_lightning = 4,//3중첩 연쇄 번개
+    Eart_Shork = 5, //대지3스택, 밀치기
+    Dark_Increased_damage = 6//암흑 3중첩, 데미지 증가
+
 
 }
 
