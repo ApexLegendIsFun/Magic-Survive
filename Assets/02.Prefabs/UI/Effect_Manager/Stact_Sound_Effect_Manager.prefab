@@ -50,7 +50,7 @@ MonoBehaviour:
     animationClip: {fileID: 0}
     sfxType: 2
   - element: 1
-    effectPrefab: {fileID: 0}
+    effectPrefab: {fileID: 6245214841360429208, guid: 529fa5c348d336d46baca5f331c57c18, type: 3}
     animationClip: {fileID: 0}
     sfxType: 3
   - element: 4
