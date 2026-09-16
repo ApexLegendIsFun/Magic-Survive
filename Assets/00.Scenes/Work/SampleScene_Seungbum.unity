@@ -776,6 +776,10 @@ PrefabInstance:
       propertyPath: m_AnchorMin.x
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 471808091369723710, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1852801818649451300, guid: 1d2161966ca3f4561a7f80c1a175b301, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.37509
@@ -889,9 +893,6 @@ MonoBehaviour:
   - element: 1
     effectPrefab: {fileID: 0}
     sfxType: 3
-  - element: 2
-    effectPrefab: {fileID: 0}
-    sfxType: 4
   - element: 4
     effectPrefab: {fileID: 0}
     sfxType: 5
