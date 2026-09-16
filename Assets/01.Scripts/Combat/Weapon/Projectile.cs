@@ -16,6 +16,10 @@ public class Projectile : MonoBehaviour
     // 관통 중 같은 적을 매 프레임 다시 때리기 방지
     private readonly List<Enemy> alreadyHit = new List<Enemy>(4);
 
+    // 연쇄 대상 위치 수집용. 이벤트로 넘길 때 ToArray로 복사하므로
+    // 이 리스트 자체는 재사용해도 구독부가 영향받지 않음
+    private readonly List<Vector2> chainTargetPositions = new List<Vector2>(4);
+
 
     // 이 투사체를 만든 프리팹. 어느 풀로 반납할지 찾는 데 쓰임
     private Projectile sourcePrefab;
@@ -183,7 +187,7 @@ public class Projectile : MonoBehaviour
 
                 float chainDamage = spec.Damage * ElementReactionValues.ChainDamageRatio;
 
-                int chainedCount = 0;
+                chainTargetPositions.Clear();
 
                 // 대상 우선순위가 기획에 없어 관리 목록 순서를 그대로 씀
                 // 거리순이 아니며 적이 죽으면 목록 순서가 바뀌므로
@@ -196,11 +200,13 @@ public class Projectile : MonoBehaviour
                         continue;
                     }
 
+                    // 위치를 피해보다 먼저 기록.
+                    // 피해가 위치를 바꾸는 경우가 이미 있음 (대지 밀치기)
+                    chainTargetPositions.Add(reactionBuffer[i].transform.position);
+
                     reactionBuffer[i].TakeDamage(chainDamage);
 
-                    chainedCount++;
-
-                    if (chainedCount >= ElementReactionValues.ChainMaxTargets)
+                    if (chainTargetPositions.Count >= ElementReactionValues.ChainMaxTargets)
                     {
                         break;
                     }
@@ -209,14 +215,20 @@ public class Projectile : MonoBehaviour
                 // 연쇄 대상이 0명이면 알리지 않음. 보여줄 연출 x
                 // 이 경우에도 적중 카운트는 이미 소비.
                 // 발동을 보류하지 않으므로 다음 기회는 3번째 적중 뒤
-                if (chainedCount > 0)
+                //
+                // 원형용 ElementReactionTriggered는 더 이상 보내지 않음.
+                // 연쇄는 선이라 원형 이펙트가 같이 터지면 잘못된 연출이 됨
+
+                if (chainTargetPositions.Count > 0)
                 {
-                    GameEvents.RaiseElementReaction(
-                        MagicElement.Lightning, center, ElementReactionValues.ChainRadius);
+                    GameEvents.RaiseChainReaction(
+                        MagicElement.Lightning, center, chainTargetPositions.ToArray());
                 }
 
                 break;
+
         }
+
     }
 
 
