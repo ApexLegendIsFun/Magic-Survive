@@ -119,6 +119,53 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &156834902
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 156834903}
+  - component: {fileID: 156834904}
+  m_Layer: 0
+  m_Name: Stack_Effect & Sound
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &156834903
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 156834902}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.81, y: 1.29, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &156834904
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 156834902}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01734b92c787d984ca747bd344d09533, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementReactionDebugTrigger
+  testOrigin: {fileID: 0}
+  igniteTestRadius: 1.3
+  freezeTestRadius: 0
 --- !u!1 &237631611
 GameObject:
   m_ObjectHideFlags: 0
@@ -888,18 +935,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElementReactionEffectPlayer
   effects:
   - element: 0
-    effectPrefab: {fileID: 0}
+    effectPrefab: {fileID: 2360207784898761538, guid: 71648fd422021fa47904f40bd7361c1c, type: 3}
+    animationClip: {fileID: 0}
     sfxType: 2
   - element: 1
     effectPrefab: {fileID: 0}
+    animationClip: {fileID: 0}
     sfxType: 3
   - element: 4
     effectPrefab: {fileID: 0}
+    animationClip: {fileID: 0}
     sfxType: 5
   - element: 3
     effectPrefab: {fileID: 0}
+    animationClip: {fileID: 0}
     sfxType: 6
   singleTargetEffectScale: 0.5
+  fallbackLifetime: 1
 --- !u!4 &1648657427
 Transform:
   m_ObjectHideFlags: 0
@@ -1099,3 +1151,4 @@ SceneRoots:
   - {fileID: 2046186195}
   - {fileID: 1638311947}
   - {fileID: 1648657427}
+  - {fileID: 156834903}
