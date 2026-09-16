@@ -265,6 +265,18 @@ public class Projectile : MonoBehaviour
                 {
                     TriggerHitCountReaction(enemy, enemyManager);
                 }
+
+                // 대지 1레벨 밀치기. 카운터가 아니라 적중할 때마다라 여기에 두기
+                //
+                // 충격파보다 뒤여야 함. 앞에 두면 TriggerHitCountReaction이
+                // origin.transform.position을 읽을 때 이미 밀려난 위치가 되므로
+                //
+                // 보스 면역은 아직 동작x 보스를 가릴 판별값이 없으므로
+                if (spec.Element == MagicElement.Earth)
+                {
+                    enemy.ApplyKnockback(direction, ElementReactionValues.KnockbackDistance);
+                }
+
             }
 
             // PierceCount 0이며 첫 명중 시 소멸
