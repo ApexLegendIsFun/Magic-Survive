@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -92,13 +93,15 @@ namespace Seondong.IntegrationGame
             Directory.CreateDirectory(Root + "/Data");
             AssetDatabase.Refresh();
             var charger = TemporaryEnemy("TemporaryCharger", "Enemy_Fast", 180, 1.8f, 20, 15);
-            var summoner = TemporaryEnemy("TemporarySummoner", "Enemy_Tank", 260, 1f, 12, 25);
+            var summoner = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Summoner.asset")
+                ?? TemporaryEnemy("TemporarySummoner", "Enemy_Tank", 260, 1f, 12, 25);
             var boss = TemporaryEnemy("TemporaryBoss", "Enemy_Boss", 2000, 1.3f, 20, 0);
             AssetDatabase.SaveAssets();
             var scene = EditorSceneManager.OpenScene(Game);
             // Opening a scene unloads unused assets; reload the persistent objects afterwards.
             charger = AssetDatabase.LoadAssetAtPath<EnemyData>(Root + "/Data/TemporaryCharger.asset");
-            summoner = AssetDatabase.LoadAssetAtPath<EnemyData>(Root + "/Data/TemporarySummoner.asset");
+            summoner = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Summoner.asset")
+                ?? AssetDatabase.LoadAssetAtPath<EnemyData>(Root + "/Data/TemporarySummoner.asset");
             boss = AssetDatabase.LoadAssetAtPath<EnemyData>(Root + "/Data/TemporaryBoss.asset");
             var roots = scene.GetRootGameObjects();
             var run = roots.SelectMany(r => r.GetComponentsInChildren<RunDirector>(true)).Single();
@@ -112,8 +115,12 @@ namespace Seondong.IntegrationGame
             serialized.FindProperty("spawnCamera").objectReferenceValue = camera;
             // Keep later inspector assignments: the placeholders are only the initial defaults.
             if (serialized.FindProperty("charger").objectReferenceValue == null) serialized.FindProperty("charger").objectReferenceValue = charger;
-            if (serialized.FindProperty("summoner").objectReferenceValue == null) serialized.FindProperty("summoner").objectReferenceValue = summoner;
+            var configuredSummoner = serialized.FindProperty("summoner");
+            if (configuredSummoner.objectReferenceValue == null ||
+                AssetDatabase.GetAssetPath(configuredSummoner.objectReferenceValue) == Root + "/Data/TemporarySummoner.asset")
+                configuredSummoner.objectReferenceValue = summoner;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            EnsureReactionEffectManager(scene);
             var bossSpawner = roots.SelectMany(r => r.GetComponentsInChildren<BossSpawner>(true)).Single();
             var bossSerialized = new SerializedObject(bossSpawner);
             var assigned = bossSerialized.FindProperty("bossData").objectReferenceValue;
@@ -141,10 +148,23 @@ namespace Seondong.IntegrationGame
                 serialized.FindProperty("charger").objectReferenceValue == null || serialized.FindProperty("summoner").objectReferenceValue == null)
                 throw new Exception("Encounter data did not survive scene loading.");
             EditorSceneManager.SaveScene(scene, Game);
-            foreach (var root in roots)
+            var finalRoots = scene.GetRootGameObjects();
+            foreach (var root in finalRoots)
                 foreach (var t in root.GetComponentsInChildren<Transform>(true))
                     if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(t.gameObject) > 0) throw new Exception("Missing script: " + t.name);
-            if (roots.Any(r => r.GetComponentInChildren<PopupUi>(true) != null)) throw new Exception("Conflicting PopupUi remains.");
+            if (finalRoots.Any(r => r.GetComponentInChildren<PopupUi>(true) != null)) throw new Exception("Conflicting PopupUi remains.");
+        }
+
+        private static void EnsureReactionEffectManager(Scene scene)
+        {
+            bool exists = scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<ElementReactionEffectPlayer>(true))
+                .Any();
+            if (exists) return;
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/02.Prefabs/UI/Effect_Manager/Stact_Sound_Effect_Manager.prefab");
+            if (prefab == null) throw new Exception("Missing element reaction effect manager prefab.");
+            PrefabUtility.InstantiatePrefab(prefab, scene);
         }
 
         private static EnemyData TemporaryEnemy(string name, string source, float hp, float speed, float damage, int xp)
@@ -170,6 +190,59 @@ namespace Seondong.IntegrationGame
         {
             SessionState.SetString("Seondong.IntegrationGame.AutoScenario", "death");
             Play();
+        }
+
+        [MenuItem("Tools/Seondong Integration/5. Validate Team Handoff")]
+        public static void ValidateTeamHandoff()
+        {
+            Scene scene = EditorSceneManager.OpenScene(Game, OpenSceneMode.Single);
+            var roots = scene.GetRootGameObjects();
+            var spawners = roots.SelectMany(root => root.GetComponentsInChildren<IntegrationEliteSpawner>(true)).ToArray();
+            Require(spawners.Length == 1, "Expected one integration elite spawner.");
+            var spawner = new SerializedObject(spawners[0]);
+            var summoner = spawner.FindProperty("summoner").objectReferenceValue as EnemyData;
+            Require(summoner != null, "Summoner data missing.");
+            Require(AssetDatabase.GetAssetPath(summoner) == "Assets/03.Data/Enemy/Enemy_Summoner.asset",
+                "Integration spawner must use Yushin's summoner data.");
+            Require(summoner.Prefab != null && Mathf.Approximately(summoner.MaxHealth, 260f) &&
+                Mathf.Approximately(summoner.MoveSpeed, 1f) && Mathf.Approximately(summoner.ContactDamage, 12f) &&
+                summoner.ExperienceReward == 25, "Summoner data values changed.");
+            Require(RunTimelineRules.Reached(360f, RunTimelineRules.SecondEliteTime), "Summoner timeline missing.");
+            Require(ElementReactionValues.ReactionUnlockLevel == 1, "Reaction unlock level changed.");
+            Require(Mathf.Approximately(ElementReactionValues.KnockbackDistance, .5f), "Earth knockback value changed.");
+
+            var reactionPlayers = roots.SelectMany(root => root.GetComponentsInChildren<ElementReactionEffectPlayer>(true)).ToArray();
+            Require(reactionPlayers.Length == 1, "Expected one element reaction effect manager.");
+            var effects = new SerializedObject(reactionPlayers[0]).FindProperty("effects");
+            bool fireReady = false;
+            bool frostReady = false;
+            for (int index = 0; index < effects.arraySize; index++)
+            {
+                var entry = effects.GetArrayElementAtIndex(index);
+                var element = (MagicElement)entry.FindPropertyRelative("element").enumValueIndex;
+                bool hasPrefab = entry.FindPropertyRelative("effectPrefab").objectReferenceValue != null;
+                if (element == MagicElement.Fire) fireReady = hasPrefab;
+                if (element == MagicElement.Frost) frostReady = hasPrefab;
+            }
+            Require(fireReady && frostReady, "Fire and frost reaction effects are not wired.");
+            Require(!roots.SelectMany(root => root.GetComponentsInChildren<LightningChainEffectPlayer>(true)).Any(),
+                "Incomplete lightning chain effect manager must not be wired.");
+
+            IReadOnlyList<Vector2> receivedTargets = null;
+            Action<MagicElement, Vector2, IReadOnlyList<Vector2>> handler =
+                (element, origin, targets) => { if (element == MagicElement.Lightning) receivedTargets = targets; };
+            GameEvents.ChainReactionTriggered += handler;
+            try
+            {
+                GameEvents.RaiseChainReaction(MagicElement.Lightning, Vector2.zero,
+                    new[] { new Vector2(1f, 2f), new Vector2(3f, 4f) });
+            }
+            finally
+            {
+                GameEvents.ChainReactionTriggered -= handler;
+            }
+            Require(receivedTargets != null && receivedTargets.Count == 2, "Chain reaction event did not publish targets.");
+            Debug.Log("[Seondong Integration] Team handoff validation passed.");
         }
 
         [MenuItem("Tools/Seondong Integration/2. Play From Title")]
@@ -222,6 +295,11 @@ namespace Seondong.IntegrationGame
         private static void RequireScenes()
         {
             if (!File.Exists(Title) || !File.Exists(Game)) throw new Exception("Personal scenes are missing.");
+        }
+
+        private static void Require(bool condition, string message)
+        {
+            if (!condition) throw new InvalidOperationException(message);
         }
 
         // A local, explicit request lets CLI and the already-open editor share the project safely.
