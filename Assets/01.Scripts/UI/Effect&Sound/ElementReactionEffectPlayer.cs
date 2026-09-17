@@ -12,8 +12,9 @@ public class ElementReactionEffectPlayer : MonoBehaviour
     public class ReactionEffectEntry
     {
         public MagicElement element;
-        public Animation effectPrefab; // 점화 폭발 / 빙결 파편 등 (레거시 Animation 컴포넌트)
-        public SFXType sfxType;             // SoundManager.SFXType 중 이 원소 반응에 해당하는 항목
+        public GameObject effectPrefab;     // Animator 컴포넌트 + Controller가 붙은 프리팹
+        public AnimationClip animationClip; // Controller 안의 재생 클립과 동일한 것. 재생 시간 계산용으로만 씀
+        public SFXType sfxType;
     }
 
     [SerializeField] private ReactionEffectEntry[] effects;
@@ -21,18 +22,18 @@ public class ElementReactionEffectPlayer : MonoBehaviour
     [Tooltip("radius가 0으로 오는 단일 대상 반응(빙결 등)일 때 쓸 기본 이펙트 스케일")]
     [SerializeField] private float singleTargetEffectScale = 0.5f;
 
+    [Tooltip("animationClip을 안 넣었을 때 안전하게 정리할 기본 유지 시간(초)")]
+    [SerializeField] private float fallbackLifetime = 1f;
+
     private void OnEnable()
     {
-        //TODO: 연동 후 재확인. 
         // static 이벤트: GameEvents.Clear() 호출 시 구독이 날아가므로, 재활성화될 때마다 다시 건다
-
-        //GameEvents.ElementReactionTriggered += HandleElementReaction;
+        GameEvents.ElementReactionTriggered += HandleElementReaction;
     }
 
     private void OnDisable()
     {
-        //TODO: 연동 후 재확인. 
-        //GameEvents.ElementReactionTriggered -= HandleElementReaction;
+        GameEvents.ElementReactionTriggered -= HandleElementReaction;
     }
 
     private void HandleElementReaction(MagicElement element, Vector2 position, float radius)
@@ -57,17 +58,9 @@ public class ElementReactionEffectPlayer : MonoBehaviour
         float scale = radius > 0f ? radius : singleTargetEffectScale;
         instance.transform.localScale = Vector3.one * scale;
 
-        if (instance.clip != null)
-        {
-            instance.Play();
-            Destroy(instance.gameObject, instance.clip.length);
-        }
-        else
-        {
-            // 기본 클립이 안 물려있으면 재생을 못 판단하니 안전하게 1초 뒤 정리
-            Debug.LogWarning($"[ElementReactionEffectPlayer] {entry.element} 이펙트에 기본 클립이 없음");
-            Destroy(instance.gameObject, 1f);
-        }
+        // Animator는 Instantiate되는 순간 Controller의 기본 State를 자동 재생함.
+        float lifetime = entry.animationClip != null ? entry.animationClip.length : fallbackLifetime;
+        Destroy(instance, lifetime);
     }
 
     private void PlaySfx(ReactionEffectEntry entry)

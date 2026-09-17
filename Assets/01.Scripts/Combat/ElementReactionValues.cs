@@ -12,7 +12,7 @@
 public static class ElementReactionValues
 {
     // 5원소 모두 3레벨에서 첫 고유 효과가 해금
-    public const int ReactionUnlockLevel = 3;
+    public const int ReactionUnlockLevel = 1; //TODO: 빌드 전 수정 필수. 테스트 용이하기 위함, 일시적인 조정입니다.
 
     // 화염 3레벨 점화
     public const float IgniteDamage = 12f;

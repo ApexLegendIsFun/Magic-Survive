@@ -57,7 +57,10 @@ public sealed class MagicRuntime : IAttackSource
             Speed,
             MaxDistance,
             HitRadius,
-            PierceCount);
+            PierceCount,
+            Element,      // 선동님 확인으로 추가함. 원소 3중첩 발동관련 로직
+            SkillLevel
+            );
 
         context.Launcher.Fire(spec, context.Origin, direction);
         return true;

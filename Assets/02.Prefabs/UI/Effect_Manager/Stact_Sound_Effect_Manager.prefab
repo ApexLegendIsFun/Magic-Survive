@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1203661146273979672
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2909969442971563698}
+  - component: {fileID: 6454273543579506912}
+  m_Layer: 0
+  m_Name: Stact_Sound_Effect_Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2909969442971563698
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1203661146273979672}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.25632, y: 0.86608, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6454273543579506912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1203661146273979672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 130c0838387a4d442b1f508e1133b417, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementReactionEffectPlayer
+  effects:
+  - element: 0
+    effectPrefab: {fileID: 2360207784898761538, guid: 71648fd422021fa47904f40bd7361c1c, type: 3}
+    animationClip: {fileID: 0}
+    sfxType: 2
+  - element: 1
+    effectPrefab: {fileID: 6245214841360429208, guid: 529fa5c348d336d46baca5f331c57c18, type: 3}
+    animationClip: {fileID: 0}
+    sfxType: 3
+  - element: 4
+    effectPrefab: {fileID: 0}
+    animationClip: {fileID: 0}
+    sfxType: 5
+  - element: 3
+    effectPrefab: {fileID: 0}
+    animationClip: {fileID: 0}
+    sfxType: 6
+  singleTargetEffectScale: 0.5
+  fallbackLifetime: 1
