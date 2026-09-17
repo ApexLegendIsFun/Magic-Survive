@@ -180,7 +180,7 @@ public class Projectile : MonoBehaviour
                 break;
         }
     }
-    
+
 
     // 적중마다의 원소별 반응. 3중첩 반응과 발동 조건만 다르고 실행 위치는 동일
     // 카운터는 원소를 가리지 않고 셈
@@ -218,35 +218,49 @@ public class Projectile : MonoBehaviour
 
                 chainTargetPositions.Clear();
 
-                // 대상 우선순위가 기획에 없어 관리 목록 순서를 그대로 씀
-                // 거리순이 아니며 적이 죽으면 목록 순서가 바뀌므로
-                // 같은 배치에서도 대상이 달라질 수 있음
-                // 기획에서 우선순위가 추가로 정해지면 여길 수정
-                for (int i = 0; i < reactionBuffer.Count; i++)
+                // 기획: 보스에게는 연쇄 대상이 보스 1명으로 제한
+                //
+                // 아래 루프 안에서 IsBoss 를 보면 x.
+                // 보스가 목록 뒤쪽에 있으면 앞의 일반 적들을 이미 때린 뒤에 만나게 됨.
+                // 목록 순서와 무관하도록 때리기 전에 먼저 찾음
+                Enemy chainBoss = FindChainBoss(origin);
+
+                if (chainBoss != null)
                 {
-                    if (reactionBuffer[i] == origin)
+                    chainTargetPositions.Add(chainBoss.transform.position);
+
+                    chainBoss.TakeDamage(chainDamage);
+                }
+                else
+                {
+                    // 대상 우선순위가 기획에 없어 관리 목록 순서를 그대로 사용.
+                    // 거리순x,  적이 죽으면 목록 순서가 바뀌므로
+                    // 같은 배치에서도 대상이 달라질 수 있음
+                    // 기획에서 우선순위가 추가로 정해지면 여길 수정
+                    for (int i = 0; i < reactionBuffer.Count; i++)
                     {
-                        continue;
-                    }
+                        if (reactionBuffer[i] == origin)
+                        {
+                            continue;
+                        }
 
-                    // 위치를 피해보다 먼저 기록.
-                    // 피해가 위치를 바꾸는 경우가 이미 있음 (대지 밀치기)
-                    chainTargetPositions.Add(reactionBuffer[i].transform.position);
+                        // 위치를 피해보다 먼저 기록.
+                        // 피해가 위치를 바꾸는 경우가 이미 있음 (대지 밀치기)
+                        chainTargetPositions.Add(reactionBuffer[i].transform.position);
 
-                    reactionBuffer[i].TakeDamage(chainDamage);
+                        reactionBuffer[i].TakeDamage(chainDamage);
 
-                    if (chainTargetPositions.Count >= ElementReactionValues.ChainMaxTargets)
-                    {
-                        break;
+                        if (chainTargetPositions.Count >= ElementReactionValues.ChainMaxTargets)
+                        {
+                            break;
+                        }
                     }
                 }
 
                 // 연쇄 대상이 0명이면 알리지 않음. 보여줄 연출 x
                 // 이 경우에도 적중 카운트는 이미 소비.
                 // 발동을 보류하지 않으므로 다음 기회는 3번째 적중 뒤
-                //
-                // 원형용 ElementReactionTriggered는 더 이상 보내지 않음.
-                // 연쇄는 선이라 원형 이펙트가 같이 터지면 잘못된 연출이 됨
+
 
                 if (chainTargetPositions.Count > 0)
                 {
@@ -255,7 +269,6 @@ public class Projectile : MonoBehaviour
                 }
 
                 break;
-
         }
 
     }
@@ -345,6 +358,8 @@ public class Projectile : MonoBehaviour
                     TriggerHitCountReaction(enemy, enemyManager);
                 }
 
+
+
                 // 대지 1레벨 밀치기. 카운터가 아니라 적중할 때마다라 여기에 두기
                 //
                 // 충격파보다 뒤여야 함. 앞에 두면 TriggerHitCountReaction이
@@ -371,6 +386,34 @@ public class Projectile : MonoBehaviour
 
 
         return false;
+    }
+
+    // 연쇄 대상 후보 중 보스를 찾기
+    //
+    // origin 은 이미 직격을 맞았으므로 후보x
+    // 따라서 보스를 직격한 경우에는 null 이 나오고 주변 일반 적에게 정상적으로 퍼짐
+    //
+    // 기획의 "보스에게는 연쇄 대상이 보스 1명" 을
+    // 보스가 연쇄를 받는 쪽일 때로 해석.
+    // 이 해석이면 단독 보스전 구간에는 연쇄 대상이 0명. 커밋 본문에 확인 요청
+    private Enemy FindChainBoss(Enemy origin)
+    {
+        for (int i = 0; i < reactionBuffer.Count; i++)
+        {
+            Enemy candidate = reactionBuffer[i];
+
+            if (candidate == origin)
+            {
+                continue;
+            }
+
+            if (candidate.IsBoss)
+            {
+                return candidate;
+            }
+        }
+
+        return null;
     }
 
 }
