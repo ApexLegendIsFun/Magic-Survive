@@ -40,9 +40,16 @@ public class EnemyRangedAttack : MonoBehaviour
 
     private float attackTimer;
 
+    // 2페이즈가 주기와 발수를 바꾸므로 인스펙터 원본을 따로 보관
+    private float baseAttackInterval;
+    private int baseProjectileCount;
+
     private void Awake()
     {
         enemy = GetComponent<Enemy>();
+
+        baseAttackInterval = attackInterval;
+        baseProjectileCount = projectileCount;
     }
 
     // EnemyManager.Spawn이 풀에서 꺼낸 직후 1회 호출
@@ -52,9 +59,23 @@ public class EnemyRangedAttack : MonoBehaviour
         launcher = projectileLauncher;
         playerTransform = player;
 
+        // 2페이즈에서 바뀐 값이 풀 재사용으로 다음 개체에 남지 않게 원본으로 되돌림
+        attackInterval = baseAttackInterval;
+        projectileCount = baseProjectileCount;
+
         // 풀에서 재사용될 때 이전 개체의 남은 주기를 이어받지 않도록 초기화
         attackTimer = attackInterval;
     }
+
+    // 보스 2페이즈 진입 시 BossPhaseController 가 1회 호출
+    // 진행 중인 주기는 그대로 두고 다음 주기부터 새 값이 적용
+    public void SetSpread(int count, float interval)
+    {
+        projectileCount = Mathf.Max(1, count);
+        attackInterval = Mathf.Max(0.1f, interval);
+    }
+
+    // 이 컴포넌트가 붙는 적은 소환술사와 보스뿐이라 개별 Update를 둠
 
     // 이 컴포넌트가 붙는 적은 소환술사와 보스뿐이라 개별 Update를 둠
     // 100마리가 쓰는 Enemy.Tick과 달리 동시에 1~2개라

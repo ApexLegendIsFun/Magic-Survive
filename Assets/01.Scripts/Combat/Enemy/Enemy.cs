@@ -330,6 +330,17 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         experienceReward = 0;
     }
 
+    // 보스 2페이즈 진입 시 BossPhaseController 가 1회 호출
+    public void MultiplyMoveSpeed(float multiplier)
+    {
+        if (multiplier <= 0f)
+        {
+            return;
+        }
+
+        moveSpeed *= multiplier;
+    }
+
     // 스폰 직후 SpawnDirector가 1회 호출
     public void ApplyDifficulty(float healthMultiplier, float damageMultiplier)
     {
