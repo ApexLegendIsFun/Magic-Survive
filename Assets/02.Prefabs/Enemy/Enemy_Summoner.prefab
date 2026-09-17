@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8662285387949474317}
   - component: {fileID: 9103200933536096095}
   - component: {fileID: 7377819187996129501}
+  - component: {fileID: 8007111486417167307}
   m_Layer: 6
   m_Name: Enemy_Summoner
   m_TagString: Untagged
@@ -123,3 +124,22 @@ MonoBehaviour:
   contactDamage: 5
   experienceReward: 1
   hitRadius: 0.5
+--- !u!114 &8007111486417167307
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5608222364171683798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee2f6492b3927ed4d811d8028ac576b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyRangedAttack
+  attackInterval: 2.5
+  damage: 8
+  projectileSpeed: 3
+  maxDistance: 12
+  hitRadius: 0.25
+  attackRange: 8
+  projectilePrefab: {fileID: 0}

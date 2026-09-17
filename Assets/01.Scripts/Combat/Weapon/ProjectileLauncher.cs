@@ -11,6 +11,15 @@ public class ProjectileLauncher : MonoBehaviour
     // 공격 so에서 프리팹 미지정시 사용할 기본 프리팹
     [SerializeField] private Projectile defaultProjectilePrefab;
 
+    // 적 투사체가 때릴 대상. 비워두면 Awake가 같은 오브젝트의 Health를 쓴다
+    [SerializeField] private Health playerHealth;
+
+    // 플레이어 피격 반경
+    //  PlayerContactDamage의 Check Radius와 같은 값을 따로 들고 있음.
+    //  단일 원본화가 필요하나 그러면 이 컴포넌트가 PlayerContactDamage를
+    //  참조하게 되므로 지금은 두 값을 인스펙터에 나란히 두기
+    [SerializeField] private float playerHitRadius = 0.4f;
+
     private readonly List<Projectile> activeProjectiles = new List<Projectile>(64);
 
     // 프리팹마다 풀을 따로 두기. 섞이면 다른 마법의 투사체가 나옴
@@ -30,6 +39,30 @@ public class ProjectileLauncher : MonoBehaviour
             Debug.LogError("[ProjectileLauncher] EnemyManager 미연결. 투사체 판정을 비활성화합니다.", this);
 
             enabled = false;
+
+            return;
+        }
+
+        // 적 행동 컴포넌트는 프리팹이라 씬의 이 런처를 직렬화로 받을 수 없다
+        // EnemyManager가 Spawn에서 넘겨주도록 여기서 스스로 등록한다
+        //
+        // 객체 참조는 이 등록으로 양방향이 된다
+        // 얻는 것은 새 직렬화 참조가 생기지 않는 것이다.
+        // EnemyManager에 [SerializeField]를 두면 통합 씬에도 배선이 하나 늘어난다
+        enemyManager.SetProjectileLauncher(this);
+
+        // 이 컴포넌트는 Player 오브젝트에 붙어 있고 같은 오브젝트에 Health가 있다
+        // 인스펙터로 따로 지정했으면 그 값을 그대로 쓴다
+        if (playerHealth == null)
+        {
+            playerHealth = GetComponent<Health>();
+        }
+
+        if (playerHealth == null)
+        {
+            // 플레이어 공격은 정상 동작하므로 컴포넌트를 끄지 않는다
+            // 적 투사체만 발사되지 않는다
+            Debug.LogWarning("[ProjectileLauncher] Player Health 미연결. 적 투사체가 발사되지 않습니다.", this);
         }
     }
 
@@ -62,6 +95,32 @@ public class ProjectileLauncher : MonoBehaviour
         activeProjectiles.Add(projectile);
     }
 
+    /// <summary>
+    /// 적이 플레이어에게 투사체를 발사한다. 소환술사 원거리탄, 보스 부채꼴이 사용.
+    /// 풀은 플레이어 투사체와 같은 것을 쓴다. 프리팹이 다르면 풀도 자동으로 분리된다
+    /// </summary>
+    public void FireAtPlayer(in ProjectileSpec spec, Vector2 origin, Vector2 direction)
+    {
+        if (playerHealth == null)
+        {
+            return;
+        }
+
+        Projectile prefab = spec.Prefab != null ? spec.Prefab : defaultProjectilePrefab;
+
+        if (prefab == null)
+        {
+            return;
+        }
+
+        Projectile projectile = GetPool(prefab).Get();
+
+        projectile.LaunchAtPlayer(spec, origin, direction, playerHealth, playerHitRadius);
+
+        projectile.gameObject.SetActive(true);
+
+        activeProjectiles.Add(projectile);
+    }
 
     // 해당 프리팹의 풀을 반환. 없으면 만들어 등록
     private ObjectPool<Projectile> GetPool(Projectile prefab)

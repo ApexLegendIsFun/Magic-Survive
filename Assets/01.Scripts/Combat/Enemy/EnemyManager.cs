@@ -17,6 +17,15 @@ public class EnemyManager : MonoBehaviour
     // [연동:UI] HUD 적 수 표시, 디버그
     public int ActiveCount => activeEnemies.Count;
 
+    // 적 행동 컴포넌트에 넘겨줄 투사체 런처
+    // 직렬화 참조를 새로 만들지 않으려고 ProjectileLauncher.Awake가 스스로 등록한다
+    private ProjectileLauncher projectileLauncher;
+
+    public void SetProjectileLauncher(ProjectileLauncher launcher)
+    {
+        projectileLauncher = launcher;
+    }
+
     private void Register(Enemy enemy)
     {
         if (enemy == null)
@@ -165,6 +174,15 @@ public class EnemyManager : MonoBehaviour
 
         enemy.Initialize(data);
 
+        // 원거리 공격을 가진 적(소환술사, 보스)에만 붙음
+        // 행동 컴포넌트 종류가 늘어나면 공통 인터페이스로 묶을 것. 지금은 1종
+        EnemyRangedAttack ranged = enemy.GetComponent<EnemyRangedAttack>();
+
+        if (ranged != null)
+        {
+            ranged.Configure(projectileLauncher, playerTransform);
+        }
+
         enemy.gameObject.SetActive(true);
 
         Register(enemy);
@@ -239,3 +257,4 @@ public class EnemyManager : MonoBehaviour
 
     }
 }
+

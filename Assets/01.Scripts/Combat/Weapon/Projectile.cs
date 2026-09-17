@@ -16,10 +16,13 @@ public class Projectile : MonoBehaviour
     // 관통 중 같은 적을 매 프레임 다시 때리기 방지
     private readonly List<Enemy> alreadyHit = new List<Enemy>(4);
 
-    // 연쇄 대상 위치 수집용. 이벤트로 넘길 때 ToArray로 복사하므로
-    // 이 리스트 자체는 재사용해도 구독부가 영향받지 않음
+    // 연쇄 대상 위치 수집용. 
     private readonly List<Vector2> chainTargetPositions = new List<Vector2>(4);
 
+    // 적이 플레이어에게 쏜 투사체일 때만 채워짐
+    // null이면 지금까지처럼 적을 찾아 때리는 플레이어 투사체로 동작
+    private Health playerTarget;
+    private float playerTargetRadius;
 
     // 이 투사체를 만든 프리팹. 어느 풀로 반납할지 찾는 데 쓰임
     private Projectile sourcePrefab;
@@ -45,6 +48,32 @@ public class Projectile : MonoBehaviour
     // 투사체 발사 전 상태 초기화
     // 풀에서 재사용될 때도 매번 호출
     public void Launch(in ProjectileSpec launchSpec, Vector2 origin, Vector2 launchDirection)
+    {
+        Prepare(launchSpec, origin, launchDirection);
+
+        // 플레이어 투사체. 적을 찾아 때림
+        playerTarget = null;
+        playerTargetRadius = 0f;
+    }
+
+
+    // 적이 플레이어에게 쏘는 투사체. 소환술사 원거리탄, 보스 부채꼴이 사용
+    //
+    // 대상이 플레이어 한 명뿐이라 EnemyManager 검색x
+    // 발사 시점에 받은 Health 하나만 거리로 검사
+    //
+    // spec.SkillLevel은 0으로 둘 것. 표식은 적에게만 붙는 개념
+    public void LaunchAtPlayer(in ProjectileSpec launchSpec, Vector2 origin, Vector2 launchDirection,
+        Health target, float targetRadius)
+    {
+        Prepare(launchSpec, origin, launchDirection);
+
+        playerTarget = target;
+        playerTargetRadius = targetRadius;
+    }
+
+    // 두 발사 경로가 공유하는 상태 초기화
+    private void Prepare(in ProjectileSpec launchSpec, Vector2 origin, Vector2 launchDirection)
     {
         spec = launchSpec;
         direction = launchDirection.normalized;
@@ -231,9 +260,47 @@ public class Projectile : MonoBehaviour
 
     }
 
+    // 적 투사체의 플레이어 명중 판정
+    //
+    // 관통도 표식도 없으므로 맞으면 그 자리에서 끝
+    // 플레이어는 풀링 대상이 아니라 중복 방지 필요 없음
+    private bool CheckPlayerHit(Vector2 position)
+    {
+        // 이미 죽은 플레이어는 때리지 않음.
+        if (!playerTarget.IsAlive)
+        {
+            return false;
+        }
+
+        float combined = spec.HitRadius + playerTargetRadius;
+
+        Vector2 toPlayer = (Vector2)playerTarget.transform.position - position;
+
+        if (toPlayer.sqrMagnitude >= combined * combined)
+        {
+            return false;
+        }
+
+        // 접촉 피해와 달리 무적 시간을 거치지 않음
+        // PlayerContactDamage의 무적은 그 컴포넌트 내부 타이머이고, 공유하면
+        // 접촉 중에 맞은 원거리탄이 먹혀 기획의 접촉 12 + 원거리 8이 안 나옴
+        // 기획에 규정이 없어 정한 것이라 확인 요청 대상
+        playerTarget.TakeDamage(spec.Damage);
+
+        isActive = false;
+
+        return true;
+    }
+
 
     private bool CheckHits(Vector2 position, EnemyManager enemyManager, ElementHitCounter hitCounter)
     {
+        // 적이 쏜 투사체는 대상이 플레이어 한 명뿐이라 적 검색으로 내려가지 않음
+        if (playerTarget != null)
+        {
+            return CheckPlayerHit(position);
+        }
+
         enemyManager.FindOverlappingEnemies(position, spec.HitRadius, hitBuffer);
 
         for (int i = 0; i < hitBuffer.Count; i++)
