@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 9103200933536096095}
   - component: {fileID: 7377819187996129501}
   - component: {fileID: 8007111486417167307}
+  - component: {fileID: 334504166899510237}
   m_Layer: 6
   m_Name: Enemy_Summoner
   m_TagString: Untagged
@@ -143,3 +144,17 @@ MonoBehaviour:
   hitRadius: 0.25
   attackRange: 8
   projectilePrefab: {fileID: 0}
+--- !u!114 &334504166899510237
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5608222364171683798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 619dc1e02d5915d4b9069ec712abd487, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyKeepDistance
+  preferredDistance: 4
+  tolerance: 0.5

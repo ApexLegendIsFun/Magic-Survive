@@ -45,6 +45,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     private Health health;
 
+    // 거리 유지 이동. 소환술사에만 붙어 있고 없으면 null
+    private EnemyKeepDistance keepDistance;
+
     private Enemy sourcePrefab;
 
     public Enemy SourcePrefab => sourcePrefab;
@@ -155,6 +158,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     private void Awake()
     {
         health = GetComponent<Health>();
+
+        // 이동 방식을 가진 적에만 붙어 있음. 없으면 기존 추적 그대로
+        keepDistance = GetComponent<EnemyKeepDistance>();
     }
 
     private void OnEnable()
@@ -249,8 +255,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         health.SetMaxHealth(baseMaxHealth * healthMultiplier, true);
     }
 
-    // EnemyManager에서 매 프레임 호출합니다
-    // 현재는 플레이어 방향으로 직선적으로 추적함
+    // EnemyManager에서 매 프레임 호출
+    // 기본은 플레이어 방향으로 직선 추적이고,
+    // EnemyKeepDistance가 붙어 있고 켜져 있으면 방향만 그쪽에서 받음
     public void Tick(float deltaTime, Vector2 playerPosition)
     {
 
@@ -280,12 +287,18 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         Vector2 currentPosition = transform.position;
         Vector2 toPlayer = playerPosition - currentPosition;
 
-        if (toPlayer.sqrMagnitude < 0.0001f)
+        // 이동 방식을 가진 적은 방향만 위임받음
+        // 위치 대입은 아래에서 한 번만. 
+        Vector2 direction = keepDistance != null && keepDistance.isActiveAndEnabled
+            ? keepDistance.GetMoveDirection(currentPosition, playerPosition)
+            : toPlayer.normalized;
+
+        // 겹쳐서 방향을 못 정했거나, 유지 구간이라 멈추는 경우
+        // 기존 추적도 toPlayer가 0이면 normalized가 zero를 돌려주므로 동일한 동작
+        if (direction.sqrMagnitude < 0.0001f)
         {
             return;
         }
-
-        Vector2 direction = toPlayer.normalized;
 
         // 냉기 표식 중첩당 이동속도 감소. moveSpeed 원본은 그대로 두어 만료 시 복원
         int frostStacks = markState.Get(MagicElement.Frost).Stacks;
