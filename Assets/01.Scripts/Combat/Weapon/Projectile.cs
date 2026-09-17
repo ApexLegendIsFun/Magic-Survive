@@ -162,6 +162,34 @@ public class Projectile : MonoBehaviour
 
                 break;
 
+            case MagicElement.Lightning:
+
+                // 방전. 위쪽 ReactionUnlockLevel 게이트와 별개로 5레벨에서 해금.
+                if (spec.SkillLevel < ElementReactionValues.ExpansionUnlockLevel)
+                {
+                    break;
+                }
+
+                // 점화와 같이 중심 적도 반경 안이라 함께 맞음
+                // 이 피해는 표식도 적중 카운트도 만들지 않음
+                enemyManager.FindOverlappingEnemies(
+                    center, ElementReactionValues.DischargeRadius, reactionBuffer);
+
+                for (int i = 0; i < reactionBuffer.Count; i++)
+                {
+                    reactionBuffer[i].TakeDamage(ElementReactionValues.DischargeDamage);
+                }
+
+                // 번개가 ElementReactionTriggered 를 발행하는 첫 경로.
+                //
+                // 3레벨 연쇄는 선이라 ChainReactionTriggered 를 쓰지만 방전은 원형.
+                // 3중첩 전이와 3번째 적중이 같은 타격이라 둘이 함께 터질 수 있음
+                // 방전이 먼저 실행되므로 방전이 죽인 적은 연쇄 대상에서 빠짐
+                GameEvents.RaiseElementReaction(
+                    MagicElement.Lightning, center, ElementReactionValues.DischargeRadius);
+
+                break;
+
             case MagicElement.Frost:
 
                 // 빙결. 단일 대상이라 반경 0으로 알린다
@@ -193,7 +221,7 @@ public class Projectile : MonoBehaviour
             case MagicElement.Earth:
 
                 // 충격파. 중심 적도 반경 안이라 함께 맞고,
-                // 이 피해는 표식도 적중 카운트도 만들지 않는다
+                // 이 피해는 표식도 적중 카운트도 만들지 않음
                 enemyManager.FindOverlappingEnemies(
                     center, ElementReactionValues.ShockwaveRadius, reactionBuffer);
 
@@ -389,10 +417,6 @@ public class Projectile : MonoBehaviour
     }
 
     // 연쇄 대상 후보 중 보스를 찾기
-    //
-    // origin 은 이미 직격을 맞았으므로 후보x
-    // 따라서 보스를 직격한 경우에는 null 이 나오고 주변 일반 적에게 정상적으로 퍼짐
-    //
     // 기획의 "보스에게는 연쇄 대상이 보스 1명" 을
     // 보스가 연쇄를 받는 쪽일 때로 해석.
     // 이 해석이면 단독 보스전 구간에는 연쇄 대상이 0명. 커밋 본문에 확인 요청

@@ -14,6 +14,10 @@ public static class ElementReactionValues
     // 5원소 모두 3레벨에서 첫 고유 효과가 해금
     public const int ReactionUnlockLevel = 1; //TODO: 빌드 전 수정 필수. 테스트 용이하기 위함, 일시적인 조정입니다.
 
+    // 5원소 공통. 기획 공통 레벨 상승표의 "5 공격 형태 확장"
+    // ReactionUnlockLevel 과 독립. 그쪽 값이 무엇이든 5레벨 효과는 이 상수로만 열림
+    public const int ExpansionUnlockLevel = 5;
+
     // 화염 3레벨 점화
     public const float IgniteDamage = 12f;
     public const float IgniteRadius = 1.3f;
@@ -29,6 +33,10 @@ public static class ElementReactionValues
     public const float ChainDamageRatio = 0.6f;
     public const float ChainRadius = 1.5f;
     public const int ChainMaxTargets = 2;
+
+    // 번개 5레벨 방전. 3중첩 기준이라 화염 점화와 같은 판정.
+    public const float DischargeDamage = 10f;
+    public const float DischargeRadius = 1.2f;
 
     // 대지 3레벨 충격파
     public const float ShockwaveDamage = 10f;
