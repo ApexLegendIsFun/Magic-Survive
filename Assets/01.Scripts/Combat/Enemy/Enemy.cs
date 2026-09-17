@@ -55,6 +55,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 거리 유지 이동. 소환술사에만 붙어 있고 없으면 null
     private EnemyKeepDistance keepDistance;
 
+    // 돌진 이동. 돌진자에만 붙어 있고 없으면 null
+    private EnemyDash dash;
+
     private Enemy sourcePrefab;
 
     public Enemy SourcePrefab => sourcePrefab;
@@ -216,12 +219,18 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     public float HitRadius => hitRadius;
 
+    // [연동:Combat] 돌진 예고 선 길이 계산에 필요
+    // 냉기 둔화가 반영되지 않은 원본 값.
+    public float MoveSpeed => moveSpeed;
+
     private void Awake()
     {
         health = GetComponent<Health>();
 
         // 이동 방식을 가진 적에만 붙어 있음. 없으면 기존 추적 그대로
         keepDistance = GetComponent<EnemyKeepDistance>();
+
+        dash = GetComponent<EnemyDash>();
     }
 
     private void OnEnable()
@@ -385,14 +394,31 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         Vector2 currentPosition = transform.position;
         Vector2 toPlayer = playerPosition - currentPosition;
 
-        // 이동 방식을 가진 적은 방향만 위임받음
-        // 위치 대입은 아래에서 한 번만.
-        Vector2 direction = keepDistance != null && keepDistance.isActiveAndEnabled
-            ? keepDistance.GetMoveDirection(currentPosition, playerPosition)
-            : toPlayer.normalized;
+        // 이동 방식을 가진 적은 방향만 위임받음.
+        // 위치 대입은 아래에서 한 번만
+        
+        // 돌진은 방향뿐 아니라 속도도 바꾸므로 배율을 함께 받기.
+        // 이동 방식이 3종째가 되면 공통 인터페이스로 묶을 것. 지금은 2종.
+        Vector2 direction;
+        float speedMultiplier = 1f;
+
+        if (dash != null && dash.isActiveAndEnabled)
+        {
+            direction = dash.Tick(deltaTime, currentPosition, playerPosition);
+
+            speedMultiplier = dash.SpeedMultiplier;
+        }
+        else if (keepDistance != null && keepDistance.isActiveAndEnabled)
+        {
+            direction = keepDistance.GetMoveDirection(currentPosition, playerPosition);
+        }
+        else
+        {
+            direction = toPlayer.normalized;
+        }
 
         // 겹쳐서 방향을 못 정했거나, 유지 구간이라 멈추는 경우
-        // 기존 추적도 toPlayer가 0이면 normalized가 zero를 돌려주므로 동일한 동작
+        // 예고 중과 전환 프레임도 여기로 빠짐.
         if (direction.sqrMagnitude < 0.0001f)
         {
             return;
@@ -401,7 +427,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         // 냉기 표식 중첩당 이동속도 감소. moveSpeed 원본은 그대로 두어 만료 시 복원
         // 기획에서 보스에게 둔화 면역을 지정했으므로. 표식은 그대로 쌓이고 속도만 안 깎이게
         int frostStacks = isBoss ? 0 : markState.Get(MagicElement.Frost).Stacks;
-        float currentSpeed = moveSpeed * (1f - frostStacks * FrostMovementSpeedReductionPerStack);
+
+        float currentSpeed = moveSpeed
+            * (1f - frostStacks * FrostMovementSpeedReductionPerStack)
+            * speedMultiplier;
 
         transform.position = currentPosition + direction * currentSpeed * deltaTime;
     }

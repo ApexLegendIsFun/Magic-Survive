@@ -101,6 +101,24 @@ public static class GameEvents
         BossShockwaveTriggered?.Invoke(center, radius);
     }
 
+    // [연동:UI] 돌진자 돌진 예고. (시작 위치, 방향, 최대 거리, 예고 시간)
+    //
+    // 방향은 정규화. 예고가 끝나면 정확히 이 방향으로 돌진함
+    // 시작 위치는 예고 동안 움직이지 않음
+    // 거리는 둔화가 없을 때의 값이라 실제 도달 거리는 이보다 짧을 수 있음
+    //
+    // 사망 또는 빙결로 돌진이 취소될 수 있다. 취소 이벤트는 따로 x
+    // 구독부는 받은 예고 시간이 지나면 선을 지울 것
+    public static event Action<Vector2, Vector2, float, float> DashTelegraph;
+
+
+    // 돌진 예고 시작 시 호출
+    public static void RaiseDashTelegraph(
+        Vector2 origin, Vector2 direction, float distance, float telegraphSeconds)
+    {
+        DashTelegraph?.Invoke(origin, direction, distance, telegraphSeconds);
+    }
+
     // 전체 이벤트 초기화 
     // [연동:성장]
     public static void Clear()
@@ -113,7 +131,7 @@ public static class GameEvents
         SummonTelegraph = null;
         BossShockwaveTelegraph = null;
         BossShockwaveTriggered = null;
-
+        DashTelegraph = null;
     }
 
 
