@@ -40,6 +40,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 암흑 3레벨 해금 여부
     private bool darkAmplificationUnlocked;
 
+    // 마지막으로 DarkAmplifiedChanged 로 알린 상태
+    // 증폭은 해금과 스택 수에서 파생되는 값이라 바뀌는 순간을 직접 잡아야 함
+    private bool darkAmplifiedNotified;
+
     private float baseMaxHealth;
     private float baseContactDamage;
 
@@ -66,6 +70,22 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     public bool IsFrozen => freezeRemainingSeconds > 0f;
 
+    // [연동:UI] 암흑 3레벨 증폭 상태 변화. true=시작, false=해제
+    // 기획과 발송본의 "저주" 부분
+    //
+    // 적은 풀에서 재사용되므로 구독부는 OnEnable 에서 IsDarkAmplified 를 한 번 읽어
+    // 현재 상태를 맞추고, OnDisable 에서 자기 연출을 꺼야 함
+    // 해제 이벤트가 반드시 먼저 온다고 가정 x
+    public event Action<bool> DarkAmplifiedChanged;
+
+    // [연동:UI] 지금 증폭이 걸려 있는가
+    //
+    // 해금과 3중첩이 둘 다 참이어야 함
+    // 스택만 보면 3중첩이어도 스킬 3레벨 전이면 증폭이 안 걸린 상태를 놓침
+    public bool IsDarkAmplified =>
+        darkAmplificationUnlocked
+        && markState.Get(MagicElement.Dark).Stacks >= ElementMarkRules.MaximumStacks;
+
     // 구독을 markState로 그대로 넘김
     public event Action<ElementMarkChange> ElementMarkChanged
     {
@@ -84,11 +104,36 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     public void ApplyElementMark(MagicElement element, int amount, float duration)
     {
         markState.Apply(element, amount, duration);
+
+        RefreshDarkAmplified();
     }
 
     public void ConsumeElementMarks(MagicElement element, int amount)
     {
         markState.Consume(element, amount);
+
+        RefreshDarkAmplified();
+    }
+
+    // 암흑 증폭이 켜지고 꺼지는 순간에만 알림
+    //
+    // markState.Changed 를 구독하지 않는 이유: Reset() 은 Changed 를 발행하지 않아서
+    // 풀 반환과 재사용을 놓치므로, 스택이 바뀌는 지점에서 직접 부르는 편이 확실
+    //
+    // darkAmplificationUnlocked 가 false 면 단락 평가로 Get 까지 가지 안흥ㅁ
+    // 일반 적은 거의 항상 false 라 Tick 비용이 사실상 0.
+    private void RefreshDarkAmplified()
+    {
+        bool current = IsDarkAmplified;
+
+        if (current == darkAmplifiedNotified)
+        {
+            return;
+        }
+
+        darkAmplifiedNotified = current;
+
+        DarkAmplifiedChanged?.Invoke(current);
     }
 
 
@@ -124,6 +169,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     public void SetDarkAmplificationUnlocked()
     {
         darkAmplificationUnlocked = true;
+
+        // 투사체가 부르는 시점은 이미 3중첩 전이라 여기서 바로 켜짐
+        RefreshDarkAmplified();
     }
 
 
@@ -188,8 +236,19 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             FrozenChanged?.Invoke(false);
         }
 
+        // 상태를 먼저 확정하고 알림
+        // 구독부가 false 를 받은 순간 IsDarkAmplified 를 다시 읽어도 false 여야 함
+        bool wasDarkAmplified = darkAmplifiedNotified;
+
         darkAmplificationUnlocked = false;
+        darkAmplifiedNotified = false;
+
+        if (wasDarkAmplified)
+        {
+            DarkAmplifiedChanged?.Invoke(false);
+        }
     }
+
 
 
     /// <summary>
@@ -281,6 +340,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
         markState.Tick(deltaTime);
 
+        // 표식 만료로 3중첩이 깨지는 순간을 여기서 잡기
+        // 빙결 early return 보다 앞이어야 빙결 중에도 해제가 알려짐
+        RefreshDarkAmplified();
+
         // 빙결 중에는 이동만 멈추기
         // TickFireDot과 markState.Tick보다 뒤에 있어야 도트와 표식 만료가 계속 돌아감
         if (freezeRemainingSeconds > 0f)
@@ -357,4 +420,5 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         Killed?.Invoke(this);
     }
 }
+
 
