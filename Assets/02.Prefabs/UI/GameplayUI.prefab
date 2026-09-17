@@ -131,14 +131,13 @@ GameObject:
   - component: {fileID: 7481716134969504699}
   - component: {fileID: 4736463948125520110}
   - component: {fileID: 7732316838473606219}
-  - component: {fileID: 193179021445075218}
   m_Layer: 0
   m_Name: ResultUi
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &7481716134969504699
 RectTransform:
   m_ObjectHideFlags: 0
@@ -198,37 +197,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &193179021445075218
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 275487800212006578}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e72e4c8724357454e82372df49094f4e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ResultUi
-  titleText: {fileID: 3711937575725997505}
-  time: {fileID: 302520196585398087}
-  killCount: {fileID: 3307866316993542064}
-  level: {fileID: 4473553287302152925}
-  elementSlots:
-  - icon: {fileID: 0}
-    levelText: {fileID: 3278980860205924781}
-  - icon: {fileID: 0}
-    levelText: {fileID: 7927603779841246177}
-  - icon: {fileID: 0}
-    levelText: {fileID: 5522622160451284097}
-  - icon: {fileID: 0}
-    levelText: {fileID: 5363708501784678261}
-  - icon: {fileID: 0}
-    levelText: {fileID: 6815247847038156920}
-  elementIcons: []
-  title: {fileID: 3430479563292101119}
-  reStart: {fileID: 518759108221368775}
-  gameFlowController: {fileID: 0}
 --- !u!1 &280464778701785898
 GameObject:
   m_ObjectHideFlags: 0
@@ -15268,7 +15236,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 342763017939109334, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 605283701627262637, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: m_Name
@@ -15310,10 +15278,6 @@ PrefabInstance:
       propertyPath: popupUi
       value: 
       objectReference: {fileID: 6857223123170221378}
-    - target: {fileID: 756776326090757750, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
-      propertyPath: resultUi
-      value: 
-      objectReference: {fileID: 193179021445075218}
     - target: {fileID: 756776326090757750, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       propertyPath: hudStatcUi
       value: 
@@ -15841,14 +15805,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e72e4c8724357454e82372df49094f4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ResultUi
-  titleText: {fileID: 0}
-  time: {fileID: 0}
-  killCount: {fileID: 0}
-  level: {fileID: 0}
-  elementSlots: []
+  titleText: {fileID: 3711937575725997505}
+  time: {fileID: 302520196585398087}
+  killCount: {fileID: 3307866316993542064}
+  level: {fileID: 4473553287302152925}
+  elementSlots:
+  - icon: {fileID: 0}
+    levelText: {fileID: 3278980860205924781}
+  - icon: {fileID: 0}
+    levelText: {fileID: 7927603779841246177}
+  - icon: {fileID: 0}
+    levelText: {fileID: 5522622160451284097}
+  - icon: {fileID: 0}
+    levelText: {fileID: 5363708501784678261}
+  - icon: {fileID: 0}
+    levelText: {fileID: 6815247847038156920}
   elementIcons: []
-  title: {fileID: 0}
-  reStart: {fileID: 0}
+  title: {fileID: 3430479563292101119}
+  reStart: {fileID: 518759108221368775}
   gameFlowController: {fileID: 0}
 --- !u!224 &846885411557677636 stripped
 RectTransform:
