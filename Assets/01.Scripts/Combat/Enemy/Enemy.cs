@@ -120,6 +120,24 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     }
 
 
+    // 대지 1레벨 밀치기. 투사체가 적중 시 호출
+    //
+    // 즉시 위치 이동이라 Tick의 이동 계산과 만나지 않음
+    // 빙결 중에도 밀쳐짐.
+    //
+    public void ApplyKnockback(Vector2 direction, float distance)
+    {
+        // 충격파가 대상을 죽인 뒤 호출될 수 있음. 죽은 적은 밀치지 않음
+        if (!IsAlive || IsKnockbackImmune || distance <= 0f)
+        {
+            return;
+        }
+
+        Vector2 currentPosition = transform.position;
+
+        transform.position = currentPosition + direction.normalized * distance;
+    }
+
 
     public void SetSourcePrefab(Enemy prefab)
     {
@@ -309,3 +327,4 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         GameEvents.RaiseEnemyKilled(transform.position, experienceReward);
     }
 }
+

@@ -37,4 +37,10 @@ public static class ElementReactionValues
     // 암흑 3레벨. 3중첩 대상이 받는 모든 피해 증가
     // 1회성이 아니라 대상에 남는 지속
     public const float DarkAmplificationBonus = 0.15f;
+
+    // 대지 1레벨 밀치기. 임시값. 확인 요청 대상
+    // hitRadius 0.5와 같은 값이고 점화 1.3, 충격파 1.5 대역보다 작음
+    public const float KnockbackDistance = 0.5f;
+
 }
+

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 using System;
 
 
@@ -25,6 +26,11 @@ public static class GameEvents
     // 반응 자체의 피해는 별도로 EnemyDamaged로도 나감
     public static event Action<MagicElement, Vector2, float> ElementReactionTriggered;
 
+    // [연동:UI] 번개 연쇄처럼 "중심 -> 개별 대상"으로 이어지는 반응.
+    // ElementReactionTriggered(원형)로는 표현이 안 되어 별도로 둠.
+    // targetPositions는 발행할 때마다 새로 만든 복사본이라 구독부가 보관해도 안전.
+    // 피해 적용 전 위치이며, 대상이 0명이면 이 이벤트 자체가 발행되지 않음.
+    public static event Action<MagicElement, Vector2, IReadOnlyList<Vector2>> ChainReactionTriggered;
 
     // 적 사망 시 호출
     public static void RaiseEnemyKilled(Vector2 position, int experienceReward)
@@ -52,6 +58,13 @@ public static class GameEvents
         ElementReactionTriggered?.Invoke(element, position, radius);
     }
 
+    // 연쇄형 반응 발동 시 호출 (번개 등)
+    public static void RaiseChainReaction(
+        MagicElement element, Vector2 originPosition, IReadOnlyList<Vector2> targetPositions)
+    {
+        ChainReactionTriggered?.Invoke(element, originPosition, targetPositions);
+    }
+
     // 전체 이벤트 초기화 
     // [연동:성장]
     public static void Clear()
@@ -60,6 +73,7 @@ public static class GameEvents
         PlayerDied = null;
         EnemyDamaged = null;
         ElementReactionTriggered = null;
+        ChainReactionTriggered = null;
 
     }
 
