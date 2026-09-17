@@ -76,6 +76,31 @@ public static class GameEvents
         SummonTelegraph?.Invoke(positions, telegraphSeconds);
     }
 
+    // [연동:UI] 보스 2페이즈 원형 충격파 예고. (중심, 반경, 예고 시간)
+    // 예고가 끝나면 정확히 이 중심과 반경에서 터진다. 중심은 예고 시점에 고정.
+    //
+    // 예고 중에 보스가 죽으면 BossShockwaveTriggered 가 오지 않
+    // radius 는 월드 반경.
+    public static event Action<Vector2, float, float> BossShockwaveTelegraph;
+
+    // [연동:UI] 보스 2페이즈 원형 충격파 발동. (중심, 반경)
+    // 플레이어가 반경 밖이어도 발행가능. 피해 여부와 무관한 발동 연출용
+    public static event Action<Vector2, float> BossShockwaveTriggered;
+
+
+    // 보스 충격파 예고 시작 시 호출
+    public static void RaiseBossShockwaveTelegraph(
+        Vector2 center, float radius, float telegraphSeconds)
+    {
+        BossShockwaveTelegraph?.Invoke(center, radius, telegraphSeconds);
+    }
+
+    // 보스 충격파가 실제로 터질 때 호출
+    public static void RaiseBossShockwaveTriggered(Vector2 center, float radius)
+    {
+        BossShockwaveTriggered?.Invoke(center, radius);
+    }
+
     // 전체 이벤트 초기화 
     // [연동:성장]
     public static void Clear()
@@ -86,6 +111,8 @@ public static class GameEvents
         ElementReactionTriggered = null;
         ChainReactionTriggered = null;
         SummonTelegraph = null;
+        BossShockwaveTelegraph = null;
+        BossShockwaveTriggered = null;
 
     }
 

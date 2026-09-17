@@ -21,6 +21,7 @@ public class BossPhaseController : MonoBehaviour
     // RequireComponent 로 묶으면 소환이 없는 보스를 만들 수 없게 되므로
     private EnemyRangedAttack rangedAttack;
     private EnemySummon summon;
+    private BossShockwave shockwave;
 
     private bool isPhaseTwo;
 
@@ -32,14 +33,17 @@ public class BossPhaseController : MonoBehaviour
         health = GetComponent<Health>();
 
         rangedAttack = GetComponent<EnemyRangedAttack>();
+
         summon = GetComponent<EnemySummon>();
 
+        shockwave = GetComponent<BossShockwave>();
+
         // 프리팹 설정을 빠뜨리면 전환이 절반만 일어나 정상처럼 보임
-        if (rangedAttack == null || summon == null)
+        if (rangedAttack == null || summon == null || shockwave == null)
         {
             Debug.LogWarning(
-                "[BossPhaseController] EnemyRangedAttack 또는 EnemySummon 이 없습니다. " +
-                "2페이즈에서 해당 변화는 일어나지 않습니다.", this);
+                "[BossPhaseController] EnemyRangedAttack, EnemySummon, BossShockwave 중 " +
+                "없는 것이 있습니다. 2페이즈에서 해당 변화는 일어나지 않습니다.", this);
         }
     }
 
@@ -54,6 +58,11 @@ public class BossPhaseController : MonoBehaviour
         if (summon != null)
         {
             summon.enabled = false;
+        }
+
+        if (shockwave != null)
+        {
+            shockwave.enabled = false;
         }
 
         health.HealthChanged += HandleHealthChanged;
@@ -103,6 +112,11 @@ public class BossPhaseController : MonoBehaviour
         if (summon != null)
         {
             summon.enabled = true;
+        }
+
+        if (shockwave != null)
+        {
+            shockwave.enabled = true;
         }
 
     }

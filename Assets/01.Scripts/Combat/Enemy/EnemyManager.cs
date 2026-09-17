@@ -100,11 +100,27 @@ public class EnemyManager : MonoBehaviour
 
     }
 
+    // 적 행동 컴포넌트가 플레이어를 직접 때릴 때 쓰는 체력
+    // 현재 소비자는 BossShockwave 하나. 원거리탄은 ProjectileLauncher 쪽을 사용
+    private Health playerHealth;
+
     private void Awake()
     {
         if (playerTransform == null)
         {
             Debug.LogError("[EnemyManager] Player Transform 미연결. 적이 움직이지 않습니다.", this);
+
+            return;
+        }
+
+        // 씬에 [SerializeField] 배선을 하나 더 늘리지 않으려고 Player 에서 직접 찾음
+        playerHealth = playerTransform.GetComponent<Health>();
+
+        if (playerHealth == null)
+        {
+            Debug.LogWarning(
+                "[EnemyManager] Player 오브젝트에 Health 가 없습니다. 보스 충격파가 플레이어를 때리지 않습니다.",
+                this);
         }
     }
 
@@ -188,6 +204,14 @@ public class EnemyManager : MonoBehaviour
         if (summon != null)
         {
             summon.Configure(this, playerTransform);
+        }
+
+        // 보스에만 붙음. 2페이즈 전에는 꺼져 있지만 GetComponent 는 꺼진 것도 찾음
+        BossShockwave shockwave = enemy.GetComponent<BossShockwave>();
+
+        if (shockwave != null)
+        {
+            shockwave.Configure(playerHealth);
         }
 
         enemy.gameObject.SetActive(true);
