@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 7377819187996129501}
   - component: {fileID: 8007111486417167307}
   - component: {fileID: 334504166899510237}
+  - component: {fileID: -694504316480940454}
   m_Layer: 6
   m_Name: Enemy_Summoner
   m_TagString: Untagged
@@ -158,3 +159,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyKeepDistance
   preferredDistance: 4
   tolerance: 0.5
+--- !u!114 &-694504316480940454
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5608222364171683798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5a3161058edbd647a6a3ada3712500a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySummon
+  summonInterval: 8
+  telegraphSeconds: 0.8
+  summonCount: 3
+  maxAliveSummons: 6
+  summonData: {fileID: 11400000, guid: fb05251c9d772f347910531787b68646, type: 2}
+  summonRadius: 2.5

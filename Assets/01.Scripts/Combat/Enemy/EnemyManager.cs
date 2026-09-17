@@ -183,6 +183,13 @@ public class EnemyManager : MonoBehaviour
             ranged.Configure(projectileLauncher, playerTransform);
         }
 
+        EnemySummon summon = enemy.GetComponent<EnemySummon>();
+
+        if (summon != null)
+        {
+            summon.Configure(this, playerTransform);
+        }
+
         enemy.gameObject.SetActive(true);
 
         Register(enemy);

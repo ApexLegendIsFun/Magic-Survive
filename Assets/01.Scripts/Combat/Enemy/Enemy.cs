@@ -60,6 +60,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 구독은 활성화 뒤에, 해제는 비활성화될 때
     public event Action<bool> FrozenChanged;
 
+    // [연동:Combat] 개체 단위 사망. 현재 소비자는 EnemySummon 하나
+    // 풀 반환 시 null 로 비우지 않을 것.
+    public event Action<Enemy> Killed;
+
     public bool IsFrozen => freezeRemainingSeconds > 0f;
 
     // 구독을 markState로 그대로 넘김
@@ -247,6 +251,15 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     }
 
+    // 소환된 적의 EXP 미지급. 소환 주체가 Spawn 직후 1회 호출
+    //
+    // Initialize 가 매 Spawn 마다 EnemyData 값으로 덮으므로
+    // 풀에서 재사용돼도 이 억제가 다음 개체에 남지 않음
+    public void SuppressExperienceReward()
+    {
+        experienceReward = 0;
+    }
+
     // 스폰 직후 SpawnDirector가 1회 호출
     public void ApplyDifficulty(float healthMultiplier, float damageMultiplier)
     {
@@ -288,7 +301,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         Vector2 toPlayer = playerPosition - currentPosition;
 
         // 이동 방식을 가진 적은 방향만 위임받음
-        // 위치 대입은 아래에서 한 번만. 
+        // 위치 대입은 아래에서 한 번만.
         Vector2 direction = keepDistance != null && keepDistance.isActiveAndEnabled
             ? keepDistance.GetMoveDirection(currentPosition, playerPosition)
             : toPlayer.normalized;
@@ -338,6 +351,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     private void HandleDied()
     {
         GameEvents.RaiseEnemyKilled(transform.position, experienceReward);
+
+        // 개체 단위 통지는 전역 이벤트 뒤에 발행
+        // Health.TakeDamage 가 !isAlive 면 바로 빠져나가므로 사망당 한 번만
+        Killed?.Invoke(this);
     }
 }
 

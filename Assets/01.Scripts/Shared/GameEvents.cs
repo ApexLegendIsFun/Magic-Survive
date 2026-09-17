@@ -32,6 +32,11 @@ public static class GameEvents
     // 피해 적용 전 위치이며, 대상이 0명이면 이 이벤트 자체가 발행되지 않음.
     public static event Action<MagicElement, Vector2, IReadOnlyList<Vector2>> ChainReactionTriggered;
 
+    // [연동:UI] 소환 예고. (예고 위치들, 예고 시간)
+    // 예고가 끝나면 정확히 이 위치에 적이 나옴.
+    // positions는 발행할 때마다 새로 만든 복사본. 구독부 보관시도 안전
+    public static event Action<IReadOnlyList<Vector2>, float> SummonTelegraph;
+
     // 적 사망 시 호출
     public static void RaiseEnemyKilled(Vector2 position, int experienceReward)
     {
@@ -65,6 +70,12 @@ public static class GameEvents
         ChainReactionTriggered?.Invoke(element, originPosition, targetPositions);
     }
 
+    // 소환 예고 시작 시 호출
+    public static void RaiseSummonTelegraph(IReadOnlyList<Vector2> positions, float telegraphSeconds)
+    {
+        SummonTelegraph?.Invoke(positions, telegraphSeconds);
+    }
+
     // 전체 이벤트 초기화 
     // [연동:성장]
     public static void Clear()
@@ -74,6 +85,7 @@ public static class GameEvents
         EnemyDamaged = null;
         ElementReactionTriggered = null;
         ChainReactionTriggered = null;
+        SummonTelegraph = null;
 
     }
 
