@@ -1140,7 +1140,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6454273543579506912, guid: 32688d6634e87bc46ac1440f5f24e5a0, type: 3}
       propertyPath: effects.Array.size
-      value: 4
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 6454273543579506912, guid: 32688d6634e87bc46ac1440f5f24e5a0, type: 3}
       propertyPath: effects.Array.data[2].element
@@ -1152,11 +1152,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6454273543579506912, guid: 32688d6634e87bc46ac1440f5f24e5a0, type: 3}
       propertyPath: effects.Array.data[3].element
-      value: 2
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 6454273543579506912, guid: 32688d6634e87bc46ac1440f5f24e5a0, type: 3}
       propertyPath: effects.Array.data[3].sfxType
-      value: 4
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 6454273543579506912, guid: 32688d6634e87bc46ac1440f5f24e5a0, type: 3}
       propertyPath: effects.Array.data[4].element
@@ -1164,6 +1164,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6454273543579506912, guid: 32688d6634e87bc46ac1440f5f24e5a0, type: 3}
       propertyPath: effects.Array.data[4].sfxType
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6454273543579506912, guid: 32688d6634e87bc46ac1440f5f24e5a0, type: 3}
+      propertyPath: effects.Array.data[5].element
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6454273543579506912, guid: 32688d6634e87bc46ac1440f5f24e5a0, type: 3}
+      propertyPath: effects.Array.data[5].sfxType
       value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 6454273543579506912, guid: 32688d6634e87bc46ac1440f5f24e5a0, type: 3}
