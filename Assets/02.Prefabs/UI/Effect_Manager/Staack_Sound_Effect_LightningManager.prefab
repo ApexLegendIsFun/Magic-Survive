@@ -44,6 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 627f334eeaa0fd240ad7ef0ddf5b5e32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LightningChainEffectPlayer
-  boltPrefab: {fileID: 0}
+  boltPrefab: {fileID: 3409985999120834207, guid: f5f821215f5b627499bad759ee88c80a, type: 3}
   boltLifetime: 0.15
   sfxType: 4
+  burstEffectPrefab: {fileID: 5220326997714010057, guid: 7ac16530d7d1e5d42bc49fa0410bc022, type: 3}
+  burstAnimationClip: {fileID: 0}
+  burstFallbackLifetime: 0.3
