@@ -47,6 +47,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     private float baseMaxHealth;
     private float baseContactDamage;
 
+    // EnemyData 가 지정하는 제어 면역. Initialize 가 매 Spawn 마다 덮는다
+    private bool isBoss;
+
     private Health health;
 
     // 거리 유지 이동. 소환술사에만 붙어 있고 없으면 null
@@ -56,9 +59,16 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     public Enemy SourcePrefab => sourcePrefab;
 
-    public float CrowdControlDurationMultiplier => 1f;
 
-    public bool IsKnockbackImmune => false;
+    // 0f 를 돌려주면 ApplyFreeze 가 applied <= 0f 가드에서 빠져나가므로
+    // 호출부를 바꾸지 않고 빙결 면역이 됨
+    public float CrowdControlDurationMultiplier => isBoss ? 0f : 1f;
+
+    public bool IsKnockbackImmune => isBoss;
+
+    // [연동:Combat] 아직 안 만든 보스 예외가 조회.
+    // 기획의 "보스에게는 연쇄 대상이 보스 1명으로 제한"과 암흑 8레벨 처형 면역
+    public bool IsBoss => isBoss;
 
     // [연동:UI] 빙결 상태 변화. true=시작, false=해제
     // 구독은 활성화 뒤에, 해제는 비활성화될 때
@@ -138,9 +148,8 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
 
     // 냉기 표식 3중첩 반응. Projectile이 호출
-    // 지속시간에 CrowdControlDurationMultiplier를 곱하는 이유는 보스 제어 면역.
-    // 현재 이 값은 1f 고정이고, 보스 작업에서 보스만 0f를 반환하게 하면
-    // 여기와 호출부는 바뀌지 않음
+    // 지속시간에 CrowdControlDurationMultiplier를 곱하기
+    // 보스는 이 값이 0f 라 applied 가 0 이 되고 빙결이 걸리지 않음
     public void ApplyFreeze(float durationSeconds)
     {
         float applied = durationSeconds * CrowdControlDurationMultiplier;
@@ -301,6 +310,8 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         baseMaxHealth = data.MaxHealth;
         baseContactDamage = data.ContactDamage;
 
+        isBoss = data.IsBoss;
+
         contactDamage = baseContactDamage;
         health.ResetHealth(baseMaxHealth);
 
@@ -377,7 +388,8 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         }
 
         // 냉기 표식 중첩당 이동속도 감소. moveSpeed 원본은 그대로 두어 만료 시 복원
-        int frostStacks = markState.Get(MagicElement.Frost).Stacks;
+        // 기획에서 보스에게 둔화 면역을 지정했으므로. 표식은 그대로 쌓이고 속도만 안 깎이게
+        int frostStacks = isBoss ? 0 : markState.Get(MagicElement.Frost).Stacks;
         float currentSpeed = moveSpeed * (1f - frostStacks * FrostMovementSpeedReductionPerStack);
 
         transform.position = currentPosition + direction * currentSpeed * deltaTime;

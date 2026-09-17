@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 8662285387949474317}
   - component: {fileID: 9103200933536096095}
   - component: {fileID: 7377819187996129501}
+  - component: {fileID: -7619301506509127058}
   m_Layer: 6
   m_Name: Enemy_Boss
   m_TagString: Untagged
@@ -123,3 +124,24 @@ MonoBehaviour:
   contactDamage: 5
   experienceReward: 1
   hitRadius: 0.5
+--- !u!114 &-7619301506509127058
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5608222364171683798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee2f6492b3927ed4d811d8028ac576b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyRangedAttack
+  attackInterval: 4.5
+  damage: 10
+  projectileSpeed: 6
+  maxDistance: 20
+  hitRadius: 0.25
+  attackRange: 20
+  projectileCount: 3
+  angleStepDegrees: 20
+  projectilePrefab: {fileID: 0}

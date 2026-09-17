@@ -22,6 +22,9 @@ public class EnemyData : ScriptableObject
     // 적 사망시 획득 경험치
     [SerializeField] private int experienceReward = 1;
 
+    [Header("보스")]
+    [SerializeField] private bool isBoss;
+
     // EnemyManager.Spawn()에서 사용하는 프리팹
     public Enemy Prefab => prefab;
 
@@ -33,5 +36,10 @@ public class EnemyData : ScriptableObject
 
     // [연동:성장] 적 사망 시 EnemyKilled 이벤트로 전달되는 값
     public int ExperienceReward => experienceReward;
+
+    // 기획이 보스에게만 지정한 면역 묶음. 빙결 둔화 밀치기 일반 적 처형
+    // 넷을 따로 두지 않는 이유는 기획이 보스에 한정해 묶어 규정하므로.
+    // 엘리트에 개별 면역이 필요해지면 그때 나누기
+    public bool IsBoss => isBoss;
 
 }

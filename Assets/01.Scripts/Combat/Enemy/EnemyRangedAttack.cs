@@ -24,6 +24,11 @@ public class EnemyRangedAttack : MonoBehaviour
     [SerializeField] private float attackRange = 8f;
 
 
+    [Header("부채꼴. 1발 0도면 기존 단발과 동일")]
+    [SerializeField] private int projectileCount = 1;
+    [SerializeField] private float angleStepDegrees = 0f;
+
+
     // 비워두면 ProjectileLauncher의 Default Projectile Prefab이 쓰임
     [SerializeField] private Projectile projectilePrefab;
 
@@ -100,10 +105,36 @@ public class EnemyRangedAttack : MonoBehaviour
         }
 
         // SkillLevel 0. 적 투사체는 원소 표식을 걸지 않음
+        // readonly struct 라 한 번 만들어 모든 탄이 공유해도 안전하도록.
         ProjectileSpec spec = new ProjectileSpec(
             projectilePrefab, damage, projectileSpeed, maxDistance, hitRadius, 0);
 
-        launcher.FireAtPlayer(spec, origin, toPlayer.normalized);
+        Vector2 baseDirection = toPlayer.normalized;
+
+        int count = Mathf.Max(1, projectileCount);
+
+        // 가운데 탄이 플레이어를 향하도록 좌우 대칭으로 벌림
+        // 3발 20도면 -20 / 0 / +20, 5발이면 -40 / -20 / 0 / +20 / +40
+        float startAngle = -angleStepDegrees * (count - 1) * 0.5f;
+
+        for (int i = 0; i < count; i++)
+        {
+            launcher.FireAtPlayer(
+                spec, origin, Rotate(baseDirection, startAngle + angleStepDegrees * i));
+        }
+    }
+
+    // 2D 한 축 회전이라 Quaternion 보다 이쪽을 채택
+    private static Vector2 Rotate(Vector2 direction, float degrees)
+    {
+        float radians = degrees * Mathf.Deg2Rad;
+
+        float cos = Mathf.Cos(radians);
+        float sin = Mathf.Sin(radians);
+
+        return new Vector2(
+            direction.x * cos - direction.y * sin,
+            direction.x * sin + direction.y * cos);
     }
 }
 
