@@ -13,7 +13,7 @@ public class SummonEffectPlayer : MonoBehaviour
     [Header("실제 소환 순간 (버스트 이펙트)")]
     [SerializeField] private GameObject summonBurstPrefab;
     [SerializeField] private AnimationClip summonBurstClip; // 재생 시간 계산용
-    //[SerializeField] private SFXType summonSfxType = SFXType.Summon;
+     [SerializeField] private SFXType summonSfxType = SFXType.Summon;
 
     private void OnEnable()
     {
@@ -23,8 +23,8 @@ public class SummonEffectPlayer : MonoBehaviour
 
     private void OnDisable()
     {
-        //GameEvents.SummonWarningTriggered -= HandleSummonWarning;
-       // GameEvents.EnemySummoned -= HandleEnemySummoned;
+       // GameEvents.SummonWarningTriggered -= HandleSummonWarning;
+      //  GameEvents.EnemySummoned -= HandleEnemySummoned;
     }
 
     private void HandleSummonWarning(Vector2 position, float leadTimeSeconds)
