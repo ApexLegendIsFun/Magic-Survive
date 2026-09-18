@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &4158464932362483992
+--- !u!1 &795773447845617743
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,45 +8,42 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5887413564716011965}
-  - component: {fileID: 3259084942697795194}
+  - component: {fileID: 5012775980883479396}
+  - component: {fileID: 5606834179647880404}
   m_Layer: 0
-  m_Name: Staack_Sound_Effect_LightningManager
+  m_Name: Summon_Effect & Sound_Manager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5887413564716011965
+--- !u!4 &5012775980883479396
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4158464932362483992}
+  m_GameObject: {fileID: 795773447845617743}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.66988, y: -0.20116, z: 0}
+  m_LocalPosition: {x: 0.15079, y: 1.14779, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3259084942697795194
+--- !u!114 &5606834179647880404
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4158464932362483992}
+  m_GameObject: {fileID: 795773447845617743}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 627f334eeaa0fd240ad7ef0ddf5b5e32, type: 3}
+  m_Script: {fileID: 11500000, guid: 0f4d769f809b59748912b4ca2efab8ab, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LightningChainEffectPlayer
-  boltPrefab: {fileID: 3409985999120834207, guid: f5f821215f5b627499bad759ee88c80a, type: 3}
-  boltLifetime: 0.15
-  sfxType: 4
-  burstEffectPrefab: {fileID: 5220326997714010057, guid: 7ac16530d7d1e5d42bc49fa0410bc022, type: 3}
-  burstAnimationClip: {fileID: 0}
-  burstFallbackLifetime: 0.3
+  m_EditorClassIdentifier: Assembly-CSharp::SummonEffectPlayer
+  warningIndicatorPrefab: {fileID: 8380676397131041506, guid: b024a5ff50796ee42a6f405db7d50574, type: 3}
+  summonBurstPrefab: {fileID: 4997841310052540845, guid: cf88918c064eb6e459d9049db24126c3, type: 3}
+  summonBurstClip: {fileID: 0}
