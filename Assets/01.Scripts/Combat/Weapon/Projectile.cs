@@ -162,9 +162,16 @@ public class Projectile : MonoBehaviour
                     MagicElement.Fire, center, ElementReactionValues.IgniteRadius);
 
                 // 5레벨 전염
-                SpreadFireMark(origin, center, enemyManager);
+                // 점화가 중심 적을 죽였다면 사망 전염이 대기열에 들어갔으므로 건너뜀
+                // 둘 다 돌면 같은 주변 적 2명이 표식 2개, 이벤트 2회를 받음
+                // 두 경로 모두 5레벨 게이트라 레벨 조건은 어긋나지 않음
+                if (origin.IsAlive)
+                {
+                    SpreadFireMark(origin, center, enemyManager);
+                }
 
                 break;
+
             case MagicElement.Lightning:
 
                 // 방전. 위쪽 ReactionUnlockLevel 게이트와 별개로 5레벨에서 해금.
@@ -429,6 +436,12 @@ public class Projectile : MonoBehaviour
             }
 
             alreadyHit.Add(enemy);
+
+            // 화염·암흑 5레벨 사망 전염 권한. 반드시 피해보다 먼저
+            if (spec.SkillLevel >= ElementReactionValues.ExpansionUnlockLevel)
+            {
+                enemy.ArmDeathSpread(spec.Element);
+            }
 
             enemy.TakeDamage(spec.Damage);
 

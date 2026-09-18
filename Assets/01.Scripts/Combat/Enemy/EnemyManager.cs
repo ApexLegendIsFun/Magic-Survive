@@ -23,6 +23,26 @@ public class EnemyManager : MonoBehaviour
 
     public bool IsResolvingFrostShatter => isResolvingFrostShatter;
 
+    // 화염,암흑 5레벨 사망 전염 대기열
+    // Enemy 참조를 담지 않음. LateUpdate 전에 풀로 반환되어 재사용될 수 있음
+    private struct PendingDeathSpread
+    {
+        public MagicElement Element;
+        public Vector2 Center;
+        public float Radius;
+        public int MaxTargets;
+    }
+
+    private readonly List<PendingDeathSpread> pendingDeathSpreads =
+        new List<PendingDeathSpread>(16);
+
+    // 사망 전염 전용 버퍼. 냉기 파괴와 공유 x
+    private readonly List<Enemy> deathSpreadBuffer = new List<Enemy>(16);
+    private readonly List<Vector2> deathSpreadPositions = new List<Vector2>(4);
+
+    // [연동:Combat] 검증용. 이번 프레임에 대기 중인 전염 수
+    public int PendingDeathSpreadCount => pendingDeathSpreads.Count;
+
     // [연동:UI] HUD 적 수 표시, 디버그
     public int ActiveCount => activeEnemies.Count;
 
@@ -160,6 +180,85 @@ public class EnemyManager : MonoBehaviour
         }
     }
 
+    // 화염·암흑 5레벨 사망 전염 등록. Enemy 가 죽는 순간 호출
+    // 조건 판정은 Enemy 가 끝냈으므로 여기서는 저장만
+    public void QueueDeathSpread(
+        MagicElement element, Vector2 center, float radius, int maxTargets)
+    {
+        pendingDeathSpreads.Add(new PendingDeathSpread
+        {
+            Element = element,
+            Center = center,
+            Radius = radius,
+            MaxTargets = maxTargets,
+        });
+    }
+
+    // LateUpdate 에서 대기열을 한 번에 처리
+
+    // 이 프레임의 모든 피해 순회(투사체, 광역 반응, 화염 도트)가 끝난 뒤라
+    // 표식 증가가 같은 프레임의 피해 배율에 섞이지 않음
+
+    // 표식만 옮기고 피해는 주지 않으므로 처리 중에 새 항목이 생기지 않음 -> 재진입 가드 x
+    // 전염이 피해를 주게 바뀌면 이 순회 도중 대기열이 늘어날 수 있으니 다시 볼 것
+    private void ProcessPendingDeathSpreads()
+    {
+        if (pendingDeathSpreads.Count == 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < pendingDeathSpreads.Count; i++)
+        {
+            PendingDeathSpread pending = pendingDeathSpreads[i];
+
+            ResolveDeathSpread(
+                pending.Element, pending.Center, pending.Radius, pending.MaxTargets);
+        }
+
+        pendingDeathSpreads.Clear();
+    }
+
+    // 전염 1건. 죽은 적은 이미 반환됐거나 IsAlive 가 false 라 대상에 없음
+    // 대상에게 전염 권한은 넘기지 않음. 재전염 여부 미확정
+    private void ResolveDeathSpread(
+        MagicElement element, Vector2 center, float radius, int maxTargets)
+    {
+        FindOverlappingEnemies(center, radius, deathSpreadBuffer);
+
+        deathSpreadPositions.Clear();
+
+        for (int i = 0; i < deathSpreadBuffer.Count; i++)
+        {
+            if (deathSpreadPositions.Count >= maxTargets)
+            {
+                break;
+            }
+
+            Enemy target = deathSpreadBuffer[i];
+
+            if (target == null || !target.IsAlive)
+            {
+                continue;
+            }
+
+            // 다른 반응과 같이 위치를 먼저 기록
+            deathSpreadPositions.Add(target.transform.position);
+
+            target.ApplyElementMark(element, 1, ElementMarkRules.Duration);
+        }
+
+        // [연동:UI] 점화 전염과 같은 이벤트. 중심은 죽은 적의 위치
+        // 대상은 관리 목록 순서. 이웃이 상한보다 많으면 누가 받는지는 순서에 따름
+        if (deathSpreadPositions.Count > 0)
+        {
+            GameEvents.RaiseChainReaction(
+                element, center, deathSpreadPositions.ToArray());
+        }
+    }
+
+    // 적 행동 컴포넌트가 플레이어를 직접 때릴 때 쓰는 체력
+
     // 적 행동 컴포넌트가 플레이어를 직접 때릴 때 쓰는 체력
     // 현재 소비자는 BossShockwave 하나. 원거리탄은 ProjectileLauncher 쪽을 사용
     private Health playerHealth;
@@ -230,6 +329,13 @@ public class EnemyManager : MonoBehaviour
             enemy.Tick(deltaTime, playerPosition);
         }
 
+    }
+
+    // 모든 Update 가 끝난 뒤. 투사체와 적 순회 양쪽의 피해가 확정된 시점
+    // playerTransform 과 무관하게 돌아야 대기열이 남지 않음
+    private void LateUpdate()
+    {
+        ProcessPendingDeathSpreads();
     }
 
     // 역순 순회 중 List.Remove로 앞쪽 지우면 뒤 항목이 당겨져 하나 건너 뜀
@@ -358,6 +464,9 @@ public class EnemyManager : MonoBehaviour
 
         activeEnemies.Clear();
         groundAreas.Clear();
+
+        // 보스 등장 정리나 재시작 직후 남은 전염이 새 적에게 걸리지 않게
+        pendingDeathSpreads.Clear();
 
 
     }

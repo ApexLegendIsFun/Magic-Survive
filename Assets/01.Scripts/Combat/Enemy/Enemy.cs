@@ -52,6 +52,15 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 적은 스킬 레벨을 모르므로, 레벨을 아는 투사체가 권한만 남기고 감
     private bool frostShatterArmed;
 
+    // 화염&암흑 5레벨 사망 전염 권한. 냉기 파괴와 같은 방식
+    // 전염으로 표식만 받은 적에게는 넘기지 않음 (재전염 여부 미확정)
+    // 실제 전염 여부는 죽는 순간의 표식 수로 판정
+    private bool fireDeathSpreadArmed;
+    private bool darkDeathSpreadArmed;
+
+
+    // 마지막으로 DarkAmplifiedChanged 로 알린 상태
+
 
     // 마지막으로 DarkAmplifiedChanged 로 알린 상태
     // 증폭은 해금과 스택 수에서 파생되는 값이라 바뀌는 순간을 직접 잡아야 함
@@ -215,6 +224,20 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         enemyManager = manager;
     }
 
+    // 화염·암흑 5레벨 사망 전염 권한. Projectile 이 피해 전에 호출
+    // 그 외 원소는 무시. 호출부가 원소를 가리지 않아도 되게
+    public void ArmDeathSpread(MagicElement element)
+    {
+        if (element == MagicElement.Fire)
+        {
+            fireDeathSpreadArmed = true;
+        }
+        else if (element == MagicElement.Dark)
+        {
+            darkDeathSpreadArmed = true;
+        }
+    }
+
 
     // 대지 1레벨 밀치기. 투사체가 적중 시 호출
     //
@@ -267,7 +290,6 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         // Health에서 사망 이벤트 받음
         health.Died += HandleDied;
     }
-
     private void OnDisable()
     {
         health.Died -= HandleDied;
@@ -285,6 +307,8 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         }
 
         frostShatterArmed = false;
+        fireDeathSpreadArmed = false;
+        darkDeathSpreadArmed = false;
 
         // 상태를 먼저 확정하고 알림
         // 구독부가 false 를 받은 순간 IsDarkAmplified 를 다시 읽어도 false 여야 함
@@ -533,6 +557,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
 
     // [연동:성장] 사망 위치, 경험치 보상 전달
+    // [연동:성장] 사망 위치, 경험치 보상 전달
     private void HandleDied()
     {
         GameEvents.RaiseEnemyKilled(transform.position, experienceReward);
@@ -540,7 +565,47 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         // 개체 단위 통지는 전역 이벤트 뒤에 발행
         // Health.TakeDamage 가 !isAlive 면 바로 빠져나가므로 사망당 한 번만
         Killed?.Invoke(this);
+
+        QueueDeathSpreadIfEligible();
+    }
+
+    // 화염&암흑 5레벨 사망 전염 판정
+    //
+    // 판정은 지금 해야 함. TakeDamage 안에서 동기적으로 불리므로 표식이 아직 살아 있고,
+    // 다음 풀 반환(OnDisable)에서 Reset 되면 조건을 알 수 없게 됨
+    //
+    // 적용은 지금 하지 않음. 광역 피해 순회 도중 표식이 늘면
+    // 뒤쪽 대상의 피해가 목록 순서에 따라 달라짐. EnemyManager 가 LateUpdate 에서 처리
+    private void QueueDeathSpreadIfEligible()
+    {
+        if (enemyManager == null)
+        {
+            return;
+        }
+
+        Vector2 position = transform.position;
+
+        // 화염: 표식이 1 이상이면 화염 적
+        if (fireDeathSpreadArmed
+            && markState.Get(MagicElement.Fire).Stacks > 0)
+        {
+            enemyManager.QueueDeathSpread(
+                MagicElement.Fire, position,
+                ElementReactionValues.FireSpreadRadius,
+                ElementReactionValues.FireSpreadMaxTargets);
+        }
+
+        // 암흑: 3중첩일 때만
+        if (darkDeathSpreadArmed
+            && markState.Get(MagicElement.Dark).Stacks >= ElementMarkRules.MaximumStacks)
+        {
+            enemyManager.QueueDeathSpread(
+                MagicElement.Dark, position,
+                ElementReactionValues.DarkSpreadRadius,
+                ElementReactionValues.DarkSpreadMaxTargets);
+        }
     }
 }
+
 
 

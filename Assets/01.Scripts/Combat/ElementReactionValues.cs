@@ -22,11 +22,17 @@ public static class ElementReactionValues
     public const float IgniteDamage = 12f;
     public const float IgniteRadius = 1.3f;
 
-    // 화염 5레벨 전염
-    // 반경을 IgniteRadius 와 공유하지 않는다
+    // 화염 5레벨 전염. 점화 전염과 사망 전염이 함께 사용
+    // 반경을 IgniteRadius 와 공유하지 않음
     // 점화 반경과 같은 값으로 시작. 확인 요청 대상
     public const float FireSpreadRadius = 1.3f;
     public const int FireSpreadMaxTargets = 2;
+
+    // 암흑 5레벨 사망 전염
+    // DarkSpreadRadius 는 임시값. 기획에 반경이 없어 화염 전염과 같은 값으로 둠
+    // 화염과 따로 둔다. 암흑 특화 "전염 탐색 거리 +10%" 가 이 값만 키움
+    public const float DarkSpreadRadius = 1.3f;
+    public const int DarkSpreadMaxTargets = 3;
 
     // 냉기 3레벨 빙결
     public const float FreezeDurationSeconds = 0.6f;
