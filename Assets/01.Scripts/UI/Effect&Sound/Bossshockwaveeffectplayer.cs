@@ -15,6 +15,12 @@ public class BossShockwaveEffectPlayer : MonoBehaviour
     [SerializeField] private AnimationClip shockwaveBurstClip;
     [SerializeField] private SFXType shockwaveSfxType = SFXType.Eart_Shork;
 
+    [Header("보정 (아트가 '스케일 1 = 반경 1'과 다르게 그려졌을 때 조정)")]
+    [Tooltip("예고 링 최종 스케일 = radius * telegraphScaleMultiplier")]
+    [SerializeField] private float telegraphScaleMultiplier = 1f;
+    [Tooltip("버스트 최종 스케일 = radius * burstScaleMultiplier. 예고 링과 아트가 달라 배율도 따로 둠")]
+    [SerializeField] private float burstScaleMultiplier = 1f;
+
     private void OnEnable()
     {
         GameEvents.BossShockwaveTelegraph += HandleTelegraph;
@@ -32,7 +38,7 @@ public class BossShockwaveEffectPlayer : MonoBehaviour
         if (telegraphRingPrefab == null) return;
 
         var ring = Instantiate(telegraphRingPrefab, center, Quaternion.identity);
-        ring.transform.localScale = Vector3.one * radius;
+        ring.transform.localScale = Vector3.one * (radius * telegraphScaleMultiplier);
         Destroy(ring, telegraphSeconds);
     }
 
@@ -41,7 +47,7 @@ public class BossShockwaveEffectPlayer : MonoBehaviour
         if (shockwaveBurstPrefab == null) return;
 
         var instance = Instantiate(shockwaveBurstPrefab, center, Quaternion.identity);
-        instance.transform.localScale = Vector3.one * radius;
+        instance.transform.localScale = Vector3.one * (radius * burstScaleMultiplier);
         float lifetime = shockwaveBurstClip != null ? shockwaveBurstClip.length : 0.5f;
         Destroy(instance, lifetime);
 

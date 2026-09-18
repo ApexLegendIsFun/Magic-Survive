@@ -48,3 +48,5 @@ MonoBehaviour:
   shockwaveBurstPrefab: {fileID: 4110063834197315217, guid: b24be15f7dae2404fb551727a61eced3, type: 3}
   shockwaveBurstClip: {fileID: 0}
   shockwaveSfxType: 5
+  telegraphScaleMultiplier: 1
+  burstScaleMultiplier: 0.3
