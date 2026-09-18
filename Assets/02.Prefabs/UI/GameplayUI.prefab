@@ -2936,13 +2936,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4168655954873741404}
+  - component: {fileID: 7008968863633060916}
   m_Layer: 0
   m_Name: Encounter_Massage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &4168655954873741404
 Transform:
   m_ObjectHideFlags: 0
@@ -2959,6 +2960,80 @@ Transform:
   - {fileID: 3296871764884209811}
   m_Father: {fileID: 4504707136173945395}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7008968863633060916
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1908214503565634491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7514cf31a42a51147abf0e10c45f9ea2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EliteAnnouncementUi
+  runDirector: {fileID: 0}
+  panelRoot: {fileID: 126668760026174149}
+  titleText: {fileID: 7139362510371605284}
+  iconImage: {fileID: 8719164604191260189}
+  eliteEntries:
+  - kind: 0
+    title: "\uB3CC\uC9C4\uC790 \uB4F1\uC7A5!"
+    icon: {fileID: 0}
+  bossTitle: "\uBCF4\uC2A4\uAC00 \uB4F1\uC7A5\uD588\uC2B5\uB2C8\uB2E4."
+  bossIcon: {fileID: 0}
+  offscreenDistance: 1400
+  enterDuration: 0.35
+  holdDuration: 1.2
+  exitDuration: 0.3
+  enterCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  exitCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &2060924606942544512
 GameObject:
   m_ObjectHideFlags: 0
