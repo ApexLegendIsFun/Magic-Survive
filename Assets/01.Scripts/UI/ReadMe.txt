@@ -114,5 +114,26 @@ Chain_Lightning 이펙트 매니저의 버그를 수정보완했습니다.
 
 기술들이 전부 3타에 효과가 터지므로 Enemy의체력을 늘려야 발동합니다.(테스트 완료)
 
+09_18
+
+원소 반응 (5원소 전부 연결)
+
+*유신님의 5원소 공격 관련 연결사항*
+
+화염 — 점화(3레벨) 이펙트/사운드
+냉기 — 빙결(3레벨) 이펙트/사운드
+대지 — 충격파(3레벨) + 지진 구역(5레벨) GroundAreaEffectPlayer
+번개 (유신님의 디버그확인, 요청사항)— 연쇄(3레벨) LightningChainEffectPlayer + 방전(5레벨) ElementReactionEffectPlayer 항목 추가
+암흑 — IsDarkAmplified/DarkAmplifiedChanged 반영, StatusEffectVisual + EnemyDarkVisualController로 분리 설계해서 완료
+           =>이부분은 여전히 모든 Enemy 프리펩에 False 되어있는 애니메이션 오브젝트를 넣고, 스크립트를 직접 넣어야 작동합니다. 
+                 기획상 해당 방식으로 동작하게 확정되면 제가 직접 넣겠습니다. 현재는 테스트 까지 완료한 상태입니다.(제가 임의로 프리펩에 넣지는 않았습니다. 따로 테스트했습니다.)
+
+엘리트 / 보스
+
+소환술사 — 예고(SummonTelegraph) + 버스트 연출 SummonEffectPlayer
+돌진자 — 예고선 DashTelegraphEffectPlayer (직선 + 폭 있는 레인 스타일)
+엘리트/보스 등장 패널 — EliteAnnouncementUi (오른쪽→중앙→왼쪽 슬라이드)
+보스 충격파 — BossShockwaveEffectPlayer, 예고 링/버스트 스케일 보정(telegraphScaleMultiplier/burstScaleMultiplier) 분리해서  해결 완료
+
 
 
