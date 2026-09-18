@@ -37,6 +37,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 냉기 3중첩 빙결. 남은 시간이 있으면 이동x
     private float freezeRemainingSeconds;
 
+    // 지속 장판 둔화. EnemyManager 가 Tick 직전에 매 프레임 세팅
+    // 1 이면 장판 밖.
+    private float groundSlowMultiplier = 1f;
+
     // 암흑 3레벨 해금 여부
     private bool darkAmplificationUnlocked;
 
@@ -246,6 +250,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         // 풀 반환 시 표식과 화염 도트 주기, 빙결을 초기화
         markState.Reset();
         fireDotTimer = FireDotIntervalSeconds;
+        groundSlowMultiplier = 1f;
 
         // 빙결 중 반환되면 해제를 알림
         if (freezeRemainingSeconds > 0f)
@@ -350,6 +355,14 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         moveSpeed *= multiplier;
     }
 
+    // EnemyManager 가 Tick 직전에 부름
+    // 보스 면역은 GroundAreaState 가 원소별로 이미 걸렀으므로 여기서는 보지 않음
+    public void SetGroundSlowMultiplier(float multiplier)
+    {
+        groundSlowMultiplier = Mathf.Clamp01(multiplier);
+    }
+
+
     // 스폰 직후 SpawnDirector가 1회 호출
     public void ApplyDifficulty(float healthMultiplier, float damageMultiplier)
     {
@@ -391,6 +404,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             return;
         }
 
+
         Vector2 currentPosition = transform.position;
         Vector2 toPlayer = playerPosition - currentPosition;
 
@@ -428,11 +442,15 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         // 기획에서 보스에게 둔화 면역을 지정했으므로. 표식은 그대로 쌓이고 속도만 안 깎이게
         int frostStacks = isBoss ? 0 : markState.Get(MagicElement.Frost).Stacks;
 
-        float currentSpeed = moveSpeed
-            * (1f - frostStacks * FrostMovementSpeedReductionPerStack)
-            * speedMultiplier;
+        // 장판 둔화는 원소별로 보스 면역이 다름
+        // 대지 지진은 보스에게도 걸리므로 여기서 isBoss 로 일괄 면제 x
+        // 냉기 서리 장판만 GroundAreaState 가 걸러서 1 을 돌려줌
+        //
+        // 표식 둔화와는 곱하기. 서로 다른 계열
+        float currentSpeed = moveSpeed * (1f - frostStacks * FrostMovementSpeedReductionPerStack) * groundSlowMultiplier * speedMultiplier;
 
         transform.position = currentPosition + direction * currentSpeed * deltaTime;
+
     }
 
     // 화염표식 지속피해. Enemy.TakeDamage를 지나므로 공통 표식 효과가 함께 적용

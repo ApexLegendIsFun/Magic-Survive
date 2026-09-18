@@ -48,6 +48,14 @@ public static class ElementReactionValues
     public const float ShockwaveDamage = 10f;
     public const float ShockwaveRadius = 1.5f;
 
+    // 대지 5레벨 지진 구역
+    // 반경을 ShockwaveRadius 와 공유하지 않음
+    // Lv6 "충격파 반경 +15%" 가 들어오면 공유한 경우 지진까지 같이 커짐
+    // 지금은 같은 값이지만 별개 상수. 기획에 지진 반경이 없어 정함
+    public const float EarthquakeRadius = 1.5f;
+    public const float EarthquakeDurationSeconds = 2f;
+    public const float EarthquakeSlowPercent = 0.30f;
+
     // 암흑 3레벨. 3중첩 대상이 받는 모든 피해 증가
     // 1회성이 아니라 대상에 남는 지속
     public const float DarkAmplificationBonus = 0.15f;

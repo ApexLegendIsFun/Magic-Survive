@@ -282,16 +282,25 @@ public class Projectile : MonoBehaviour
 
                 // 충격파. 중심 적도 반경 안이라 함께 맞고,
                 // 이 피해는 표식도 적중 카운트도 만들지 않음
-                enemyManager.FindOverlappingEnemies(
-                    center, ElementReactionValues.ShockwaveRadius, reactionBuffer);
+                enemyManager.FindOverlappingEnemies(center, ElementReactionValues.ShockwaveRadius, reactionBuffer);
 
                 for (int i = 0; i < reactionBuffer.Count; i++)
                 {
                     reactionBuffer[i].TakeDamage(ElementReactionValues.ShockwaveDamage);
                 }
 
-                GameEvents.RaiseElementReaction(
-                    MagicElement.Earth, center, ElementReactionValues.ShockwaveRadius);
+                GameEvents.RaiseElementReaction(MagicElement.Earth, center, ElementReactionValues.ShockwaveRadius);
+
+                // 5레벨 지진 구역. 충격파가 터진 자리에 남는다
+                if (spec.SkillLevel >= ElementReactionValues.ExpansionUnlockLevel)
+                {
+                    enemyManager.AddGroundArea(
+                        MagicElement.Earth,
+                        center,
+                        ElementReactionValues.EarthquakeRadius,
+                        ElementReactionValues.EarthquakeDurationSeconds,
+                        ElementReactionValues.EarthquakeSlowPercent);
+                }
 
                 break;
 

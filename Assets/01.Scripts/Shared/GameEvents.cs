@@ -64,8 +64,7 @@ public static class GameEvents
     }
 
     // 연쇄형 반응 발동 시 호출 (번개 등)
-    public static void RaiseChainReaction(
-        MagicElement element, Vector2 originPosition, IReadOnlyList<Vector2> targetPositions)
+    public static void RaiseChainReaction(MagicElement element, Vector2 originPosition, IReadOnlyList<Vector2> targetPositions)
     {
         ChainReactionTriggered?.Invoke(element, originPosition, targetPositions);
     }
@@ -119,6 +118,19 @@ public static class GameEvents
         DashTelegraph?.Invoke(origin, direction, distance, telegraphSeconds);
     }
 
+    // [연동:UI] 지속 장판 생성.
+    //
+    // 대지 5레벨 지진 구역과 냉기 8레벨 서리 장판이 같은 이벤트를 사용.
+    // 보스 등장과 재시작에서 장판이 조기 제거
+    // 그때는 이 이벤트로 알리지 않으므로 남은 지속시간 동안 연출만 남을 수 있음
+    public static event Action<MagicElement, Vector2, float, float> GroundAreaCreated;
+
+    // 지속 장판 생성 시 호출
+    public static void RaiseGroundAreaCreated(MagicElement element, Vector2 center, float radius, float durationSeconds)
+    {
+        GroundAreaCreated?.Invoke(element, center, radius, durationSeconds);
+    }
+
     // 전체 이벤트 초기화 
     // [연동:성장]
     public static void Clear()
@@ -132,6 +144,7 @@ public static class GameEvents
         BossShockwaveTelegraph = null;
         BossShockwaveTriggered = null;
         DashTelegraph = null;
+        GroundAreaCreated = null;
     }
 
 
