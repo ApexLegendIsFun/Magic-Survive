@@ -17218,6 +17218,18 @@ PrefabInstance:
       propertyPath: sfxSlider
       value: 
       objectReference: {fileID: 7001472080765815795}
+    - target: {fileID: 7897356085521857654, guid: 57814695ffdd54f4887b8a023a63ae70, type: 3}
+      propertyPath: soundClip.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7897356085521857654, guid: 57814695ffdd54f4887b8a023a63ae70, type: 3}
+      propertyPath: 'soundClip.Array.data[1]'
+      value: 
+      objectReference: {fileID: 8300000, guid: 9ab7be34eb9cd374e9c28db4d6f9f8bf, type: 3}
+    - target: {fileID: 7897356085521857654, guid: 57814695ffdd54f4887b8a023a63ae70, type: 3}
+      propertyPath: 'soundClip.Array.data[7]'
+      value: 
+      objectReference: {fileID: 8300000, guid: fa7b58d87446c20498273d3f3453ed24, type: 3}
     - target: {fileID: 8089506774587740067, guid: 57814695ffdd54f4887b8a023a63ae70, type: 3}
       propertyPath: m_Name
       value: Option & Sound_Manager
