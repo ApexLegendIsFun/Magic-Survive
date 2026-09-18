@@ -44,6 +44,15 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 암흑 3레벨 해금 여부
     private bool darkAmplificationUnlocked;
 
+    // EnemyManager.Spawn 이 주입.
+    // 반응이 주변 적을 찾아야 할 때 사용. 프리팹이라 [SerializeField] 로는 못 받음
+    private EnemyManager enemyManager;
+
+    // 냉기 5레벨. 빙결을 건 얼음창이 5레벨이었는지만 기억.
+    // 적은 스킬 레벨을 모르므로, 레벨을 아는 투사체가 권한만 남기고 감
+    private bool frostShatterArmed;
+
+
     // 마지막으로 DarkAmplifiedChanged 로 알린 상태
     // 증폭은 해금과 스택 수에서 파생되는 값이라 바뀌는 순간을 직접 잡아야 함
     private bool darkAmplifiedNotified;
@@ -155,9 +164,12 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
 
     // 냉기 표식 3중첩 반응. Projectile이 호출
-    // 지속시간에 CrowdControlDurationMultiplier를 곱하기
+    // 지속시간에 CrowdControlDurationMultiplier를 곱하기.
     // 보스는 이 값이 0f 라 applied 가 0 이 되고 빙결이 걸리지 않음
-    public void ApplyFreeze(float durationSeconds)
+    //
+    // armShatter 는 5레벨 파괴 권한. 보스는 위 가드에서 먼저 빠져나가
+    // 권한도 받지 않는다
+    public void ApplyFreeze(float durationSeconds, bool armShatter)
     {
         float applied = durationSeconds * CrowdControlDurationMultiplier;
 
@@ -178,6 +190,13 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
                 FrozenChanged?.Invoke(true);
             }
         }
+
+        // 지속시간이 갱신되지 않아도 권한은 줌
+        // 긴 빙결이 남아 있을 때 5레벨 얼음창이 또 맞으면 파괴는 열려야 함
+        if (armShatter)
+        {
+            frostShatterArmed = true;
+        }
     }
 
 
@@ -188,6 +207,12 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
         // 투사체가 부르는 시점은 이미 3중첩 전이라 여기서 바로 켜짐
         RefreshDarkAmplified();
+    }
+
+    // EnemyManager.Spawn 이 풀에서 꺼낸 직후 1회 호출
+    public void SetEnemyManager(EnemyManager manager)
+    {
+        enemyManager = manager;
     }
 
 
@@ -259,6 +284,8 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             FrozenChanged?.Invoke(false);
         }
 
+        frostShatterArmed = false;
+
         // 상태를 먼저 확정하고 알림
         // 구독부가 false 를 받은 순간 IsDarkAmplified 를 다시 읽어도 false 여야 함
         bool wasDarkAmplified = darkAmplifiedNotified;
@@ -306,6 +333,30 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             GameEvents.RaiseEnemyDamaged(transform.position, appliedDamage);
         }
 
+        TryFrostShatter(appliedDamage);
+    }
+
+    // 냉기 5레벨. 빙결 중에 피해를 받으면 그 자리에서 파괴가 터짐
+    //
+    // 어떤 피해든 상관없음. 직격, 화염 도트, 충격파, 연쇄 전부 여기를 통과
+    // 실제로 깎인 양이 0 이면 터지지 않음. 오버킬 뒤 중복 호출 막기.
+    //
+    //  IsResolvingFrostShatter 를 권한 소비보다 먼저 본다
+    private void TryFrostShatter(float appliedDamage)
+    {
+        if (!frostShatterArmed
+            || appliedDamage <= 0f
+            || freezeRemainingSeconds <= 0f
+            || enemyManager == null
+            || enemyManager.IsResolvingFrostShatter)
+        {
+            return;
+        }
+
+        // 한 번의 빙결에 한 번만. 0.6초 동안 맞을 때마다 터지면 과하다
+        frostShatterArmed = false;
+
+        enemyManager.ResolveFrostShatter(transform.position);
     }
 
 
@@ -398,6 +449,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             if (freezeRemainingSeconds <= 0f)
             {
                 freezeRemainingSeconds = 0f;
+                frostShatterArmed = false;
                 FrozenChanged?.Invoke(false);
             }
 

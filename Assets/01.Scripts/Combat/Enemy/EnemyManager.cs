@@ -14,6 +14,15 @@ public class EnemyManager : MonoBehaviour
     private readonly Dictionary<Enemy, ObjectPool<Enemy>>
         pools = new Dictionary<Enemy, ObjectPool<Enemy>>();
 
+    // 냉기 5레벨 파괴 전용 버퍼
+    private readonly List<Enemy> frostShatterBuffer = new List<Enemy>(16);
+
+    // 파괴 피해가 다른 빙결 적을 또 터뜨리는 재귀를 막음.
+    // 냉기 전용.
+    private bool isResolvingFrostShatter;
+
+    public bool IsResolvingFrostShatter => isResolvingFrostShatter;
+
     // [연동:UI] HUD 적 수 표시, 디버그
     public int ActiveCount => activeEnemies.Count;
 
@@ -93,7 +102,7 @@ public class EnemyManager : MonoBehaviour
     {
         results.Clear();
 
-       for (int i = 0; i < activeEnemies.Count; i++)
+        for (int i = 0; i < activeEnemies.Count; i++)
         {
             Enemy enemy = activeEnemies[i];
 
@@ -111,11 +120,44 @@ public class EnemyManager : MonoBehaviour
                 results.Add(enemy);
             }
             {
-                
+
             }
 
         }
 
+    }
+
+    // 냉기 5레벨 파괴. 
+    public void ResolveFrostShatter(Vector2 center)
+    {
+        isResolvingFrostShatter = true;
+
+        try
+        {
+            FindOverlappingEnemies(
+                center, ElementReactionValues.ShatterRadius, frostShatterBuffer);
+
+            for (int i = 0; i < frostShatterBuffer.Count; i++)
+            {
+                Enemy target = frostShatterBuffer[i];
+
+                if (target == null || !target.IsAlive)
+                {
+                    continue;
+                }
+
+                target.TakeDamage(ElementReactionValues.ShatterDamage);
+            }
+
+            // [연동:UI] 빙결(반경 0)과 파괴(반경 1.2)가 같은 Frost 이벤트로 나감
+            // 반경으로 구분
+            GameEvents.RaiseElementReaction(
+                MagicElement.Frost, center, ElementReactionValues.ShatterRadius);
+        }
+        finally
+        {
+            isResolvingFrostShatter = false;
+        }
     }
 
     // 적 행동 컴포넌트가 플레이어를 직접 때릴 때 쓰는 체력
@@ -217,6 +259,9 @@ public class EnemyManager : MonoBehaviour
         enemy.transform.position = position;
 
         enemy.Initialize(data);
+
+        // 반응이 주변 적을 찾을 수 있게.
+        enemy.SetEnemyManager(this);
 
         // 원거리 공격을 가진 적(소환술사, 보스)에만 붙음
         // 행동 컴포넌트 종류가 늘어나면 공통 인터페이스로 묶을 것. 지금은 1종

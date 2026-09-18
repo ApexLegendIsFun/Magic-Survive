@@ -31,6 +31,10 @@ public static class ElementReactionValues
     // 냉기 3레벨 빙결
     public const float FreezeDurationSeconds = 0.6f;
 
+    // 냉기 5레벨 파괴
+    public const float ShatterDamage = 8f;
+    public const float ShatterRadius = 1.2f;
+
     // 적중 카운터 기반 효과의 발동 주기. 번개 대지 모두 3번째 적중마다
     public const int HitsPerTrigger = 3;
 

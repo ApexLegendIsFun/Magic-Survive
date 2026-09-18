@@ -195,8 +195,13 @@ public class Projectile : MonoBehaviour
 
             case MagicElement.Frost:
 
-                // 빙결. 단일 대상이라 반경 0으로 알린다
-                origin.ApplyFreeze(ElementReactionValues.FreezeDurationSeconds);
+                // 빙결. 
+                // 5레벨이면 파괴 권한을 같이 넘김
+                // 파괴는 이 자리가 아니라 다음에 맞을 때 터지므로
+                // 레벨을 아는 여기서 적에게 권한만 남김
+                origin.ApplyFreeze(
+                    ElementReactionValues.FreezeDurationSeconds,
+                    spec.SkillLevel >= ElementReactionValues.ExpansionUnlockLevel);
 
                 GameEvents.RaiseElementReaction(MagicElement.Frost, center, 0f);
 
