@@ -57,5 +57,9 @@ MonoBehaviour:
     effectPrefab: {fileID: 3685560036689682143, guid: 76d33a7c8e633f445bb82bd2aa374104, type: 3}
     animationClip: {fileID: 0}
     sfxType: 5
+  - element: 2
+    effectPrefab: {fileID: 392604334091333448, guid: af042ceb11d48fe4f91e6cbe9c148005, type: 3}
+    animationClip: {fileID: 0}
+    sfxType: 0
   singleTargetEffectScale: 0.5
   fallbackLifetime: 1
