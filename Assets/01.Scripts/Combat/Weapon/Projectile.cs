@@ -149,7 +149,8 @@ public class Projectile : MonoBehaviour
             case MagicElement.Fire:
 
                 // 점화. 중심 적 자신도 반경 안에 들어가므로 함께 피해를 받는다
-                enemyManager.FindOverlappingEnemies(center, ElementReactionValues.IgniteRadius, reactionBuffer);
+                enemyManager.FindOverlappingEnemies(
+                    center, ElementReactionValues.IgniteRadius, reactionBuffer);
 
                 for (int i = 0; i < reactionBuffer.Count; i++)
                 {
@@ -160,8 +161,10 @@ public class Projectile : MonoBehaviour
                 GameEvents.RaiseElementReaction(
                     MagicElement.Fire, center, ElementReactionValues.IgniteRadius);
 
-                break;
+                // 5레벨 전염
+                SpreadFireMark(origin, center, enemyManager);
 
+                break;
             case MagicElement.Lightning:
 
                 // 방전. 위쪽 ReactionUnlockLevel 게이트와 별개로 5레벨에서 해금.
@@ -206,6 +209,63 @@ public class Projectile : MonoBehaviour
                 origin.SetDarkAmplificationUnlocked();
 
                 break;
+        }
+    }
+
+    // 화염 5레벨. 점화가 터진 자리에서 주변 적에게 화염 표식 1 을 옮김
+    //
+    // 점화가 쓴 reactionBuffer 를 재사용하지 않고 전염 반경으로 다시 찾음
+    // 두 반경이 지금은 같은 값이지만 Lv7 과 특화가 점화 반경만 키우기 때문.
+    // 점화 루프는 이미 끝났으므로 같은 버퍼를 덮어써도 안전
+    private void SpreadFireMark(Enemy origin, Vector2 center, EnemyManager enemyManager)
+    {
+        if (spec.SkillLevel < ElementReactionValues.ExpansionUnlockLevel)
+        {
+            return;
+        }
+
+        enemyManager.FindOverlappingEnemies(
+            center, ElementReactionValues.FireSpreadRadius, reactionBuffer);
+
+        // 화염 투사체가 부르는 경로라 같은 프레임에 번개 연쇄가 이 목록을 쓰지 않음
+        // TriggerHitCountReaction 의 switch 는 대지와 번개만 처리
+        chainTargetPositions.Clear();
+
+        for (int i = 0; i < reactionBuffer.Count; i++)
+        {
+            Enemy target = reactionBuffer[i];
+
+            // origin 은 방금 3중첩이 된 적. 전염해도 지속시간만 갱신되고
+            // "주변 적 최대 2명" 자리를 먹음
+            if (target == origin || !target.IsAlive)
+            {
+                continue;
+            }
+
+            // 위치를 피해보다 먼저 기록하는 다른 반응들과 순서를 맞추기
+            chainTargetPositions.Add(target.transform.position);
+
+            // 전염 표식은 반응 판정을 거치지 않음. 미확정 부분.
+            // reactionBuffer 가 인스턴스 필드라 전염 도중 반응이 다시 돌면
+            // 지금 순회 중인 이 목록이 덮어써진다. 같은 적 재처리 금지도 있어야 함
+            //
+            // 구조를 합의하기 전까지는 표식만 걸기. 커밋 본문에 확인 요청.
+            target.ApplyElementMark(MagicElement.Fire, 1, ElementMarkRules.Duration);
+
+            if (chainTargetPositions.Count >= ElementReactionValues.FireSpreadMaxTargets)
+            {
+                break;
+            }
+        }
+
+        // 중심에서 개별 대상으로 이어지는 반응이라 연쇄와 같은 이벤트를 사용
+        // 같은 순간에 ElementReactionTriggered(Fire, 원형) 도 나가게.
+        // 폭발이 터지고 표식이 퍼지는 그림.
+        // [연동:UI] 별도 연결이 필요
+        if (chainTargetPositions.Count > 0)
+        {
+            GameEvents.RaiseChainReaction(
+                MagicElement.Fire, center, chainTargetPositions.ToArray());
         }
     }
 

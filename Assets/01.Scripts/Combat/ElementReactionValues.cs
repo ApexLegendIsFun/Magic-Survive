@@ -22,6 +22,12 @@ public static class ElementReactionValues
     public const float IgniteDamage = 12f;
     public const float IgniteRadius = 1.3f;
 
+    // 화염 5레벨 전염
+    // 반경을 IgniteRadius 와 공유하지 않는다
+    // 점화 반경과 같은 값으로 시작. 확인 요청 대상
+    public const float FireSpreadRadius = 1.3f;
+    public const int FireSpreadMaxTargets = 2;
+
     // 냉기 3레벨 빙결
     public const float FreezeDurationSeconds = 0.6f;
 
