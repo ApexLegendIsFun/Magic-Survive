@@ -37,27 +37,71 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 냉기 3중첩 빙결. 남은 시간이 있으면 이동x
     private float freezeRemainingSeconds;
 
+    // 지속 장판 둔화. EnemyManager 가 Tick 직전에 매 프레임 세팅
+    // 1 이면 장판 밖.
+    private float groundSlowMultiplier = 1f;
+
     // 암흑 3레벨 해금 여부
     private bool darkAmplificationUnlocked;
+
+    // 마지막으로 DarkAmplifiedChanged 로 알린 상태
+    // 증폭은 해금과 스택 수에서 파생되는 값이라 바뀌는 순간을 직접 잡아야 함
+    private bool darkAmplifiedNotified;
 
     private float baseMaxHealth;
     private float baseContactDamage;
 
+    // EnemyData 가 지정하는 제어 면역. Initialize 가 매 Spawn 마다 덮는다
+    private bool isBoss;
+
     private Health health;
+
+    // 거리 유지 이동. 소환술사에만 붙어 있고 없으면 null
+    private EnemyKeepDistance keepDistance;
+
+    // 돌진 이동. 돌진자에만 붙어 있고 없으면 null
+    private EnemyDash dash;
 
     private Enemy sourcePrefab;
 
     public Enemy SourcePrefab => sourcePrefab;
 
-    public float CrowdControlDurationMultiplier => 1f;
 
-    public bool IsKnockbackImmune => false;
+    // 0f 를 돌려주면 ApplyFreeze 가 applied <= 0f 가드에서 빠져나가므로
+    // 호출부를 바꾸지 않고 빙결 면역이 됨
+    public float CrowdControlDurationMultiplier => isBoss ? 0f : 1f;
+
+    public bool IsKnockbackImmune => isBoss;
+
+    // [연동:Combat] 아직 안 만든 보스 예외가 조회.
+    // 기획의 "보스에게는 연쇄 대상이 보스 1명으로 제한"과 암흑 8레벨 처형 면역
+    public bool IsBoss => isBoss;
 
     // [연동:UI] 빙결 상태 변화. true=시작, false=해제
     // 구독은 활성화 뒤에, 해제는 비활성화될 때
     public event Action<bool> FrozenChanged;
 
+    // [연동:Combat] 개체 단위 사망. 현재 소비자는 EnemySummon 하나
+    // 풀 반환 시 null 로 비우지 않을 것.
+    public event Action<Enemy> Killed;
+
     public bool IsFrozen => freezeRemainingSeconds > 0f;
+
+    // [연동:UI] 암흑 3레벨 증폭 상태 변화. true=시작, false=해제
+    // 기획과 발송본의 "저주" 부분
+    //
+    // 적은 풀에서 재사용되므로 구독부는 OnEnable 에서 IsDarkAmplified 를 한 번 읽어
+    // 현재 상태를 맞추고, OnDisable 에서 자기 연출을 꺼야 함
+    // 해제 이벤트가 반드시 먼저 온다고 가정 x
+    public event Action<bool> DarkAmplifiedChanged;
+
+    // [연동:UI] 지금 증폭이 걸려 있는가
+    //
+    // 해금과 3중첩이 둘 다 참이어야 함
+    // 스택만 보면 3중첩이어도 스킬 3레벨 전이면 증폭이 안 걸린 상태를 놓침
+    public bool IsDarkAmplified =>
+        darkAmplificationUnlocked
+        && markState.Get(MagicElement.Dark).Stacks >= ElementMarkRules.MaximumStacks;
 
     // 구독을 markState로 그대로 넘김
     public event Action<ElementMarkChange> ElementMarkChanged
@@ -77,18 +121,42 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     public void ApplyElementMark(MagicElement element, int amount, float duration)
     {
         markState.Apply(element, amount, duration);
+
+        RefreshDarkAmplified();
     }
 
     public void ConsumeElementMarks(MagicElement element, int amount)
     {
         markState.Consume(element, amount);
+
+        RefreshDarkAmplified();
+    }
+
+    // 암흑 증폭이 켜지고 꺼지는 순간에만 알림
+    //
+    // markState.Changed 를 구독하지 않는 이유: Reset() 은 Changed 를 발행하지 않아서
+    // 풀 반환과 재사용을 놓치므로, 스택이 바뀌는 지점에서 직접 부르는 편이 확실
+    //
+    // darkAmplificationUnlocked 가 false 면 단락 평가로 Get 까지 가지 안흥ㅁ
+    // 일반 적은 거의 항상 false 라 Tick 비용이 사실상 0.
+    private void RefreshDarkAmplified()
+    {
+        bool current = IsDarkAmplified;
+
+        if (current == darkAmplifiedNotified)
+        {
+            return;
+        }
+
+        darkAmplifiedNotified = current;
+
+        DarkAmplifiedChanged?.Invoke(current);
     }
 
 
     // 냉기 표식 3중첩 반응. Projectile이 호출
-    // 지속시간에 CrowdControlDurationMultiplier를 곱하는 이유는 보스 제어 면역.
-    // 현재 이 값은 1f 고정이고, 보스 작업에서 보스만 0f를 반환하게 하면
-    // 여기와 호출부는 바뀌지 않음
+    // 지속시간에 CrowdControlDurationMultiplier를 곱하기
+    // 보스는 이 값이 0f 라 applied 가 0 이 되고 빙결이 걸리지 않음
     public void ApplyFreeze(float durationSeconds)
     {
         float applied = durationSeconds * CrowdControlDurationMultiplier;
@@ -117,6 +185,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     public void SetDarkAmplificationUnlocked()
     {
         darkAmplificationUnlocked = true;
+
+        // 투사체가 부르는 시점은 이미 3중첩 전이라 여기서 바로 켜짐
+        RefreshDarkAmplified();
     }
 
 
@@ -152,9 +223,18 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     public float HitRadius => hitRadius;
 
+    // [연동:Combat] 돌진 예고 선 길이 계산에 필요
+    // 냉기 둔화가 반영되지 않은 원본 값.
+    public float MoveSpeed => moveSpeed;
+
     private void Awake()
     {
         health = GetComponent<Health>();
+
+        // 이동 방식을 가진 적에만 붙어 있음. 없으면 기존 추적 그대로
+        keepDistance = GetComponent<EnemyKeepDistance>();
+
+        dash = GetComponent<EnemyDash>();
     }
 
     private void OnEnable()
@@ -170,6 +250,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         // 풀 반환 시 표식과 화염 도트 주기, 빙결을 초기화
         markState.Reset();
         fireDotTimer = FireDotIntervalSeconds;
+        groundSlowMultiplier = 1f;
 
         // 빙결 중 반환되면 해제를 알림
         if (freezeRemainingSeconds > 0f)
@@ -178,8 +259,19 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             FrozenChanged?.Invoke(false);
         }
 
+        // 상태를 먼저 확정하고 알림
+        // 구독부가 false 를 받은 순간 IsDarkAmplified 를 다시 읽어도 false 여야 함
+        bool wasDarkAmplified = darkAmplifiedNotified;
+
         darkAmplificationUnlocked = false;
+        darkAmplifiedNotified = false;
+
+        if (wasDarkAmplified)
+        {
+            DarkAmplifiedChanged?.Invoke(false);
+        }
     }
+
 
 
     /// <summary>
@@ -232,6 +324,8 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         baseMaxHealth = data.MaxHealth;
         baseContactDamage = data.ContactDamage;
 
+        isBoss = data.IsBoss;
+
         contactDamage = baseContactDamage;
         health.ResetHealth(baseMaxHealth);
 
@@ -241,6 +335,34 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     }
 
+    // 소환된 적의 EXP 미지급. 소환 주체가 Spawn 직후 1회 호출
+    //
+    // Initialize 가 매 Spawn 마다 EnemyData 값으로 덮으므로
+    // 풀에서 재사용돼도 이 억제가 다음 개체에 남지 않음
+    public void SuppressExperienceReward()
+    {
+        experienceReward = 0;
+    }
+
+    // 보스 2페이즈 진입 시 BossPhaseController 가 1회 호출
+    public void MultiplyMoveSpeed(float multiplier)
+    {
+        if (multiplier <= 0f)
+        {
+            return;
+        }
+
+        moveSpeed *= multiplier;
+    }
+
+    // EnemyManager 가 Tick 직전에 부름
+    // 보스 면역은 GroundAreaState 가 원소별로 이미 걸렀으므로 여기서는 보지 않음
+    public void SetGroundSlowMultiplier(float multiplier)
+    {
+        groundSlowMultiplier = Mathf.Clamp01(multiplier);
+    }
+
+
     // 스폰 직후 SpawnDirector가 1회 호출
     public void ApplyDifficulty(float healthMultiplier, float damageMultiplier)
     {
@@ -249,8 +371,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         health.SetMaxHealth(baseMaxHealth * healthMultiplier, true);
     }
 
-    // EnemyManager에서 매 프레임 호출합니다
-    // 현재는 플레이어 방향으로 직선적으로 추적함
+    // EnemyManager에서 매 프레임 호출
+    // 기본은 플레이어 방향으로 직선 추적이고,
+    // EnemyKeepDistance가 붙어 있고 켜져 있으면 방향만 그쪽에서 받음
     public void Tick(float deltaTime, Vector2 playerPosition)
     {
 
@@ -260,6 +383,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         TickFireDot(deltaTime);
 
         markState.Tick(deltaTime);
+
+        // 표식 만료로 3중첩이 깨지는 순간을 여기서 잡기
+        // 빙결 early return 보다 앞이어야 빙결 중에도 해제가 알려짐
+        RefreshDarkAmplified();
 
         // 빙결 중에는 이동만 멈추기
         // TickFireDot과 markState.Tick보다 뒤에 있어야 도트와 표식 만료가 계속 돌아감
@@ -277,21 +404,53 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             return;
         }
 
+
         Vector2 currentPosition = transform.position;
         Vector2 toPlayer = playerPosition - currentPosition;
 
-        if (toPlayer.sqrMagnitude < 0.0001f)
+        // 이동 방식을 가진 적은 방향만 위임받음.
+        // 위치 대입은 아래에서 한 번만
+        
+        // 돌진은 방향뿐 아니라 속도도 바꾸므로 배율을 함께 받기.
+        // 이동 방식이 3종째가 되면 공통 인터페이스로 묶을 것. 지금은 2종.
+        Vector2 direction;
+        float speedMultiplier = 1f;
+
+        if (dash != null && dash.isActiveAndEnabled)
+        {
+            direction = dash.Tick(deltaTime, currentPosition, playerPosition);
+
+            speedMultiplier = dash.SpeedMultiplier;
+        }
+        else if (keepDistance != null && keepDistance.isActiveAndEnabled)
+        {
+            direction = keepDistance.GetMoveDirection(currentPosition, playerPosition);
+        }
+        else
+        {
+            direction = toPlayer.normalized;
+        }
+
+        // 겹쳐서 방향을 못 정했거나, 유지 구간이라 멈추는 경우
+        // 예고 중과 전환 프레임도 여기로 빠짐.
+        if (direction.sqrMagnitude < 0.0001f)
         {
             return;
         }
 
-        Vector2 direction = toPlayer.normalized;
-
         // 냉기 표식 중첩당 이동속도 감소. moveSpeed 원본은 그대로 두어 만료 시 복원
-        int frostStacks = markState.Get(MagicElement.Frost).Stacks;
-        float currentSpeed = moveSpeed * (1f - frostStacks * FrostMovementSpeedReductionPerStack);
+        // 기획에서 보스에게 둔화 면역을 지정했으므로. 표식은 그대로 쌓이고 속도만 안 깎이게
+        int frostStacks = isBoss ? 0 : markState.Get(MagicElement.Frost).Stacks;
+
+        // 장판 둔화는 원소별로 보스 면역이 다름
+        // 대지 지진은 보스에게도 걸리므로 여기서 isBoss 로 일괄 면제 x
+        // 냉기 서리 장판만 GroundAreaState 가 걸러서 1 을 돌려줌
+        //
+        // 표식 둔화와는 곱하기. 서로 다른 계열
+        float currentSpeed = moveSpeed * (1f - frostStacks * FrostMovementSpeedReductionPerStack) * groundSlowMultiplier * speedMultiplier;
 
         transform.position = currentPosition + direction * currentSpeed * deltaTime;
+
     }
 
     // 화염표식 지속피해. Enemy.TakeDamage를 지나므로 공통 표식 효과가 함께 적용
@@ -325,6 +484,11 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     private void HandleDied()
     {
         GameEvents.RaiseEnemyKilled(transform.position, experienceReward);
+
+        // 개체 단위 통지는 전역 이벤트 뒤에 발행
+        // Health.TakeDamage 가 !isAlive 면 바로 빠져나가므로 사망당 한 번만
+        Killed?.Invoke(this);
     }
 }
+
 

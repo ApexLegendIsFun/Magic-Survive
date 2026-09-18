@@ -32,6 +32,11 @@ public static class GameEvents
     // 피해 적용 전 위치이며, 대상이 0명이면 이 이벤트 자체가 발행되지 않음.
     public static event Action<MagicElement, Vector2, IReadOnlyList<Vector2>> ChainReactionTriggered;
 
+    // [연동:UI] 소환 예고. (예고 위치들, 예고 시간)
+    // 예고가 끝나면 정확히 이 위치에 적이 나옴.
+    // positions는 발행할 때마다 새로 만든 복사본. 구독부 보관시도 안전
+    public static event Action<IReadOnlyList<Vector2>, float> SummonTelegraph;
+
     // 적 사망 시 호출
     public static void RaiseEnemyKilled(Vector2 position, int experienceReward)
     {
@@ -59,10 +64,71 @@ public static class GameEvents
     }
 
     // 연쇄형 반응 발동 시 호출 (번개 등)
-    public static void RaiseChainReaction(
-        MagicElement element, Vector2 originPosition, IReadOnlyList<Vector2> targetPositions)
+    public static void RaiseChainReaction(MagicElement element, Vector2 originPosition, IReadOnlyList<Vector2> targetPositions)
     {
         ChainReactionTriggered?.Invoke(element, originPosition, targetPositions);
+    }
+
+    // 소환 예고 시작 시 호출
+    public static void RaiseSummonTelegraph(IReadOnlyList<Vector2> positions, float telegraphSeconds)
+    {
+        SummonTelegraph?.Invoke(positions, telegraphSeconds);
+    }
+
+    // [연동:UI] 보스 2페이즈 원형 충격파 예고. (중심, 반경, 예고 시간)
+    // 예고가 끝나면 정확히 이 중심과 반경에서 터진다. 중심은 예고 시점에 고정.
+    //
+    // 예고 중에 보스가 죽으면 BossShockwaveTriggered 가 오지 않
+    // radius 는 월드 반경.
+    public static event Action<Vector2, float, float> BossShockwaveTelegraph;
+
+    // [연동:UI] 보스 2페이즈 원형 충격파 발동. (중심, 반경)
+    // 플레이어가 반경 밖이어도 발행가능. 피해 여부와 무관한 발동 연출용
+    public static event Action<Vector2, float> BossShockwaveTriggered;
+
+
+    // 보스 충격파 예고 시작 시 호출
+    public static void RaiseBossShockwaveTelegraph(
+        Vector2 center, float radius, float telegraphSeconds)
+    {
+        BossShockwaveTelegraph?.Invoke(center, radius, telegraphSeconds);
+    }
+
+    // 보스 충격파가 실제로 터질 때 호출
+    public static void RaiseBossShockwaveTriggered(Vector2 center, float radius)
+    {
+        BossShockwaveTriggered?.Invoke(center, radius);
+    }
+
+    // [연동:UI] 돌진자 돌진 예고. (시작 위치, 방향, 최대 거리, 예고 시간)
+    //
+    // 방향은 정규화. 예고가 끝나면 정확히 이 방향으로 돌진함
+    // 시작 위치는 예고 동안 움직이지 않음
+    // 거리는 둔화가 없을 때의 값이라 실제 도달 거리는 이보다 짧을 수 있음
+    //
+    // 사망 또는 빙결로 돌진이 취소될 수 있다. 취소 이벤트는 따로 x
+    // 구독부는 받은 예고 시간이 지나면 선을 지울 것
+    public static event Action<Vector2, Vector2, float, float> DashTelegraph;
+
+
+    // 돌진 예고 시작 시 호출
+    public static void RaiseDashTelegraph(
+        Vector2 origin, Vector2 direction, float distance, float telegraphSeconds)
+    {
+        DashTelegraph?.Invoke(origin, direction, distance, telegraphSeconds);
+    }
+
+    // [연동:UI] 지속 장판 생성.
+    //
+    // 대지 5레벨 지진 구역과 냉기 8레벨 서리 장판이 같은 이벤트를 사용.
+    // 보스 등장과 재시작에서 장판이 조기 제거
+    // 그때는 이 이벤트로 알리지 않으므로 남은 지속시간 동안 연출만 남을 수 있음
+    public static event Action<MagicElement, Vector2, float, float> GroundAreaCreated;
+
+    // 지속 장판 생성 시 호출
+    public static void RaiseGroundAreaCreated(MagicElement element, Vector2 center, float radius, float durationSeconds)
+    {
+        GroundAreaCreated?.Invoke(element, center, radius, durationSeconds);
     }
 
     // 전체 이벤트 초기화 
@@ -74,7 +140,11 @@ public static class GameEvents
         EnemyDamaged = null;
         ElementReactionTriggered = null;
         ChainReactionTriggered = null;
-
+        SummonTelegraph = null;
+        BossShockwaveTelegraph = null;
+        BossShockwaveTriggered = null;
+        DashTelegraph = null;
+        GroundAreaCreated = null;
     }
 
 

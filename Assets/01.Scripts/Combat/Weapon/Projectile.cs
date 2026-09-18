@@ -16,10 +16,13 @@ public class Projectile : MonoBehaviour
     // 관통 중 같은 적을 매 프레임 다시 때리기 방지
     private readonly List<Enemy> alreadyHit = new List<Enemy>(4);
 
-    // 연쇄 대상 위치 수집용. 이벤트로 넘길 때 ToArray로 복사하므로
-    // 이 리스트 자체는 재사용해도 구독부가 영향받지 않음
+    // 연쇄 대상 위치 수집용. 
     private readonly List<Vector2> chainTargetPositions = new List<Vector2>(4);
 
+    // 적이 플레이어에게 쏜 투사체일 때만 채워짐
+    // null이면 지금까지처럼 적을 찾아 때리는 플레이어 투사체로 동작
+    private Health playerTarget;
+    private float playerTargetRadius;
 
     // 이 투사체를 만든 프리팹. 어느 풀로 반납할지 찾는 데 쓰임
     private Projectile sourcePrefab;
@@ -45,6 +48,32 @@ public class Projectile : MonoBehaviour
     // 투사체 발사 전 상태 초기화
     // 풀에서 재사용될 때도 매번 호출
     public void Launch(in ProjectileSpec launchSpec, Vector2 origin, Vector2 launchDirection)
+    {
+        Prepare(launchSpec, origin, launchDirection);
+
+        // 플레이어 투사체. 적을 찾아 때림
+        playerTarget = null;
+        playerTargetRadius = 0f;
+    }
+
+
+    // 적이 플레이어에게 쏘는 투사체. 소환술사 원거리탄, 보스 부채꼴이 사용
+    //
+    // 대상이 플레이어 한 명뿐이라 EnemyManager 검색x
+    // 발사 시점에 받은 Health 하나만 거리로 검사
+    //
+    // spec.SkillLevel은 0으로 둘 것. 표식은 적에게만 붙는 개념
+    public void LaunchAtPlayer(in ProjectileSpec launchSpec, Vector2 origin, Vector2 launchDirection,
+        Health target, float targetRadius)
+    {
+        Prepare(launchSpec, origin, launchDirection);
+
+        playerTarget = target;
+        playerTargetRadius = targetRadius;
+    }
+
+    // 두 발사 경로가 공유하는 상태 초기화
+    private void Prepare(in ProjectileSpec launchSpec, Vector2 origin, Vector2 launchDirection)
     {
         spec = launchSpec;
         direction = launchDirection.normalized;
@@ -120,7 +149,8 @@ public class Projectile : MonoBehaviour
             case MagicElement.Fire:
 
                 // 점화. 중심 적 자신도 반경 안에 들어가므로 함께 피해를 받는다
-                enemyManager.FindOverlappingEnemies(center, ElementReactionValues.IgniteRadius, reactionBuffer);
+                enemyManager.FindOverlappingEnemies(
+                    center, ElementReactionValues.IgniteRadius, reactionBuffer);
 
                 for (int i = 0; i < reactionBuffer.Count; i++)
                 {
@@ -130,6 +160,36 @@ public class Projectile : MonoBehaviour
 
                 GameEvents.RaiseElementReaction(
                     MagicElement.Fire, center, ElementReactionValues.IgniteRadius);
+
+                // 5레벨 전염
+                SpreadFireMark(origin, center, enemyManager);
+
+                break;
+            case MagicElement.Lightning:
+
+                // 방전. 위쪽 ReactionUnlockLevel 게이트와 별개로 5레벨에서 해금.
+                if (spec.SkillLevel < ElementReactionValues.ExpansionUnlockLevel)
+                {
+                    break;
+                }
+
+                // 점화와 같이 중심 적도 반경 안이라 함께 맞음
+                // 이 피해는 표식도 적중 카운트도 만들지 않음
+                enemyManager.FindOverlappingEnemies(
+                    center, ElementReactionValues.DischargeRadius, reactionBuffer);
+
+                for (int i = 0; i < reactionBuffer.Count; i++)
+                {
+                    reactionBuffer[i].TakeDamage(ElementReactionValues.DischargeDamage);
+                }
+
+                // 번개가 ElementReactionTriggered 를 발행하는 첫 경로.
+                //
+                // 3레벨 연쇄는 선이라 ChainReactionTriggered 를 쓰지만 방전은 원형.
+                // 3중첩 전이와 3번째 적중이 같은 타격이라 둘이 함께 터질 수 있음
+                // 방전이 먼저 실행되므로 방전이 죽인 적은 연쇄 대상에서 빠짐
+                GameEvents.RaiseElementReaction(
+                    MagicElement.Lightning, center, ElementReactionValues.DischargeRadius);
 
                 break;
 
@@ -151,7 +211,64 @@ public class Projectile : MonoBehaviour
                 break;
         }
     }
-    
+
+    // 화염 5레벨. 점화가 터진 자리에서 주변 적에게 화염 표식 1 을 옮김
+    //
+    // 점화가 쓴 reactionBuffer 를 재사용하지 않고 전염 반경으로 다시 찾음
+    // 두 반경이 지금은 같은 값이지만 Lv7 과 특화가 점화 반경만 키우기 때문.
+    // 점화 루프는 이미 끝났으므로 같은 버퍼를 덮어써도 안전
+    private void SpreadFireMark(Enemy origin, Vector2 center, EnemyManager enemyManager)
+    {
+        if (spec.SkillLevel < ElementReactionValues.ExpansionUnlockLevel)
+        {
+            return;
+        }
+
+        enemyManager.FindOverlappingEnemies(
+            center, ElementReactionValues.FireSpreadRadius, reactionBuffer);
+
+        // 화염 투사체가 부르는 경로라 같은 프레임에 번개 연쇄가 이 목록을 쓰지 않음
+        // TriggerHitCountReaction 의 switch 는 대지와 번개만 처리
+        chainTargetPositions.Clear();
+
+        for (int i = 0; i < reactionBuffer.Count; i++)
+        {
+            Enemy target = reactionBuffer[i];
+
+            // origin 은 방금 3중첩이 된 적. 전염해도 지속시간만 갱신되고
+            // "주변 적 최대 2명" 자리를 먹음
+            if (target == origin || !target.IsAlive)
+            {
+                continue;
+            }
+
+            // 위치를 피해보다 먼저 기록하는 다른 반응들과 순서를 맞추기
+            chainTargetPositions.Add(target.transform.position);
+
+            // 전염 표식은 반응 판정을 거치지 않음. 미확정 부분.
+            // reactionBuffer 가 인스턴스 필드라 전염 도중 반응이 다시 돌면
+            // 지금 순회 중인 이 목록이 덮어써진다. 같은 적 재처리 금지도 있어야 함
+            //
+            // 구조를 합의하기 전까지는 표식만 걸기. 커밋 본문에 확인 요청.
+            target.ApplyElementMark(MagicElement.Fire, 1, ElementMarkRules.Duration);
+
+            if (chainTargetPositions.Count >= ElementReactionValues.FireSpreadMaxTargets)
+            {
+                break;
+            }
+        }
+
+        // 중심에서 개별 대상으로 이어지는 반응이라 연쇄와 같은 이벤트를 사용
+        // 같은 순간에 ElementReactionTriggered(Fire, 원형) 도 나가게.
+        // 폭발이 터지고 표식이 퍼지는 그림.
+        // [연동:UI] 별도 연결이 필요
+        if (chainTargetPositions.Count > 0)
+        {
+            GameEvents.RaiseChainReaction(
+                MagicElement.Fire, center, chainTargetPositions.ToArray());
+        }
+    }
+
 
     // 적중마다의 원소별 반응. 3중첩 반응과 발동 조건만 다르고 실행 위치는 동일
     // 카운터는 원소를 가리지 않고 셈
@@ -164,17 +281,26 @@ public class Projectile : MonoBehaviour
             case MagicElement.Earth:
 
                 // 충격파. 중심 적도 반경 안이라 함께 맞고,
-                // 이 피해는 표식도 적중 카운트도 만들지 않는다
-                enemyManager.FindOverlappingEnemies(
-                    center, ElementReactionValues.ShockwaveRadius, reactionBuffer);
+                // 이 피해는 표식도 적중 카운트도 만들지 않음
+                enemyManager.FindOverlappingEnemies(center, ElementReactionValues.ShockwaveRadius, reactionBuffer);
 
                 for (int i = 0; i < reactionBuffer.Count; i++)
                 {
                     reactionBuffer[i].TakeDamage(ElementReactionValues.ShockwaveDamage);
                 }
 
-                GameEvents.RaiseElementReaction(
-                    MagicElement.Earth, center, ElementReactionValues.ShockwaveRadius);
+                GameEvents.RaiseElementReaction(MagicElement.Earth, center, ElementReactionValues.ShockwaveRadius);
+
+                // 5레벨 지진 구역. 충격파가 터진 자리에 남는다
+                if (spec.SkillLevel >= ElementReactionValues.ExpansionUnlockLevel)
+                {
+                    enemyManager.AddGroundArea(
+                        MagicElement.Earth,
+                        center,
+                        ElementReactionValues.EarthquakeRadius,
+                        ElementReactionValues.EarthquakeDurationSeconds,
+                        ElementReactionValues.EarthquakeSlowPercent);
+                }
 
                 break;
 
@@ -189,35 +315,49 @@ public class Projectile : MonoBehaviour
 
                 chainTargetPositions.Clear();
 
-                // 대상 우선순위가 기획에 없어 관리 목록 순서를 그대로 씀
-                // 거리순이 아니며 적이 죽으면 목록 순서가 바뀌므로
-                // 같은 배치에서도 대상이 달라질 수 있음
-                // 기획에서 우선순위가 추가로 정해지면 여길 수정
-                for (int i = 0; i < reactionBuffer.Count; i++)
+                // 기획: 보스에게는 연쇄 대상이 보스 1명으로 제한
+                //
+                // 아래 루프 안에서 IsBoss 를 보면 x.
+                // 보스가 목록 뒤쪽에 있으면 앞의 일반 적들을 이미 때린 뒤에 만나게 됨.
+                // 목록 순서와 무관하도록 때리기 전에 먼저 찾음
+                Enemy chainBoss = FindChainBoss(origin);
+
+                if (chainBoss != null)
                 {
-                    if (reactionBuffer[i] == origin)
+                    chainTargetPositions.Add(chainBoss.transform.position);
+
+                    chainBoss.TakeDamage(chainDamage);
+                }
+                else
+                {
+                    // 대상 우선순위가 기획에 없어 관리 목록 순서를 그대로 사용.
+                    // 거리순x,  적이 죽으면 목록 순서가 바뀌므로
+                    // 같은 배치에서도 대상이 달라질 수 있음
+                    // 기획에서 우선순위가 추가로 정해지면 여길 수정
+                    for (int i = 0; i < reactionBuffer.Count; i++)
                     {
-                        continue;
-                    }
+                        if (reactionBuffer[i] == origin)
+                        {
+                            continue;
+                        }
 
-                    // 위치를 피해보다 먼저 기록.
-                    // 피해가 위치를 바꾸는 경우가 이미 있음 (대지 밀치기)
-                    chainTargetPositions.Add(reactionBuffer[i].transform.position);
+                        // 위치를 피해보다 먼저 기록.
+                        // 피해가 위치를 바꾸는 경우가 이미 있음 (대지 밀치기)
+                        chainTargetPositions.Add(reactionBuffer[i].transform.position);
 
-                    reactionBuffer[i].TakeDamage(chainDamage);
+                        reactionBuffer[i].TakeDamage(chainDamage);
 
-                    if (chainTargetPositions.Count >= ElementReactionValues.ChainMaxTargets)
-                    {
-                        break;
+                        if (chainTargetPositions.Count >= ElementReactionValues.ChainMaxTargets)
+                        {
+                            break;
+                        }
                     }
                 }
 
                 // 연쇄 대상이 0명이면 알리지 않음. 보여줄 연출 x
                 // 이 경우에도 적중 카운트는 이미 소비.
                 // 발동을 보류하지 않으므로 다음 기회는 3번째 적중 뒤
-                //
-                // 원형용 ElementReactionTriggered는 더 이상 보내지 않음.
-                // 연쇄는 선이라 원형 이펙트가 같이 터지면 잘못된 연출이 됨
+
 
                 if (chainTargetPositions.Count > 0)
                 {
@@ -226,14 +366,51 @@ public class Projectile : MonoBehaviour
                 }
 
                 break;
-
         }
 
+    }
+
+    // 적 투사체의 플레이어 명중 판정
+    //
+    // 관통도 표식도 없으므로 맞으면 그 자리에서 끝
+    // 플레이어는 풀링 대상이 아니라 중복 방지 필요 없음
+    private bool CheckPlayerHit(Vector2 position)
+    {
+        // 이미 죽은 플레이어는 때리지 않음.
+        if (!playerTarget.IsAlive)
+        {
+            return false;
+        }
+
+        float combined = spec.HitRadius + playerTargetRadius;
+
+        Vector2 toPlayer = (Vector2)playerTarget.transform.position - position;
+
+        if (toPlayer.sqrMagnitude >= combined * combined)
+        {
+            return false;
+        }
+
+        // 접촉 피해와 달리 무적 시간을 거치지 않음
+        // PlayerContactDamage의 무적은 그 컴포넌트 내부 타이머이고, 공유하면
+        // 접촉 중에 맞은 원거리탄이 먹혀 기획의 접촉 12 + 원거리 8이 안 나옴
+        // 기획에 규정이 없어 정한 것이라 확인 요청 대상
+        playerTarget.TakeDamage(spec.Damage);
+
+        isActive = false;
+
+        return true;
     }
 
 
     private bool CheckHits(Vector2 position, EnemyManager enemyManager, ElementHitCounter hitCounter)
     {
+        // 적이 쏜 투사체는 대상이 플레이어 한 명뿐이라 적 검색으로 내려가지 않음
+        if (playerTarget != null)
+        {
+            return CheckPlayerHit(position);
+        }
+
         enemyManager.FindOverlappingEnemies(position, spec.HitRadius, hitBuffer);
 
         for (int i = 0; i < hitBuffer.Count; i++)
@@ -278,6 +455,8 @@ public class Projectile : MonoBehaviour
                     TriggerHitCountReaction(enemy, enemyManager);
                 }
 
+
+
                 // 대지 1레벨 밀치기. 카운터가 아니라 적중할 때마다라 여기에 두기
                 //
                 // 충격파보다 뒤여야 함. 앞에 두면 TriggerHitCountReaction이
@@ -304,6 +483,30 @@ public class Projectile : MonoBehaviour
 
 
         return false;
+    }
+
+    // 연쇄 대상 후보 중 보스를 찾기
+    // 기획의 "보스에게는 연쇄 대상이 보스 1명" 을
+    // 보스가 연쇄를 받는 쪽일 때로 해석.
+    // 이 해석이면 단독 보스전 구간에는 연쇄 대상이 0명. 커밋 본문에 확인 요청
+    private Enemy FindChainBoss(Enemy origin)
+    {
+        for (int i = 0; i < reactionBuffer.Count; i++)
+        {
+            Enemy candidate = reactionBuffer[i];
+
+            if (candidate == origin)
+            {
+                continue;
+            }
+
+            if (candidate.IsBoss)
+            {
+                return candidate;
+            }
+        }
+
+        return null;
     }
 
 }

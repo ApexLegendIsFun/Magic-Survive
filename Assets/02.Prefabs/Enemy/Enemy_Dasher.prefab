@@ -12,12 +12,9 @@ GameObject:
   - component: {fileID: 8662285387949474317}
   - component: {fileID: 9103200933536096095}
   - component: {fileID: 7377819187996129501}
-  - component: {fileID: -7619301506509127058}
-  - component: {fileID: -8264398554190960988}
-  - component: {fileID: 5481016861449514271}
-  - component: {fileID: 6816554341839302393}
+  - component: {fileID: -1611767914131922253}
   m_Layer: 6
-  m_Name: Enemy_Boss
+  m_Name: Enemy_Dasher
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -88,7 +85,7 @@ SpriteRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 0.6509434, g: 0.27458706, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -127,7 +124,7 @@ MonoBehaviour:
   contactDamage: 5
   experienceReward: 1
   hitRadius: 0.5
---- !u!114 &-7619301506509127058
+--- !u!114 &-1611767914131922253
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -136,65 +133,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 5608222364171683798}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ee2f6492b3927ed4d811d8028ac576b9, type: 3}
+  m_Script: {fileID: 11500000, guid: 670892acd2bbf014a8ddd4196471cac5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyRangedAttack
-  attackInterval: 4.5
-  damage: 10
-  projectileSpeed: 6
-  maxDistance: 20
-  hitRadius: 0.25
-  attackRange: 20
-  projectileCount: 3
-  angleStepDegrees: 20
-  projectilePrefab: {fileID: 0}
---- !u!114 &-8264398554190960988
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5608222364171683798}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f5a3161058edbd647a6a3ada3712500a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemySummon
-  summonInterval: 10
-  telegraphSeconds: 0.8
-  summonCount: 2
-  maxAliveSummons: 4
-  summonData: {fileID: 11400000, guid: fb05251c9d772f347910531787b68646, type: 2}
-  summonRadius: 2.5
---- !u!114 &5481016861449514271
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5608222364171683798}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8c867d9213c538a49a6f5d01a409ef5d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossPhaseController
-  phaseTwoHealthRatio: 0.7
-  phaseTwoProjectileCount: 5
-  phaseTwoAttackInterval: 4
-  moveSpeedMultiplier: 1.25
---- !u!114 &6816554341839302393
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5608222364171683798}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cab8a8f57d534244086f04ad2b6ab34f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossShockwave
-  shockwaveInterval: 5
-  telegraphSeconds: 0.8
-  radius: 2.5
-  damage: 18
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDash
+  dashInterval: 8
+  telegraphSeconds: 1.2
+  dashSeconds: 0.8
+  dashSpeedMultiplier: 4
