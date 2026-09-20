@@ -148,18 +148,22 @@ public class Projectile : MonoBehaviour
         {
             case MagicElement.Fire:
 
-                // 점화. 중심 적 자신도 반경 안에 들어가므로 함께 피해를 받는다
+                // 7레벨이면 피해,반경이 커짐. 판정과 이벤트가 같은 반경을 쓰도록 한 번만 계산
+                float igniteRadius = ElementReactionValues.GetIgniteRadius(spec.SkillLevel);
+                float igniteDamage = ElementReactionValues.GetIgniteDamage(spec.SkillLevel);
+
+                // 점화. 중심 적 자신도 반경 안에 들어가므로 함께 피해를 받음
                 enemyManager.FindOverlappingEnemies(
-                    center, ElementReactionValues.IgniteRadius, reactionBuffer);
+                    center, igniteRadius, reactionBuffer);
 
                 for (int i = 0; i < reactionBuffer.Count; i++)
                 {
-                    // 폭발 피해는 표식을 걸지 않는다. 연쇄 점화가 생기지 않음
-                    reactionBuffer[i].TakeDamage(ElementReactionValues.IgniteDamage);
+                    // 폭발 피해는 표식을 걸지 않는다. 연쇄 점화 x
+                    reactionBuffer[i].TakeDamage(igniteDamage);
                 }
 
                 GameEvents.RaiseElementReaction(
-                    MagicElement.Fire, center, ElementReactionValues.IgniteRadius);
+                    MagicElement.Fire, center, igniteRadius);
 
                 // 5레벨 전염
                 // 점화가 중심 적을 죽였다면 사망 전염이 대기열에 들어갔으므로 건너뜀
@@ -182,12 +186,14 @@ public class Projectile : MonoBehaviour
 
                 // 점화와 같이 중심 적도 반경 안이라 함께 맞음
                 // 이 피해는 표식도 적중 카운트도 만들지 않음
-                enemyManager.FindOverlappingEnemies(
-                    center, ElementReactionValues.DischargeRadius, reactionBuffer);
+                enemyManager.FindOverlappingEnemies(center, ElementReactionValues.DischargeRadius, reactionBuffer);
+
+                // 7레벨 방전 피해 강화. 반경은 언급 없어 그대로
+                float dischargeDamage = ElementReactionValues.GetDischargeDamage(spec.SkillLevel);
 
                 for (int i = 0; i < reactionBuffer.Count; i++)
                 {
-                    reactionBuffer[i].TakeDamage(ElementReactionValues.DischargeDamage);
+                    reactionBuffer[i].TakeDamage(dischargeDamage);
                 }
 
                 // 번개가 ElementReactionTriggered 를 발행하는 첫 경로.
@@ -206,8 +212,10 @@ public class Projectile : MonoBehaviour
                 // 5레벨이면 파괴 권한을 같이 넘김
                 // 파괴는 이 자리가 아니라 다음에 맞을 때 터지므로
                 // 레벨을 아는 여기서 적에게 권한만 남김
+                //
+                // 7레벨이면 빙결 시간이 늘어남. 파괴 권한은 빙결 동안 유지되므로 함께 길어짐
                 origin.ApplyFreeze(
-                    ElementReactionValues.FreezeDurationSeconds,
+                    ElementReactionValues.GetFreezeDurationSeconds(spec.SkillLevel),
                     spec.SkillLevel >= ElementReactionValues.ExpansionUnlockLevel);
 
                 GameEvents.RaiseElementReaction(MagicElement.Frost, center, 0f);
@@ -225,10 +233,8 @@ public class Projectile : MonoBehaviour
     }
 
     // 화염 5레벨. 점화가 터진 자리에서 주변 적에게 화염 표식 1 을 옮김
-    //
     // 점화가 쓴 reactionBuffer 를 재사용하지 않고 전염 반경으로 다시 찾음
-    // 두 반경이 지금은 같은 값이지만 Lv7 과 특화가 점화 반경만 키우기 때문.
-    // 점화 루프는 이미 끝났으므로 같은 버퍼를 덮어써도 안전
+    // 점화 루프는 이미 끝났으므로 같은 버퍼를 덮어써도 ok
     private void SpreadFireMark(Enemy origin, Vector2 center, EnemyManager enemyManager)
     {
         if (spec.SkillLevel < ElementReactionValues.ExpansionUnlockLevel)
@@ -292,16 +298,20 @@ public class Projectile : MonoBehaviour
         {
             case MagicElement.Earth:
 
+                // 6레벨이면 충격파 반경이 커짐. 판정과 이벤트가 같은 반경을 쓰도록 한 번만 계산
+                // 아래 지진 구역은 EarthquakeRadius 를 그대로 사용
+                float shockwaveRadius = ElementReactionValues.GetShockwaveRadius(spec.SkillLevel);
+
                 // 충격파. 중심 적도 반경 안이라 함께 맞고,
                 // 이 피해는 표식도 적중 카운트도 만들지 않음
-                enemyManager.FindOverlappingEnemies(center, ElementReactionValues.ShockwaveRadius, reactionBuffer);
+                enemyManager.FindOverlappingEnemies(center, shockwaveRadius, reactionBuffer);
 
                 for (int i = 0; i < reactionBuffer.Count; i++)
                 {
                     reactionBuffer[i].TakeDamage(ElementReactionValues.ShockwaveDamage);
                 }
 
-                GameEvents.RaiseElementReaction(MagicElement.Earth, center, ElementReactionValues.ShockwaveRadius);
+                GameEvents.RaiseElementReaction(MagicElement.Earth, center, shockwaveRadius);
 
                 // 5레벨 지진 구역. 충격파가 터진 자리에 남는다
                 if (spec.SkillLevel >= ElementReactionValues.ExpansionUnlockLevel)
@@ -324,6 +334,9 @@ public class Projectile : MonoBehaviour
                     center, ElementReactionValues.ChainRadius, reactionBuffer);
 
                 float chainDamage = spec.Damage * ElementReactionValues.ChainDamageRatio;
+
+                // 6레벨이면 대상 +1. 보스 분기는 이 값을 쓰지 않아 보스는 계속 1명
+                int chainMaxTargets = ElementReactionValues.GetChainMaxTargets(spec.SkillLevel);
 
                 chainTargetPositions.Clear();
 
@@ -359,7 +372,7 @@ public class Projectile : MonoBehaviour
 
                         reactionBuffer[i].TakeDamage(chainDamage);
 
-                        if (chainTargetPositions.Count >= ElementReactionValues.ChainMaxTargets)
+                        if (chainTargetPositions.Count >= chainMaxTargets)
                         {
                             break;
                         }
@@ -480,10 +493,10 @@ public class Projectile : MonoBehaviour
                 // 충격파보다 뒤여야 함. 앞에 두면 TriggerHitCountReaction이
                 // origin.transform.position을 읽을 때 이미 밀려난 위치가 되므로
                 //
-                // 보스 면역은 아직 동작x 보스를 가릴 판별값이 없으므로
+                // 7레벨이면 거리 +30%. 보스 면역은 Enemy.ApplyKnockback 의 IsKnockbackImmune 이 처리
                 if (spec.Element == MagicElement.Earth)
                 {
-                    enemy.ApplyKnockback(direction, ElementReactionValues.KnockbackDistance);
+                    enemy.ApplyKnockback(direction, ElementReactionValues.GetKnockbackDistance(spec.SkillLevel));
                 }
 
             }
