@@ -226,7 +226,8 @@ public class Projectile : MonoBehaviour
             case MagicElement.Dark:
 
                 // 점화, 빙결은 이 자리에서 끝나는 1회성이지만 암흑은 지속 상태.
-                origin.SetDarkAmplificationUnlocked();
+                // 7레벨이면 피해 증가량이 커짐. 적은 받은 값만 기억
+                origin.SetDarkAmplificationUnlocked(ElementReactionValues.GetDarkAmplificationBonus(spec.SkillLevel));
 
                 break;
         }
@@ -464,6 +465,14 @@ public class Projectile : MonoBehaviour
             //   (보스 투사체, _Test/SimpleProjectileAttack, MagicRuntime 미반영 상태)
             if (spec.SkillLevel > 0 && enemy.IsAlive)
             {
+                // 냉기 6레벨 둔화 강화. 둔화는 Enemy.Tick 이 계산하므로 값만 남김
+                // ApplyElementMark 는 IElementMarkTarget 계약이라 인자를 늘리지 않음
+                if (spec.Element == MagicElement.Frost)
+                {
+                    enemy.SetFrostSlowPerStack(
+                        ElementReactionValues.GetFrostSlowPerStack(spec.SkillLevel));
+                }
+
                 int stacksBefore = enemy.GetElementMark(spec.Element).Stacks;
 
                 enemy.ApplyElementMark(spec.Element, 1, ElementMarkRules.Duration);

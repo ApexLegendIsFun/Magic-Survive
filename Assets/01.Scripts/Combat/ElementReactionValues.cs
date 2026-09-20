@@ -78,6 +78,11 @@ public static class ElementReactionValues
     // 1회성이 아니라 대상에 남는 지속
     public const float DarkAmplificationBonus = 0.15f;
 
+    // 냉기 표식 둔화. 중첩당 이동속도 감소
+    // 기획에 기본 수치가 없어 기존 Enemy 값을 그대로 옮김. 확인 요청 대상
+    // Enemy 에서 옮긴 이유: 6레벨 강화 계산이 기본값을 알아야 함
+    public const float FrostMovementSpeedReductionPerStack = 0.10f;
+
     // 대지 1레벨 밀치기. 임시값. 확인 요청 대상
     // hitRadius 0.5와 같은 값이고 점화 1.3, 충격파 1.5 대역보다 작음
     public const float KnockbackDistance = 0.5f;
@@ -112,6 +117,15 @@ public static class ElementReactionValues
     // 대지 7레벨. 밀치기 거리 +30%
     // 보스는 Enemy.IsKnockbackImmune 으로 그대로 면역
     public const float KnockbackBoostDistanceMultiplier = 1.3f;
+
+    // 냉기 6레벨. 냉기 표식 둔화 효과 +10%
+    // 다른 +% 강화와 같이 기본값에 곱하는 배율로 해석. 확인 요청 대상
+    // 중첩당 0.10 -> 0.11. 보스는 Enemy.Tick 에서 표식 둔화 면역
+    public const float FrostSlowReinforceMultiplier = 1.1f;
+
+    // 암흑 7레벨. 암흑 피해 증가 효과 +10%
+    // 같은 배율 해석. 0.15 → 0.165. 보스에게도 적용
+    public const float DarkAmplificationBoostMultiplier = 1.1f;
 
 
     // 레벨별 값 계산
@@ -187,6 +201,26 @@ public static class ElementReactionValues
         }
 
         return KnockbackDistance;
+    }
+
+    public static float GetFrostSlowPerStack(int skillLevel)
+    {
+        if (skillLevel >= ReinforceUnlockLevel)
+        {
+            return FrostMovementSpeedReductionPerStack * FrostSlowReinforceMultiplier;
+        }
+
+        return FrostMovementSpeedReductionPerStack;
+    }
+
+    public static float GetDarkAmplificationBonus(int skillLevel)
+    {
+        if (skillLevel >= ReactionBoostUnlockLevel)
+        {
+            return DarkAmplificationBonus * DarkAmplificationBoostMultiplier;
+        }
+
+        return DarkAmplificationBonus;
     }
 
 }

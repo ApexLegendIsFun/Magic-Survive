@@ -24,8 +24,8 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     // 원소별 고유 효과. 카탈로그 확정값 임시 미러링
     // 암흑은 중첩당이 아니라 3중첩 문턱 효과가 되어 ElementReactionValues로 옮김
+    // 냉기 둔화도 6레벨 강화가 생겨 ElementReactionValues로 옮김
     private const float FireDotDamagePerStack = 1f;
-    private const float FrostMovementSpeedReductionPerStack = 0.10f;
 
 
 
@@ -43,6 +43,14 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     // 암흑 3레벨 해금 여부
     private bool darkAmplificationUnlocked;
+
+    // 암흑 3중첩 대상이 받는 피해 증가량. 해금할 때 투사체가 레벨로 계산해 넘김
+    // Lv3~6 0.15, Lv7 0.165. 해금 전에는 0
+    private float darkAmplificationBonus;
+
+    // 냉기 표식 중첩당 이동속도 감소. 냉기 투사체가 적중할 때 레벨로 계산해 넘김
+    // Lv1~5 0.10, Lv6 0.11
+    private float frostSlowPerStack = ElementReactionValues.FrostMovementSpeedReductionPerStack;
 
     // EnemyManager.Spawn 이 주입.
     // 반응이 주변 적을 찾아야 할 때 사용. 프리팹이라 [SerializeField] 로는 못 받음
@@ -210,12 +218,22 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
 
     // 암흑 표식 3중첩 반응
-    public void SetDarkAmplificationUnlocked()
+    //
+    // 피해 증가량은 레벨을 아는 투사체가 계산해 넘김. 적은 값만 기억
+    public void SetDarkAmplificationUnlocked(float bonus)
     {
         darkAmplificationUnlocked = true;
+        darkAmplificationBonus = Mathf.Max(darkAmplificationBonus, bonus);
 
         // 투사체가 부르는 시점은 이미 3중첩 전이라 여기서 바로 켜짐
         RefreshDarkAmplified();
+    }
+
+    // 냉기 투사체가 적중할 때마다 호출. 표식 둔화의 중첩당 감소량
+    // 암흑과 같은 이유로 더 큰 값만 받음
+    public void SetFrostSlowPerStack(float slowPerStack)
+    {
+        frostSlowPerStack = Mathf.Max(frostSlowPerStack, slowPerStack);
     }
 
     // EnemyManager.Spawn 이 풀에서 꺼낸 직후 1회 호출
@@ -306,15 +324,20 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             FrozenChanged?.Invoke(false);
         }
 
+
         frostShatterArmed = false;
         fireDeathSpreadArmed = false;
         darkDeathSpreadArmed = false;
+
+        // 레벨로 받은 값. 풀에서 다음 개체에 남지 않게 기본값으로
+        frostSlowPerStack = ElementReactionValues.FrostMovementSpeedReductionPerStack;
 
         // 상태를 먼저 확정하고 알림
         // 구독부가 false 를 받은 순간 IsDarkAmplified 를 다시 읽어도 false 여야 함
         bool wasDarkAmplified = darkAmplifiedNotified;
 
         darkAmplificationUnlocked = false;
+        darkAmplificationBonus = 0f;
         darkAmplifiedNotified = false;
 
         if (wasDarkAmplified)
@@ -338,10 +361,11 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         float multiplier = 1f + markState.TotalStacks * DamageTakenPerTotalStack;
 
         // 암흑 3레벨. 중첩당 가산이 아니라 3중첩 문턱에서 한 번만
+        // 값은 해금할 때 받은 것. 7레벨이면 0.165
         if (darkAmplificationUnlocked
             && markState.Get(MagicElement.Dark).Stacks >= ElementMarkRules.MaximumStacks)
         {
-            multiplier += ElementReactionValues.DarkAmplificationBonus;
+            multiplier += darkAmplificationBonus;
         }
 
         // [연동:UI] Damage Number는 요청량이 아니라 실제로 깎인 양을 받음
@@ -516,6 +540,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
         // 냉기 표식 중첩당 이동속도 감소. moveSpeed 원본은 그대로 두어 만료 시 복원
         // 기획에서 보스에게 둔화 면역을 지정했으므로. 표식은 그대로 쌓이고 속도만 안 깎이게
+        // 중첩당 감소량은 냉기 투사체가 넘긴 값. 6레벨이면 0.11
         int frostStacks = isBoss ? 0 : markState.Get(MagicElement.Frost).Stacks;
 
         // 장판 둔화는 원소별로 보스 면역이 다름
@@ -523,7 +548,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         // 냉기 서리 장판만 GroundAreaState 가 걸러서 1 을 돌려줌
         //
         // 표식 둔화와는 곱하기. 서로 다른 계열
-        float currentSpeed = moveSpeed * (1f - frostStacks * FrostMovementSpeedReductionPerStack) * groundSlowMultiplier * speedMultiplier;
+        float currentSpeed = moveSpeed * (1f - frostStacks * frostSlowPerStack) * groundSlowMultiplier * speedMultiplier;
 
         transform.position = currentPosition + direction * currentSpeed * deltaTime;
 
