@@ -66,6 +66,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     private bool fireDeathSpreadArmed;
     private bool darkDeathSpreadArmed;
 
+    // 암흑 8레벨 처형 권한. Lv8 암흑 탄이 피해 직전에 켬
+    // 그 타격의 TakeDamage 에서 소비. 다음 타격까지 남지 않음
+    private bool darkExecuteArmed;
+
 
     // 마지막으로 DarkAmplifiedChanged 로 알린 상태
 
@@ -256,6 +260,15 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         }
     }
 
+    // 암흑 8레벨 처형 권한. Projectile 이 피해 직전에 호출
+    //
+    // 피해보다 먼저여야 함. 뒤에 두면 그 타격으로 체력이 문턱 아래로 내려가도
+    // 이번 타격에서는 처형되지 않음
+    public void ArmDarkExecute()
+    {
+        darkExecuteArmed = true;
+    }
+
 
     // 대지 1레벨 밀치기. 투사체가 적중 시 호출
     //
@@ -328,6 +341,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         frostShatterArmed = false;
         fireDeathSpreadArmed = false;
         darkDeathSpreadArmed = false;
+        darkExecuteArmed = false;
 
         // 레벨로 받은 값. 풀에서 다음 개체에 남지 않게 기본값으로
         frostSlowPerStack = ElementReactionValues.FrostMovementSpeedReductionPerStack;
@@ -357,6 +371,17 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 부를 수 있게 되면 적의 생명주기가 EnemyManager 밖에서 흔들림
     public void TakeDamage(float amount)
     {
+        // 암흑 8레벨 처형 권한을 이번 호출로 가져오고 필드는 즉시 비움
+        //
+        // 먼저 비우는 이유: 아래 TryFrostShatter 의 파괴는 반경 안 적을 때리는데
+        // 그 안에 자기 자신이 들어 있어 TakeDamage 가 재진입.
+        // 필드가 비어 있으면 재진입한 호출은 처형하지 않고,
+        // 바깥 호출이 "파괴가 끝난 뒤" 상태로 판정
+        //
+        // 이 한 줄을 지우면 권한이 풀 반환까지 남는 정책이 됨. 확인 요청 대상
+        bool executeThisHit = darkExecuteArmed;
+        darkExecuteArmed = false;
+
         // 공통 효과 원소별이 아니라 모든 원소 중첩의 합
         float multiplier = 1f + markState.TotalStacks * DamageTakenPerTotalStack;
 
@@ -382,6 +407,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         }
 
         TryFrostShatter(appliedDamage);
+
+        // 파괴 뒤에 본다. 파괴 피해로 이미 죽었으면 아래 IsAlive 가드에서 빠짐
+        TryDarkExecute(executeThisHit, appliedDamage);
     }
 
     // 냉기 5레벨. 빙결 중에 피해를 받으면 그 자리에서 파괴가 터짐
@@ -405,6 +433,34 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         frostShatterArmed = false;
 
         enemyManager.ResolveFrostShatter(transform.position);
+    }
+
+    // 암흑 8레벨 처형. 이번 타격으로 체력이 문턱 아래가 된 일반 적을 즉시 처리
+    // 남은 체력만큼의 피해로 처리하는 이유:
+    // 사망 처리(EXP, 사망 전염, EnemyKilled)를 기존 경로로 한 번만 태우기 위해서.
+    // 별도 사망 경로를 만들면 그 셋을 모두 다시 구현해야 함
+    private void TryDarkExecute(bool armedThisHit, float appliedDamage)
+    {
+        // 보스는 제외. 실제로 깎인 양이 0 이면 판정하지 않음 (파괴와 같은 가드)
+        if (!armedThisHit
+            || appliedDamage <= 0f
+            || isBoss
+            || !health.IsAlive)
+        {
+            return;
+        }
+
+        if (health.CurrentHealth > health.MaxHealth * ElementReactionValues.DarkExecuteHealthRatio)
+        {
+            return;
+        }
+
+        float remainingHealth = health.CurrentHealth;
+
+        health.TakeDamage(remainingHealth);
+
+        // [연동:UI] 처형분도 데미지 숫자로 보인다. 안 보내면 적이 소리 없이 사라짐
+        GameEvents.RaiseEnemyDamaged(transform.position, remainingHealth);
     }
 
 

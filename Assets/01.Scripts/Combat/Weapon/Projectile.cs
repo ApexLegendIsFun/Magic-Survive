@@ -451,10 +451,18 @@ public class Projectile : MonoBehaviour
 
             alreadyHit.Add(enemy);
 
-            // 화염·암흑 5레벨 사망 전염 권한. 반드시 피해보다 먼저
+            // 화염/암흑 5레벨 사망 전염 권한. 반드시 피해보다 먼저
             if (spec.SkillLevel >= ElementReactionValues.ExpansionUnlockLevel)
             {
                 enemy.ArmDeathSpread(spec.Element);
+            }
+
+            // 암흑 8레벨 처형 권한. 같은 이유로 피해보다 먼저
+            // 이 타격으로 체력이 10% 아래가 되면 그 자리에서 처형
+            if (spec.Element == MagicElement.Dark
+                && spec.SkillLevel >= ElementReactionValues.AwakeningUnlockLevel)
+            {
+                enemy.ArmDarkExecute();
             }
 
             enemy.TakeDamage(spec.Damage);

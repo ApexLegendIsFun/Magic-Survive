@@ -22,9 +22,12 @@ public static class ElementReactionValues
     // 관통 +1 은 MagicContentCatalog.GetStats 가 처리. 이 상수는 범위·대상 수에만 사용
     public const int ReinforceUnlockLevel = 6;
 
-    // 5원소 공통. 공통 레벨 상승표의 "7 원소 고유 효과 강화"
+    // 5원소 공통. 공통 레벨 상승표의 7 원소 고유 효과 강화
     // Mastery 는 ElementMarkRules.ShouldTriggerMastery(3중첩)가 이미 쓰는 이름이라 피함
     public const int ReactionBoostUnlockLevel = 7;
+
+    // 5원소 공통. 공통 레벨 상승표의 8 원소 각성 효과 해금
+    public const int AwakeningUnlockLevel = 8;
 
     // 화염 3레벨 점화
     public const float IgniteDamage = 12f;
@@ -128,8 +131,13 @@ public static class ElementReactionValues
     public const float DarkAmplificationBoostMultiplier = 1.1f;
 
 
+    // 8레벨 각성
+    // 암흑 8레벨 처형. 남은 체력이 최대 체력의 이 비율 이하면 즉시 처형
+    // 일반 적만. 보스는 Enemy.TryDarkExecute 에서 isBoss 로 제외
+    public const float DarkExecuteHealthRatio = 0.10f;
+
+
     // 레벨별 값 계산
-    //
     // 호출부는 스킬 레벨만 넘김. 게이트와 기본 강화 수치는 이 클래스가 관리
     // 카탈로그 api 연결 시 이 계산 경로를 교체
 
