@@ -135,5 +135,21 @@ Chain_Lightning 이펙트 매니저의 버그를 수정보완했습니다.
 엘리트/보스 등장 패널 — EliteAnnouncementUi (오른쪽→중앙→왼쪽 슬라이드)
 보스 충격파 — BossShockwaveEffectPlayer, 예고 링/버스트 스케일 보정(telegraphScaleMultiplier/burstScaleMultiplier) 분리해서  해결 완료
 
+09_21
+
+UI의 해상도 검사(1280×720 / 1920×1080)
+ 텍스트가 박스 밖으로 삐져나오거나 잘리는 곳 있는지 해결 
+
+ 화면 모서리 UI(HUD, Exit 버튼 등)가 화면 밖으로 밀려나거나 다른 요소랑 겹치는지 해결 
+
+ EliteAnnouncementUi 슬라이드 패널의 offscreenDistance가 두 해상도 다 화면 밖으로 완전히 나가는지 해결 
+   (1280x720에서는 화면이 좁아서 같은 offscreenDistance 값이 상대적으로 덜 나갈 수 있음)
+ BossHudUi HP바/타이머가 다른 HUD 요소랑 겹치지 않는지 해결 
+
+ 씬의 디버그관련 스크립트/코드 제거
+
+ *이벤트 필요
+ BossHud(보스의 Hp bar 연결 대기중)
+
 
 
