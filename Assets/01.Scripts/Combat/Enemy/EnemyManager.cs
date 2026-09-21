@@ -28,6 +28,13 @@ public class EnemyManager : MonoBehaviour
     private readonly List<GroundAreaState.DamagePulse> groundDamagePulses =
         new List<GroundAreaState.DamagePulse>(8);
 
+    // 번개 8레벨 낙뢰 대상. 가까운 순으로 최대 3명만 남기므로 그 크기로 고정
+    private readonly List<Enemy> lightningStormBuffer =
+        new List<Enemy>(ElementReactionValues.LightningStormMaxTargets);
+
+    private readonly float[] lightningStormDistances =
+        new float[ElementReactionValues.LightningStormMaxTargets];
+
     // 파괴 피해가 다른 빙결 적을 또 터뜨리는 재귀를 막음.
     // 냉기 전용.
     private bool isResolvingFrostShatter;
@@ -252,6 +259,104 @@ public class EnemyManager : MonoBehaviour
         // [연동:UI] 중심은 플레이어, 대상은 낙석 3곳
         // 화염 전염·연쇄와 같은 이벤트라 원소로 구분할 것
         GameEvents.RaiseChainReaction(MagicElement.Earth, playerPosition, (Vector2[])rockfallPositions.Clone());
+    }
+
+    // [연동:Combat] 번개 8레벨 낙뢰. ProjectileLauncher 가 6초마다 호출
+    //
+    // 사거리 제한 없음. 기획에 거리가 없어 살아 있는 적 전체가 후보
+    // 대신 플레이어에게 가까운 순으로 골라 발밑의 적이 밀리지 않게.
+    // 보스 제외 없음.
+    public void ResolveLightningStorm()
+    {
+        if (playerTransform == null)
+        {
+            return;
+        }
+
+        Vector2 playerPosition = playerTransform.position;
+
+        lightningStormBuffer.Clear();
+
+        for (int i = 0; i < activeEnemies.Count; i++)
+        {
+            Enemy enemy = activeEnemies[i];
+
+            if (enemy == null || !enemy.IsAlive || !enemy.HasAnyElementMark)
+            {
+                continue;
+            }
+
+            Vector2 enemyPosition = enemy.transform.position;
+
+            TryAddStormTarget(enemy, (enemyPosition - playerPosition).sqrMagnitude);
+        }
+
+        for (int i = 0; i < lightningStormBuffer.Count; i++)
+        {
+            Enemy target = lightningStormBuffer[i];
+
+            // 앞 대상의 피해가 파괴를 불러 이미 죽였을 수 있음
+            if (target == null || !target.IsAlive)
+            {
+                continue;
+            }
+
+            // 죽으면 위치를 못 읽으므로 피해 전에 저장
+            Vector2 strikePosition = target.transform.position;
+
+            target.TakeDamage(ElementReactionValues.LightningStormDamage);
+
+            // [연동:UI] 대상 1명당 1회. 다른 반응과 같이 효과가 끝난 뒤 발행
+            // 반경 0 은 단일 대상 반응 규약이고 같은 번개라도 방전은 반경 1.2 로 옴
+            GameEvents.RaiseElementReaction(
+                MagicElement.Lightning, strikePosition, 0f);
+        }
+    }
+
+    // 가까운 순 3명만 유지. 대상이 3명뿐이라 정렬이나 LINQ 없이 끼워넣기
+    // 거리 비교는 제곱 거리로만 한다. 순서만 필요하고 실제 거리는 쓰지 않음
+    private void TryAddStormTarget(Enemy enemy, float sqrDistance)
+    {
+        int maxTargets = ElementReactionValues.LightningStormMaxTargets;
+
+        // 이미 3명이 찼는데 그중 가장 먼 대상보다도 멀면 볼 것 없음
+        if (lightningStormBuffer.Count >= maxTargets
+            && sqrDistance >= lightningStormDistances[maxTargets - 1])
+        {
+            return;
+        }
+
+        if (lightningStormBuffer.Count < maxTargets)
+        {
+            lightningStormBuffer.Add(enemy);
+
+            lightningStormDistances[lightningStormBuffer.Count - 1] = sqrDistance;
+        }
+        else
+        {
+            // 가장 먼 대상을 밀어내고 그 자리에 넣음
+            lightningStormBuffer[maxTargets - 1] = enemy;
+
+            lightningStormDistances[maxTargets - 1] = sqrDistance;
+        }
+
+        // 방금 넣은 것을 제자리까지 앞으로 끌어올림
+        for (int i = lightningStormBuffer.Count - 1; i > 0; i--)
+        {
+            if (lightningStormDistances[i - 1] <= lightningStormDistances[i])
+            {
+                break;
+            }
+
+            Enemy movedEnemy = lightningStormBuffer[i];
+            float movedDistance = lightningStormDistances[i];
+
+            lightningStormBuffer[i] = lightningStormBuffer[i - 1];
+            lightningStormDistances[i] = lightningStormDistances[i - 1];
+
+            lightningStormBuffer[i - 1] = movedEnemy;
+            lightningStormDistances[i - 1] = movedDistance;
+        }
     }
 
     // 화염·암흑 5레벨 사망 전염 등록. Enemy 가 죽는 순간 호출

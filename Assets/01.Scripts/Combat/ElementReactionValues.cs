@@ -154,19 +154,22 @@ public static class ElementReactionValues
 
     // 8레벨 각성의 발동 주기. 3레벨 충격파·연쇄의 HitsPerTrigger 와 별개로 셈
     // 같은 카운터를 쓰면 한쪽 발동이 다른 쪽 카운트를 0 으로 되돌림
-    //
     // 기획 115행은 "3번째 적중마다", 119행은 "5번째 대지 공격마다" 로 단어가 다르기에
     // 이쪽은 적중이 아니라 발사를 셈. 확인 요청 대상
     public const int AwakeningHitsPerTrigger = 5;
 
-    // 대지 8레벨 낙석. 5번째 대지 발사마다 플레이어 주변에 낙하.
-    // 배치와 반경은 기획에 없으므로 확인 요청 대상
-    // 판정이 RockfallRadius + 적 HitRadius 라 플레이어 바로 위의 적은 3곳 모두에 맞음
     public const int RockfallCount = 3;
     public const float RockfallDamage = 14f;
     public const float RockfallRadius = 1.2f;
     public const float RockfallSpawnDistance = 1.5f;
     public const float RockfallFirstAngleDegrees = 90f;
+
+    // 번개 8레벨 낙뢰.
+    // 기획에 사거리가 없어 살아 있는 적 전체가 후보이고, 그중 플레이어에게 가까운 순으로 고름
+    // 보스도 대상.
+    public const float LightningStormIntervalSeconds = 6f;
+    public const float LightningStormDamage = 12f;
+    public const int LightningStormMaxTargets = 3;
 
 
     // 레벨별 값 계산

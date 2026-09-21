@@ -152,6 +152,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     }
 
+    // [연동:Combat] 원소를 가리지 않고 표식이 하나라도 남아 있는지
+    // 번개 8레벨 낙뢰의 대상 조건. 중첩 수는 보지 않고 1 이상이면 대상
+    public bool HasAnyElementMark => markState.TotalStacks > 0;
+
     public void ApplyElementMark(MagicElement element, int amount, float duration)
     {
         markState.Apply(element, amount, duration);

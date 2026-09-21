@@ -29,6 +29,16 @@ public class ProjectileLauncher : MonoBehaviour
     // 원소별 적중 횟수. 씬이 다시 로드되면 이 컴포넌트와 함께 새로 만들어짐
     private readonly ElementHitCounter hitCounter = new ElementHitCounter();
 
+    // 번개 8레벨 낙뢰.
+    //
+    // 타이머와 해금을 따로 둠.
+    private bool lightningStormUnlocked;
+    private float lightningStormTimer = ElementReactionValues.LightningStormIntervalSeconds;
+
+    // [연동:Combat] 검증용. 다음 낙뢰까지 남은 시간과 해금 여부
+    public float LightningStormTimer => lightningStormTimer;
+    public bool IsLightningStormUnlocked => lightningStormUnlocked;
+
     public int ActiveCount => activeProjectiles.Count;
 
 
@@ -102,6 +112,13 @@ public class ProjectileLauncher : MonoBehaviour
             && hitCounter.RegisterAwakeningHit(spec.Element))
         {
             enemyManager.ResolveRockfall();
+        }
+
+        // 번개 8레벨 낙뢰 해금. 
+        if (spec.Element == MagicElement.Lightning
+            && spec.SkillLevel >= ElementReactionValues.AwakeningUnlockLevel)
+        {
+            lightningStormUnlocked = true;
         }
     }
 
@@ -209,6 +226,36 @@ public class ProjectileLauncher : MonoBehaviour
 
         }
 
+        // 투사체 뒤에 둔다. 이번 프레임에 막 붙은 표식도 대상에 들어감
+        TickLightningStorm(deltaTime);
+    }
+
+    // 번개 8레벨 낙뢰 주기.
+    // 대상이 하나도 없어도 격자는 그대로 흘러간다. 다음 기회는 6초 뒤
+    // enemyManager 는 Awake 에서 확인하고 없으면 컴포넌트를 껐으므로 null 검사 x
+    private void TickLightningStorm(float deltaTime)
+    {
+        lightningStormTimer -= deltaTime;
+
+        if (lightningStormTimer > 0f)
+        {
+            return;
+        }
+
+        // 남은 시간을 더해 다음 주기로 넘김. 매번 6초로 덮어쓰면 주기가 조금씩 밀림
+        lightningStormTimer += ElementReactionValues.LightningStormIntervalSeconds;
+
+        if (lightningStormTimer <= 0f)
+        {
+            lightningStormTimer = ElementReactionValues.LightningStormIntervalSeconds;
+        }
+
+        if (!lightningStormUnlocked)
+        {
+            return;
+        }
+
+        enemyManager.ResolveLightningStorm();
     }
 
     // 순서가 필요 없어 마지막 항목을 덮어쓰는 방식으로 제거
