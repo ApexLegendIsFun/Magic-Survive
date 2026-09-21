@@ -174,6 +174,20 @@ public class Projectile : MonoBehaviour
                     SpreadFireMark(origin, center, enemyManager);
                 }
 
+                // 8레벨 불장판. 폭발이 터진 자리에 남음
+                // 반경은 이번 폭발과 같은 값. 중심 적이 죽었는지와 무관하게 생성
+                if (spec.SkillLevel >= ElementReactionValues.AwakeningUnlockLevel)
+                {
+                    enemyManager.AddGroundArea(
+                        MagicElement.Fire,
+                        center,
+                        igniteRadius,
+                        ElementReactionValues.FireGroundDurationSeconds,
+                        0f,
+                        ElementReactionValues.FireGroundDamagePerTick,
+                        ElementReactionValues.FireGroundDamageIntervalSeconds);
+                }
+
                 break;
 
             case MagicElement.Lightning:

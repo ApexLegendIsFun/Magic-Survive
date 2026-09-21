@@ -144,6 +144,14 @@ public static class ElementReactionValues
     public const float FrostGroundDurationSeconds = 2.5f;
     public const float FrostGroundSlowPercent = 0.35f;
 
+    // 화염 8레벨 불장판. 점화 폭발이 터진 자리에 남음
+    // 점화 폭발의 반경을 그대로 사용
+    // 기획에 장판 반경이 없어 폭발 원과 맞춤. 확인 요청 대상
+    // 둔화 x. 피해만 주는 첫 장판이고 2초 동안 0.5초마다 4 씩 4회
+    public const float FireGroundDurationSeconds = 2f;
+    public const float FireGroundDamagePerTick = 4f;
+    public const float FireGroundDamageIntervalSeconds = 0.5f;
+
 
     // 레벨별 값 계산
     // 호출부는 스킬 레벨만 넘김. 게이트와 기본 강화 수치는 이 클래스가 관리

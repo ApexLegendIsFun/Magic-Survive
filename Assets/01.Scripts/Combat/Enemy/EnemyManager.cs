@@ -17,6 +17,11 @@ public class EnemyManager : MonoBehaviour
     // 냉기 5레벨 파괴 전용 버퍼
     private readonly List<Enemy> frostShatterBuffer = new List<Enemy>(16);
 
+    // 화염 8레벨 불장판 피해 버퍼
+    // GroundAreaState 가 이번 프레임 분을 채우고 ApplyGroundDamage 가 적에게 적용
+    private readonly List<GroundAreaState.DamagePulse> groundDamagePulses =
+        new List<GroundAreaState.DamagePulse>(8);
+
     // 파괴 피해가 다른 빙결 적을 또 터뜨리는 재귀를 막음.
     // 냉기 전용.
     private bool isResolvingFrostShatter;
@@ -61,8 +66,20 @@ public class EnemyManager : MonoBehaviour
         MagicElement element, Vector2 center, float radius,
         float durationSeconds, float slowPercent)
     {
+        AddGroundArea(element, center, radius, durationSeconds, slowPercent, 0f, 0f);
+    }
+
+    // [연동:Combat] 피해를 주는 장판. 화염 8레벨 불장판이 사용
+    // damagePerTick 을 damageIntervalSeconds 마다 장판 안의 적에게 준다
+    public void AddGroundArea(
+        MagicElement element, Vector2 center, float radius,
+        float durationSeconds, float slowPercent,
+        float damagePerTick, float damageIntervalSeconds)
+    {
         // 만들어지지 않았으면 알리지 않음 연출만 나오고 판정이 없는 상태를 막음
-        if (!groundAreas.Add(element, center, radius, durationSeconds, slowPercent))
+        if (!groundAreas.Add(
+            element, center, radius, durationSeconds, slowPercent,
+            damagePerTick, damageIntervalSeconds))
         {
             return;
         }
@@ -301,7 +318,10 @@ public class EnemyManager : MonoBehaviour
         Vector2 playerPosition = playerTransform.position;
 
         // 적보다 먼저. 만료된 장판이 이번 프레임에 영향을 주지 않게
-        groundAreas.Tick(deltaTime);
+        groundAreas.Tick(deltaTime, groundDamagePulses);
+
+        // 이동 전에 장판 피해. 적이 이번 프레임에 서 있던 자리로 판정
+        ApplyGroundDamage();
 
         for (int i = activeEnemies.Count - 1; i >= 0; i--)
         {
@@ -338,6 +358,40 @@ public class EnemyManager : MonoBehaviour
         ProcessPendingDeathSpreads();
     }
 
+    // 화염 8레벨 불장판 피해. 
+    // 판정은 장판 둔화와 같은 규칙으로 중심 거리만 확인
+    // FindOverlappingEnemies 와 달리 적의 HitRadius 더하기 x.
+    // 화면에 그려지는 원과 피해 범위를 맞추기 위해서
+    // 보스에게도 적용
+    private void ApplyGroundDamage()
+    {
+        for (int pulseIndex = 0; pulseIndex < groundDamagePulses.Count; pulseIndex++)
+        {
+            GroundAreaState.DamagePulse pulse = groundDamagePulses[pulseIndex];
+
+            for (int i = 0; i < activeEnemies.Count; i++)
+            {
+                Enemy enemy = activeEnemies[i];
+
+                if (enemy == null || !enemy.IsAlive)
+                {
+                    continue;
+                }
+
+                Vector2 position = enemy.transform.position;
+
+                if ((position - pulse.Center).sqrMagnitude >= pulse.Radius * pulse.Radius)
+                {
+                    continue;
+                }
+
+                enemy.TakeDamage(pulse.Damage);
+            }
+        }
+
+        groundDamagePulses.Clear();
+    }
+
     // 역순 순회 중 List.Remove로 앞쪽 지우면 뒤 항목이 당겨져 하나 건너 뜀
     // 그래서 지금 보고 있는 인덱스에만 마지막 항목을 덮어쓰는 방식으로 지움
     private void RemoveAtSwapBack(int index)
@@ -348,6 +402,7 @@ public class EnemyManager : MonoBehaviour
 
         activeEnemies.RemoveAt(lastIndex);
     }
+
 
 
     // [연동:스폰] 스폰 타이밍 결정 후 함수 호출
