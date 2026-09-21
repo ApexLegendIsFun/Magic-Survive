@@ -16736,6 +16736,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3935628123274627305, guid: 711e4904882235541a1219050ed117f9, type: 3}
+      propertyPath: m_text
+      value: "\uC218\uD638\uC790"
+      objectReference: {fileID: 0}
     - target: {fileID: 6518850240362733892, guid: 711e4904882235541a1219050ed117f9, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: -2
@@ -16770,7 +16774,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ad095cf5ed4b31478910745febfea8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BossHudUi
-  bossNameText: {fileID: 765711806742349203}
   bossTimeText: {fileID: 3903583415535980779}
   bossHpBar: {fileID: 1693338280187343965}
   runDirector: {fileID: 0}
