@@ -35,3 +35,9 @@
 - `Ground_Effect_Manager`에는 Earth만 있어 Frost Lv8 장판 표현이 누락됐다. Frost Lv8 장판을 포함한 완성본 전달.
 - 각 담당자는 원본 GUID를 유지한 채 package를 재전달하거나 완성 prefab을 전달한다.
 - 승범: `HudDynamicUi.UpdateLvtext`의 깨진 문자열/소스 인코딩 수정 요청. Mac 플레이어에서 U+FFFD가 사각형으로 표시됨. 숫자와 나머지 HUD 연결은 통합 담당이 유지했다.
+
+## 2026-09-22 추가 요청 — 미발송
+
+- 승범의 최신 GameplayUI 사운드 슬롯 13개 반영. 새 GUID `ecc06cf8772ce564a87d99e1b1eaa019`, `39e5463693c4eae4e94fc933ca6fb550`, `e6c195af1a5d1c34d9a6fff989f830b7` 음원 원본도 로컬에 없음. 원래 GUID로 전달 필요.
+- 화염 Lv8은 `GroundAreaCreated(Fire, ...)`, 대지 Lv8 낙석은 `ChainReactionTriggered(Earth, origin, positions)`를 사용한다. 현재 GroundAreaEffectPlayer는 Earth만, LightningChainEffectPlayer는 Lightning만 처리하므로 해당 표현을 지원하는 담당자 구현/프리팹 전달 필요.
+- 전용 보스 HUD는 기존 IntegrationBossHud의 체력·시간 연결을 유지하고 이름을 `수호자`로 맞췄다. 팀 BossHudUi를 별도로 중복 배치하지 않았다.

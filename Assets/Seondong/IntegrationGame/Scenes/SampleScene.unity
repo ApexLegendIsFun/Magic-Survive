@@ -261,7 +261,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4394805880707063987, guid: 9ca751d9fa53ed24e95a4263ba26708a, type: 3}
       propertyPath: soundClip.Array.size
-      value: 8
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 4394805880707063987, guid: 9ca751d9fa53ed24e95a4263ba26708a, type: 3}
       propertyPath: 'soundClip.Array.data[0]'

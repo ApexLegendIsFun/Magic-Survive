@@ -18,7 +18,7 @@ namespace Seondong.IntegrationGame
             if (health != null) health.HealthChanged -= Refresh;
             health = enemy.GetComponent<Health>();
             hud.EnableBossGroup();
-            hud.SetbossNameText("TEMP BOSS");
+            hud.SetbossNameText("수호자");
             health.HealthChanged += Refresh;
             Refresh(health.CurrentHealth, health.MaxHealth);
         }
