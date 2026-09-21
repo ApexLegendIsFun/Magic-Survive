@@ -17,6 +17,24 @@ public class EnemyManager : MonoBehaviour
     // 냉기 5레벨 파괴 전용 버퍼
     private readonly List<Enemy> frostShatterBuffer = new List<Enemy>(16);
 
+    // 대지 8레벨 낙석 전용 버퍼와 위치 배열
+    // 낙석 피해가 파괴를 유발할 수 있어 파괴 버퍼와 섞으면 x
+    private readonly List<Enemy> rockfallBuffer = new List<Enemy>(16);
+    private readonly Vector2[] rockfallPositions =
+        new Vector2[ElementReactionValues.RockfallCount];
+
+    // 화염 8레벨 불장판 피해 버퍼
+    // GroundAreaState 가 이번 프레임 분을 채우고 ApplyGroundDamage 가 적에게 적용
+    private readonly List<GroundAreaState.DamagePulse> groundDamagePulses =
+        new List<GroundAreaState.DamagePulse>(8);
+
+    // 번개 8레벨 낙뢰 대상. 가까운 순으로 최대 3명만 남기므로 그 크기로 고정
+    private readonly List<Enemy> lightningStormBuffer =
+        new List<Enemy>(ElementReactionValues.LightningStormMaxTargets);
+
+    private readonly float[] lightningStormDistances =
+        new float[ElementReactionValues.LightningStormMaxTargets];
+
     // 파괴 피해가 다른 빙결 적을 또 터뜨리는 재귀를 막음.
     // 냉기 전용.
     private bool isResolvingFrostShatter;
@@ -61,8 +79,20 @@ public class EnemyManager : MonoBehaviour
         MagicElement element, Vector2 center, float radius,
         float durationSeconds, float slowPercent)
     {
+        AddGroundArea(element, center, radius, durationSeconds, slowPercent, 0f, 0f);
+    }
+
+    // [연동:Combat] 피해를 주는 장판. 화염 8레벨 불장판이 사용
+    // damagePerTick 을 damageIntervalSeconds 마다 장판 안의 적에게 준다
+    public void AddGroundArea(
+        MagicElement element, Vector2 center, float radius,
+        float durationSeconds, float slowPercent,
+        float damagePerTick, float damageIntervalSeconds)
+    {
         // 만들어지지 않았으면 알리지 않음 연출만 나오고 판정이 없는 상태를 막음
-        if (!groundAreas.Add(element, center, radius, durationSeconds, slowPercent))
+        if (!groundAreas.Add(
+            element, center, radius, durationSeconds, slowPercent,
+            damagePerTick, damageIntervalSeconds))
         {
             return;
         }
@@ -177,6 +207,155 @@ public class EnemyManager : MonoBehaviour
         finally
         {
             isResolvingFrostShatter = false;
+        }
+    }
+
+    // [연동:Combat] 대지 8레벨 낙석. ProjectileLauncher 가 5번째 대지 발사에서 호출
+    // 여기서 처리하는 이유: 낙석은 적중 지점이 아니라 플레이어 주변에 떨어지고,
+    // 플레이어 위치와 적 목록을 둘 다 아는 곳이 여기뿐. 냉기 파괴와 같은 자리
+    // 판정은 충격파/점화와 같은 FindOverlappingEnemies (반경 + 적 HitRadius).
+    // 장판이 아니라 순간 타격
+    public void ResolveRockfall()
+    {
+        if (playerTransform == null)
+        {
+            return;
+        }
+
+        Vector2 playerPosition = playerTransform.position;
+
+        float stepDegrees = 360f / rockfallPositions.Length;
+
+        for (int i = 0; i < rockfallPositions.Length; i++)
+        {
+            float radians =
+                (ElementReactionValues.RockfallFirstAngleDegrees + i * stepDegrees)
+                * Mathf.Deg2Rad;
+
+            Vector2 offset = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians))
+                * ElementReactionValues.RockfallSpawnDistance;
+
+            Vector2 position = playerPosition + offset;
+
+            rockfallPositions[i] = position;
+
+            FindOverlappingEnemies(
+                position, ElementReactionValues.RockfallRadius, rockfallBuffer);
+
+            // 낙석마다 따로 판정. 세 반경에 모두 든 적은 세 번 맞음
+            for (int target = 0; target < rockfallBuffer.Count; target++)
+            {
+                Enemy enemy = rockfallBuffer[target];
+
+                if (enemy == null || !enemy.IsAlive)
+                {
+                    continue;
+                }
+
+                enemy.TakeDamage(ElementReactionValues.RockfallDamage);
+            }
+        }
+
+        // [연동:UI] 중심은 플레이어, 대상은 낙석 3곳
+        // 화염 전염·연쇄와 같은 이벤트라 원소로 구분할 것
+        GameEvents.RaiseChainReaction(MagicElement.Earth, playerPosition, (Vector2[])rockfallPositions.Clone());
+    }
+
+    // [연동:Combat] 번개 8레벨 낙뢰. ProjectileLauncher 가 6초마다 호출
+    //
+    // 사거리 제한 없음. 기획에 거리가 없어 살아 있는 적 전체가 후보
+    // 대신 플레이어에게 가까운 순으로 골라 발밑의 적이 밀리지 않게.
+    // 보스 제외 없음.
+    public void ResolveLightningStorm()
+    {
+        if (playerTransform == null)
+        {
+            return;
+        }
+
+        Vector2 playerPosition = playerTransform.position;
+
+        lightningStormBuffer.Clear();
+
+        for (int i = 0; i < activeEnemies.Count; i++)
+        {
+            Enemy enemy = activeEnemies[i];
+
+            if (enemy == null || !enemy.IsAlive || !enemy.HasAnyElementMark)
+            {
+                continue;
+            }
+
+            Vector2 enemyPosition = enemy.transform.position;
+
+            TryAddStormTarget(enemy, (enemyPosition - playerPosition).sqrMagnitude);
+        }
+
+        for (int i = 0; i < lightningStormBuffer.Count; i++)
+        {
+            Enemy target = lightningStormBuffer[i];
+
+            // 앞 대상의 피해가 파괴를 불러 이미 죽였을 수 있음
+            if (target == null || !target.IsAlive)
+            {
+                continue;
+            }
+
+            // 죽으면 위치를 못 읽으므로 피해 전에 저장
+            Vector2 strikePosition = target.transform.position;
+
+            target.TakeDamage(ElementReactionValues.LightningStormDamage);
+
+            // [연동:UI] 대상 1명당 1회. 다른 반응과 같이 효과가 끝난 뒤 발행
+            // 반경 0 은 단일 대상 반응 규약이고 같은 번개라도 방전은 반경 1.2 로 옴
+            GameEvents.RaiseElementReaction(
+                MagicElement.Lightning, strikePosition, 0f);
+        }
+    }
+
+    // 가까운 순 3명만 유지. 대상이 3명뿐이라 정렬이나 LINQ 없이 끼워넣기
+    // 거리 비교는 제곱 거리로만 한다. 순서만 필요하고 실제 거리는 쓰지 않음
+    private void TryAddStormTarget(Enemy enemy, float sqrDistance)
+    {
+        int maxTargets = ElementReactionValues.LightningStormMaxTargets;
+
+        // 이미 3명이 찼는데 그중 가장 먼 대상보다도 멀면 볼 것 없음
+        if (lightningStormBuffer.Count >= maxTargets
+            && sqrDistance >= lightningStormDistances[maxTargets - 1])
+        {
+            return;
+        }
+
+        if (lightningStormBuffer.Count < maxTargets)
+        {
+            lightningStormBuffer.Add(enemy);
+
+            lightningStormDistances[lightningStormBuffer.Count - 1] = sqrDistance;
+        }
+        else
+        {
+            // 가장 먼 대상을 밀어내고 그 자리에 넣음
+            lightningStormBuffer[maxTargets - 1] = enemy;
+
+            lightningStormDistances[maxTargets - 1] = sqrDistance;
+        }
+
+        // 방금 넣은 것을 제자리까지 앞으로 끌어올림
+        for (int i = lightningStormBuffer.Count - 1; i > 0; i--)
+        {
+            if (lightningStormDistances[i - 1] <= lightningStormDistances[i])
+            {
+                break;
+            }
+
+            Enemy movedEnemy = lightningStormBuffer[i];
+            float movedDistance = lightningStormDistances[i];
+
+            lightningStormBuffer[i] = lightningStormBuffer[i - 1];
+            lightningStormDistances[i] = lightningStormDistances[i - 1];
+
+            lightningStormBuffer[i - 1] = movedEnemy;
+            lightningStormDistances[i - 1] = movedDistance;
         }
     }
 
@@ -301,7 +480,10 @@ public class EnemyManager : MonoBehaviour
         Vector2 playerPosition = playerTransform.position;
 
         // 적보다 먼저. 만료된 장판이 이번 프레임에 영향을 주지 않게
-        groundAreas.Tick(deltaTime);
+        groundAreas.Tick(deltaTime, groundDamagePulses);
+
+        // 이동 전에 장판 피해. 적이 이번 프레임에 서 있던 자리로 판정
+        ApplyGroundDamage();
 
         for (int i = activeEnemies.Count - 1; i >= 0; i--)
         {
@@ -338,6 +520,40 @@ public class EnemyManager : MonoBehaviour
         ProcessPendingDeathSpreads();
     }
 
+    // 화염 8레벨 불장판 피해. 
+    // 판정은 장판 둔화와 같은 규칙으로 중심 거리만 확인
+    // FindOverlappingEnemies 와 달리 적의 HitRadius 더하기 x.
+    // 화면에 그려지는 원과 피해 범위를 맞추기 위해서
+    // 보스에게도 적용
+    private void ApplyGroundDamage()
+    {
+        for (int pulseIndex = 0; pulseIndex < groundDamagePulses.Count; pulseIndex++)
+        {
+            GroundAreaState.DamagePulse pulse = groundDamagePulses[pulseIndex];
+
+            for (int i = 0; i < activeEnemies.Count; i++)
+            {
+                Enemy enemy = activeEnemies[i];
+
+                if (enemy == null || !enemy.IsAlive)
+                {
+                    continue;
+                }
+
+                Vector2 position = enemy.transform.position;
+
+                if ((position - pulse.Center).sqrMagnitude >= pulse.Radius * pulse.Radius)
+                {
+                    continue;
+                }
+
+                enemy.TakeDamage(pulse.Damage);
+            }
+        }
+
+        groundDamagePulses.Clear();
+    }
+
     // 역순 순회 중 List.Remove로 앞쪽 지우면 뒤 항목이 당겨져 하나 건너 뜀
     // 그래서 지금 보고 있는 인덱스에만 마지막 항목을 덮어쓰는 방식으로 지움
     private void RemoveAtSwapBack(int index)
@@ -348,6 +564,7 @@ public class EnemyManager : MonoBehaviour
 
         activeEnemies.RemoveAt(lastIndex);
     }
+
 
 
     // [연동:스폰] 스폰 타이밍 결정 후 함수 호출

@@ -144,6 +144,33 @@ public static class ElementReactionValues
     public const float FrostGroundDurationSeconds = 2.5f;
     public const float FrostGroundSlowPercent = 0.35f;
 
+    // 화염 8레벨 불장판. 점화 폭발이 터진 자리에 남음
+    // 점화 폭발의 반경을 그대로 사용
+    // 기획에 장판 반경이 없어 폭발 원과 맞춤. 확인 요청 대상
+    // 둔화 x. 피해만 주는 첫 장판이고 2초 동안 0.5초마다 4 씩 4회
+    public const float FireGroundDurationSeconds = 2f;
+    public const float FireGroundDamagePerTick = 4f;
+    public const float FireGroundDamageIntervalSeconds = 0.5f;
+
+    // 8레벨 각성의 발동 주기. 3레벨 충격파·연쇄의 HitsPerTrigger 와 별개로 셈
+    // 같은 카운터를 쓰면 한쪽 발동이 다른 쪽 카운트를 0 으로 되돌림
+    // 기획 115행은 "3번째 적중마다", 119행은 "5번째 대지 공격마다" 로 단어가 다르기에
+    // 이쪽은 적중이 아니라 발사를 셈. 확인 요청 대상
+    public const int AwakeningHitsPerTrigger = 5;
+
+    public const int RockfallCount = 3;
+    public const float RockfallDamage = 14f;
+    public const float RockfallRadius = 1.2f;
+    public const float RockfallSpawnDistance = 1.5f;
+    public const float RockfallFirstAngleDegrees = 90f;
+
+    // 번개 8레벨 낙뢰.
+    // 기획에 사거리가 없어 살아 있는 적 전체가 후보이고, 그중 플레이어에게 가까운 순으로 고름
+    // 보스도 대상.
+    public const float LightningStormIntervalSeconds = 6f;
+    public const float LightningStormDamage = 12f;
+    public const int LightningStormMaxTargets = 3;
+
 
     // 레벨별 값 계산
     // 호출부는 스킬 레벨만 넘김. 게이트와 기본 강화 수치는 이 클래스가 관리
