@@ -38,6 +38,7 @@ public class ElementReactionEffectPlayer : MonoBehaviour
 
     private void HandleElementReaction(MagicElement element, Vector2 position, float radius)
     {
+        Debug.Log($"[반응 수신] {element} @ {position}"); // 3중첩 공격 => 이후 공격이 반응 x. 검증용 디버그
         var entry = effects?.FirstOrDefault(e => e.element.Equals(element));
         if (entry == null)
         {
