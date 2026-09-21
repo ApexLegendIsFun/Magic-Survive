@@ -93,6 +93,16 @@ public class ProjectileLauncher : MonoBehaviour
         projectile.gameObject.SetActive(true);
 
         activeProjectiles.Add(projectile);
+
+        // 대지 8레벨 낙석.
+        // 탄이 실제로 나간 뒤에 셈. 프리팹이 없어 발사가 취소되면 세지 않음
+        // 빗나가도 세고, 관통으로 여럿을 맞혀도 한 발은 1회.
+        if (spec.Element == MagicElement.Earth
+            && spec.SkillLevel >= ElementReactionValues.AwakeningUnlockLevel
+            && hitCounter.RegisterAwakeningHit(spec.Element))
+        {
+            enemyManager.ResolveRockfall();
+        }
     }
 
     /// <summary>

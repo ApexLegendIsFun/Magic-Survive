@@ -17,6 +17,12 @@ public class EnemyManager : MonoBehaviour
     // 냉기 5레벨 파괴 전용 버퍼
     private readonly List<Enemy> frostShatterBuffer = new List<Enemy>(16);
 
+    // 대지 8레벨 낙석 전용 버퍼와 위치 배열
+    // 낙석 피해가 파괴를 유발할 수 있어 파괴 버퍼와 섞으면 x
+    private readonly List<Enemy> rockfallBuffer = new List<Enemy>(16);
+    private readonly Vector2[] rockfallPositions =
+        new Vector2[ElementReactionValues.RockfallCount];
+
     // 화염 8레벨 불장판 피해 버퍼
     // GroundAreaState 가 이번 프레임 분을 채우고 ApplyGroundDamage 가 적에게 적용
     private readonly List<GroundAreaState.DamagePulse> groundDamagePulses =
@@ -195,6 +201,57 @@ public class EnemyManager : MonoBehaviour
         {
             isResolvingFrostShatter = false;
         }
+    }
+
+    // [연동:Combat] 대지 8레벨 낙석. ProjectileLauncher 가 5번째 대지 발사에서 호출
+    // 여기서 처리하는 이유: 낙석은 적중 지점이 아니라 플레이어 주변에 떨어지고,
+    // 플레이어 위치와 적 목록을 둘 다 아는 곳이 여기뿐. 냉기 파괴와 같은 자리
+    // 판정은 충격파/점화와 같은 FindOverlappingEnemies (반경 + 적 HitRadius).
+    // 장판이 아니라 순간 타격
+    public void ResolveRockfall()
+    {
+        if (playerTransform == null)
+        {
+            return;
+        }
+
+        Vector2 playerPosition = playerTransform.position;
+
+        float stepDegrees = 360f / rockfallPositions.Length;
+
+        for (int i = 0; i < rockfallPositions.Length; i++)
+        {
+            float radians =
+                (ElementReactionValues.RockfallFirstAngleDegrees + i * stepDegrees)
+                * Mathf.Deg2Rad;
+
+            Vector2 offset = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians))
+                * ElementReactionValues.RockfallSpawnDistance;
+
+            Vector2 position = playerPosition + offset;
+
+            rockfallPositions[i] = position;
+
+            FindOverlappingEnemies(
+                position, ElementReactionValues.RockfallRadius, rockfallBuffer);
+
+            // 낙석마다 따로 판정. 세 반경에 모두 든 적은 세 번 맞음
+            for (int target = 0; target < rockfallBuffer.Count; target++)
+            {
+                Enemy enemy = rockfallBuffer[target];
+
+                if (enemy == null || !enemy.IsAlive)
+                {
+                    continue;
+                }
+
+                enemy.TakeDamage(ElementReactionValues.RockfallDamage);
+            }
+        }
+
+        // [연동:UI] 중심은 플레이어, 대상은 낙석 3곳
+        // 화염 전염·연쇄와 같은 이벤트라 원소로 구분할 것
+        GameEvents.RaiseChainReaction(MagicElement.Earth, playerPosition, (Vector2[])rockfallPositions.Clone());
     }
 
     // 화염·암흑 5레벨 사망 전염 등록. Enemy 가 죽는 순간 호출
