@@ -24,8 +24,8 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     // 원소별 고유 효과. 카탈로그 확정값 임시 미러링
     // 암흑은 중첩당이 아니라 3중첩 문턱 효과가 되어 ElementReactionValues로 옮김
+    // 냉기 둔화도 6레벨 강화가 생겨 ElementReactionValues로 옮김
     private const float FireDotDamagePerStack = 1f;
-    private const float FrostMovementSpeedReductionPerStack = 0.10f;
 
 
 
@@ -43,6 +43,36 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
     // 암흑 3레벨 해금 여부
     private bool darkAmplificationUnlocked;
+
+    // 암흑 3중첩 대상이 받는 피해 증가량. 해금할 때 투사체가 레벨로 계산해 넘김
+    // Lv3~6 0.15, Lv7 0.165. 해금 전에는 0
+    private float darkAmplificationBonus;
+
+    // 냉기 표식 중첩당 이동속도 감소. 냉기 투사체가 적중할 때 레벨로 계산해 넘김
+    // Lv1~5 0.10, Lv6 0.11
+    private float frostSlowPerStack = ElementReactionValues.FrostMovementSpeedReductionPerStack;
+
+    // EnemyManager.Spawn 이 주입.
+    // 반응이 주변 적을 찾아야 할 때 사용. 프리팹이라 [SerializeField] 로는 못 받음
+    private EnemyManager enemyManager;
+
+    // 냉기 5레벨. 빙결을 건 얼음창이 5레벨이었는지만 기억.
+    // 적은 스킬 레벨을 모르므로, 레벨을 아는 투사체가 권한만 남기고 감
+    private bool frostShatterArmed;
+
+    // 화염&암흑 5레벨 사망 전염 권한. 냉기 파괴와 같은 방식
+    // 전염으로 표식만 받은 적에게는 넘기지 않음 (재전염 여부 미확정)
+    // 실제 전염 여부는 죽는 순간의 표식 수로 판정
+    private bool fireDeathSpreadArmed;
+    private bool darkDeathSpreadArmed;
+
+    // 암흑 8레벨 처형 권한. Lv8 암흑 탄이 피해 직전에 켬
+    // 그 타격의 TakeDamage 에서 소비. 다음 타격까지 남지 않음
+    private bool darkExecuteArmed;
+
+
+    // 마지막으로 DarkAmplifiedChanged 로 알린 상태
+
 
     // 마지막으로 DarkAmplifiedChanged 로 알린 상태
     // 증폭은 해금과 스택 수에서 파생되는 값이라 바뀌는 순간을 직접 잡아야 함
@@ -155,9 +185,12 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
 
     // 냉기 표식 3중첩 반응. Projectile이 호출
-    // 지속시간에 CrowdControlDurationMultiplier를 곱하기
+    // 지속시간에 CrowdControlDurationMultiplier를 곱하기.
     // 보스는 이 값이 0f 라 applied 가 0 이 되고 빙결이 걸리지 않음
-    public void ApplyFreeze(float durationSeconds)
+    //
+    // armShatter 는 5레벨 파괴 권한. 보스는 위 가드에서 먼저 빠져나가
+    // 권한도 받지 않는다
+    public void ApplyFreeze(float durationSeconds, bool armShatter)
     {
         float applied = durationSeconds * CrowdControlDurationMultiplier;
 
@@ -178,16 +211,62 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
                 FrozenChanged?.Invoke(true);
             }
         }
+
+        // 지속시간이 갱신되지 않아도 권한은 줌
+        // 긴 빙결이 남아 있을 때 5레벨 얼음창이 또 맞으면 파괴는 열려야 함
+        if (armShatter)
+        {
+            frostShatterArmed = true;
+        }
     }
 
 
     // 암흑 표식 3중첩 반응
-    public void SetDarkAmplificationUnlocked()
+    //
+    // 피해 증가량은 레벨을 아는 투사체가 계산해 넘김. 적은 값만 기억
+    public void SetDarkAmplificationUnlocked(float bonus)
     {
         darkAmplificationUnlocked = true;
+        darkAmplificationBonus = Mathf.Max(darkAmplificationBonus, bonus);
 
         // 투사체가 부르는 시점은 이미 3중첩 전이라 여기서 바로 켜짐
         RefreshDarkAmplified();
+    }
+
+    // 냉기 투사체가 적중할 때마다 호출. 표식 둔화의 중첩당 감소량
+    // 암흑과 같은 이유로 더 큰 값만 받음
+    public void SetFrostSlowPerStack(float slowPerStack)
+    {
+        frostSlowPerStack = Mathf.Max(frostSlowPerStack, slowPerStack);
+    }
+
+    // EnemyManager.Spawn 이 풀에서 꺼낸 직후 1회 호출
+    public void SetEnemyManager(EnemyManager manager)
+    {
+        enemyManager = manager;
+    }
+
+    // 화염·암흑 5레벨 사망 전염 권한. Projectile 이 피해 전에 호출
+    // 그 외 원소는 무시. 호출부가 원소를 가리지 않아도 되게
+    public void ArmDeathSpread(MagicElement element)
+    {
+        if (element == MagicElement.Fire)
+        {
+            fireDeathSpreadArmed = true;
+        }
+        else if (element == MagicElement.Dark)
+        {
+            darkDeathSpreadArmed = true;
+        }
+    }
+
+    // 암흑 8레벨 처형 권한. Projectile 이 피해 직전에 호출
+    //
+    // 피해보다 먼저여야 함. 뒤에 두면 그 타격으로 체력이 문턱 아래로 내려가도
+    // 이번 타격에서는 처형되지 않음
+    public void ArmDarkExecute()
+    {
+        darkExecuteArmed = true;
     }
 
 
@@ -242,7 +321,6 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         // Health에서 사망 이벤트 받음
         health.Died += HandleDied;
     }
-
     private void OnDisable()
     {
         health.Died -= HandleDied;
@@ -259,11 +337,21 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             FrozenChanged?.Invoke(false);
         }
 
+
+        frostShatterArmed = false;
+        fireDeathSpreadArmed = false;
+        darkDeathSpreadArmed = false;
+        darkExecuteArmed = false;
+
+        // 레벨로 받은 값. 풀에서 다음 개체에 남지 않게 기본값으로
+        frostSlowPerStack = ElementReactionValues.FrostMovementSpeedReductionPerStack;
+
         // 상태를 먼저 확정하고 알림
         // 구독부가 false 를 받은 순간 IsDarkAmplified 를 다시 읽어도 false 여야 함
         bool wasDarkAmplified = darkAmplifiedNotified;
 
         darkAmplificationUnlocked = false;
+        darkAmplificationBonus = 0f;
         darkAmplifiedNotified = false;
 
         if (wasDarkAmplified)
@@ -283,14 +371,26 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 부를 수 있게 되면 적의 생명주기가 EnemyManager 밖에서 흔들림
     public void TakeDamage(float amount)
     {
+        // 암흑 8레벨 처형 권한을 이번 호출로 가져오고 필드는 즉시 비움
+        //
+        // 먼저 비우는 이유: 아래 TryFrostShatter 의 파괴는 반경 안 적을 때리는데
+        // 그 안에 자기 자신이 들어 있어 TakeDamage 가 재진입.
+        // 필드가 비어 있으면 재진입한 호출은 처형하지 않고,
+        // 바깥 호출이 "파괴가 끝난 뒤" 상태로 판정
+        //
+        // 이 한 줄을 지우면 권한이 풀 반환까지 남는 정책이 됨. 확인 요청 대상
+        bool executeThisHit = darkExecuteArmed;
+        darkExecuteArmed = false;
+
         // 공통 효과 원소별이 아니라 모든 원소 중첩의 합
         float multiplier = 1f + markState.TotalStacks * DamageTakenPerTotalStack;
 
         // 암흑 3레벨. 중첩당 가산이 아니라 3중첩 문턱에서 한 번만
+        // 값은 해금할 때 받은 것. 7레벨이면 0.165
         if (darkAmplificationUnlocked
             && markState.Get(MagicElement.Dark).Stacks >= ElementMarkRules.MaximumStacks)
         {
-            multiplier += ElementReactionValues.DarkAmplificationBonus;
+            multiplier += darkAmplificationBonus;
         }
 
         // [연동:UI] Damage Number는 요청량이 아니라 실제로 깎인 양을 받음
@@ -306,6 +406,61 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             GameEvents.RaiseEnemyDamaged(transform.position, appliedDamage);
         }
 
+        TryFrostShatter(appliedDamage);
+
+        // 파괴 뒤에 본다. 파괴 피해로 이미 죽었으면 아래 IsAlive 가드에서 빠짐
+        TryDarkExecute(executeThisHit, appliedDamage);
+    }
+
+    // 냉기 5레벨. 빙결 중에 피해를 받으면 그 자리에서 파괴가 터짐
+    //
+    // 어떤 피해든 상관없음. 직격, 화염 도트, 충격파, 연쇄 전부 여기를 통과
+    // 실제로 깎인 양이 0 이면 터지지 않음. 오버킬 뒤 중복 호출 막기.
+    //
+    //  IsResolvingFrostShatter 를 권한 소비보다 먼저 본다
+    private void TryFrostShatter(float appliedDamage)
+    {
+        if (!frostShatterArmed
+            || appliedDamage <= 0f
+            || freezeRemainingSeconds <= 0f
+            || enemyManager == null
+            || enemyManager.IsResolvingFrostShatter)
+        {
+            return;
+        }
+
+        // 한 번의 빙결에 한 번만. 0.6초 동안 맞을 때마다 터지면 과하다
+        frostShatterArmed = false;
+
+        enemyManager.ResolveFrostShatter(transform.position);
+    }
+
+    // 암흑 8레벨 처형. 이번 타격으로 체력이 문턱 아래가 된 일반 적을 즉시 처리
+    // 남은 체력만큼의 피해로 처리하는 이유:
+    // 사망 처리(EXP, 사망 전염, EnemyKilled)를 기존 경로로 한 번만 태우기 위해서.
+    // 별도 사망 경로를 만들면 그 셋을 모두 다시 구현해야 함
+    private void TryDarkExecute(bool armedThisHit, float appliedDamage)
+    {
+        // 보스는 제외. 실제로 깎인 양이 0 이면 판정하지 않음 (파괴와 같은 가드)
+        if (!armedThisHit
+            || appliedDamage <= 0f
+            || isBoss
+            || !health.IsAlive)
+        {
+            return;
+        }
+
+        if (health.CurrentHealth > health.MaxHealth * ElementReactionValues.DarkExecuteHealthRatio)
+        {
+            return;
+        }
+
+        float remainingHealth = health.CurrentHealth;
+
+        health.TakeDamage(remainingHealth);
+
+        // [연동:UI] 처형분도 데미지 숫자로 보인다. 안 보내면 적이 소리 없이 사라짐
+        GameEvents.RaiseEnemyDamaged(transform.position, remainingHealth);
     }
 
 
@@ -398,6 +553,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             if (freezeRemainingSeconds <= 0f)
             {
                 freezeRemainingSeconds = 0f;
+                frostShatterArmed = false;
                 FrozenChanged?.Invoke(false);
             }
 
@@ -440,6 +596,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
         // 냉기 표식 중첩당 이동속도 감소. moveSpeed 원본은 그대로 두어 만료 시 복원
         // 기획에서 보스에게 둔화 면역을 지정했으므로. 표식은 그대로 쌓이고 속도만 안 깎이게
+        // 중첩당 감소량은 냉기 투사체가 넘긴 값. 6레벨이면 0.11
         int frostStacks = isBoss ? 0 : markState.Get(MagicElement.Frost).Stacks;
 
         // 장판 둔화는 원소별로 보스 면역이 다름
@@ -447,7 +604,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         // 냉기 서리 장판만 GroundAreaState 가 걸러서 1 을 돌려줌
         //
         // 표식 둔화와는 곱하기. 서로 다른 계열
-        float currentSpeed = moveSpeed * (1f - frostStacks * FrostMovementSpeedReductionPerStack) * groundSlowMultiplier * speedMultiplier;
+        float currentSpeed = moveSpeed * (1f - frostStacks * frostSlowPerStack) * groundSlowMultiplier * speedMultiplier;
 
         transform.position = currentPosition + direction * currentSpeed * deltaTime;
 
@@ -481,6 +638,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
 
     // [연동:성장] 사망 위치, 경험치 보상 전달
+    // [연동:성장] 사망 위치, 경험치 보상 전달
     private void HandleDied()
     {
         GameEvents.RaiseEnemyKilled(transform.position, experienceReward);
@@ -488,7 +646,47 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         // 개체 단위 통지는 전역 이벤트 뒤에 발행
         // Health.TakeDamage 가 !isAlive 면 바로 빠져나가므로 사망당 한 번만
         Killed?.Invoke(this);
+
+        QueueDeathSpreadIfEligible();
+    }
+
+    // 화염&암흑 5레벨 사망 전염 판정
+    //
+    // 판정은 지금 해야 함. TakeDamage 안에서 동기적으로 불리므로 표식이 아직 살아 있고,
+    // 다음 풀 반환(OnDisable)에서 Reset 되면 조건을 알 수 없게 됨
+    //
+    // 적용은 지금 하지 않음. 광역 피해 순회 도중 표식이 늘면
+    // 뒤쪽 대상의 피해가 목록 순서에 따라 달라짐. EnemyManager 가 LateUpdate 에서 처리
+    private void QueueDeathSpreadIfEligible()
+    {
+        if (enemyManager == null)
+        {
+            return;
+        }
+
+        Vector2 position = transform.position;
+
+        // 화염: 표식이 1 이상이면 화염 적
+        if (fireDeathSpreadArmed
+            && markState.Get(MagicElement.Fire).Stacks > 0)
+        {
+            enemyManager.QueueDeathSpread(
+                MagicElement.Fire, position,
+                ElementReactionValues.FireSpreadRadius,
+                ElementReactionValues.FireSpreadMaxTargets);
+        }
+
+        // 암흑: 3중첩일 때만
+        if (darkDeathSpreadArmed
+            && markState.Get(MagicElement.Dark).Stacks >= ElementMarkRules.MaximumStacks)
+        {
+            enemyManager.QueueDeathSpread(
+                MagicElement.Dark, position,
+                ElementReactionValues.DarkSpreadRadius,
+                ElementReactionValues.DarkSpreadMaxTargets);
+        }
     }
 }
+
 
 
