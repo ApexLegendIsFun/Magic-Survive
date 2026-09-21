@@ -1,5 +1,30 @@
 # 선동 전용 통합 게임
 
+## 2026-09-21 현재 상태
+
+최신 통합 경로는 이 폴더의 `Scenes/TitleScene.unity`와 `Scenes/SampleScene.unity`다.
+`Tools > Seondong Integration > 2. Play From Title`로 실행한다. 일반 Build Settings의 원본 씬과 구분한다.
+
+유신의 실제 Dasher·Summoner·Boss 데이터와 승범의 번개·소환·돌진·보스·장판 효과, 등장 알림을 전용 씬에 연결했다.
+공용 프리팹은 수정하지 않았다. 암흑 적 표현·냉기 장판 표현은 담당자 전달이 더 필요하다.
+현재 Mac에는 구매 에셋 원본이 없어 그래픽·사운드 검증이 실패한다. 빌드 성공이나 입력 검사 성공만으로 정상 통합본으로 판정하지 않는다.
+이번 결과와 미완료 항목은 `Docs/DailyIntegration_20260921.md`, 미발송 요청은 `Requests.md`를 참조한다.
+
+Mac 빌드: `Tools > Seondong Integration > 6. Build Mac`.
+출력: `Builds/SeondongIntegrationMac/Magic-Survive.app`.
+빌드는 진단용 실행 파일도 생성하며, handoff 검증을 대신하지 않는다.
+
+```bash
+python3 Assets/Seondong/IntegrationGame/Editor/Run-BuildCheck.py --scenario death
+python3 Assets/Seondong/IntegrationGame/Editor/Run-BuildCheck.py --scenario growth --element Frost
+```
+
+Python 검사는 새 근거 폴더에 `report.json`, `process.json`, `Player.log`, 화면을 보존한다.
+실행 검사 PASS는 report PASS와 실제 프로세스 exit code 0이 모두 필요하다.
+시각 원본 검사: `Seondong.IntegrationGame.IntegrationGraphicsCheck.ValidateAssets`.
+팀 배선 검사: `Tools > Seondong Integration > 5. Validate Team Handoff`.
+아래 Windows/간이 전투 기록은 과거 기록이며 현재 Mac 소스의 통과 증거가 아니다.
+
 ## 실행
 
 Unity 6000.3.17f1에서 `Tools > Seondong Integration > 2. Play From Title`.
@@ -21,7 +46,7 @@ WASD/방향키 이동, 자동 공격. 시작 원소를 선택하고 레벨업 �
 - 일반 적·플레이어 외형은 기존 프리팹 참조. 투사체는 전용 Graphics 프리팹으로 시각 부분만 교체했다. 구매 에셋은 Git 제외이므로 별도 로컬 임포트 필요.
 - 이전 빌드에서 SPUM SpriteEditManager의 UnityEditor using에 UNITY_EDITOR 조건이 필요했다. 해당 로컬 패키지 수정은 Git 제외다.
 
-## 간이 엘리트·보스
+## 이전 간이 엘리트·보스 기록
 
 사용자가 허용한 임시 소환 대상이다. 유신의 최종 패턴 구현 완료를 뜻하지 않는다.
 

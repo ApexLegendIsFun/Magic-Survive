@@ -99,6 +99,7 @@ def run(args: argparse.Namespace) -> int:
         "-logFile", str(log_file),
     ]
 
+    executable_hash = sha256(executable)
     started = time.monotonic()
     process = subprocess.Popen(command, cwd=root)
     print(f"Started {args.scenario} at {args.width}x{args.height}, process {process.pid}. Evidence: {output}")
@@ -124,7 +125,7 @@ def run(args: argparse.Namespace) -> int:
         "processExited": True,
         "timedOut": timed_out,
         "seconds": round(time.monotonic() - started, 3),
-        "executableSHA256": sha256(executable),
+        "executableSHA256": executable_hash,
     }
     if timed_out:
         process_data["reason"] = "Process deadline exceeded"

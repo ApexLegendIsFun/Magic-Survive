@@ -227,7 +227,10 @@ namespace Seondong.IntegrationGame
                     Check(Mathf.Approximately(Time.timeScale, 0) && Mathf.Approximately(pausedTime, run.ElapsedCombatTime), "Level-up failed to pause.");
                     var skills = FindFirstObjectByType<PlayerSkillSystem>();
                     var choices = FindObjectsByType<Button>(FindObjectsSortMode.None).Where(b => b.name.StartsWith("Skill_") && b.IsInteractable()).OrderBy(b => report.scenario == "death" || report.scenario == "layout" || report.scenario == "growth" ? (b.name == "Skill_" + startingElement ? 0 : 1) : skills.GetSkillLevel((MagicElement)Enum.Parse(typeof(MagicElement), b.name.Substring(6)))).ToArray();
-                    Check(choices.Length > 0 && choices.Length <= 3, "Invalid skill choices.");
+                    // PrepareChoices now offers every eligible element, up to five.
+                    Check(choices.Length > 0 && choices.Length == skills.Choices.Count &&
+                        choices.All(b => skills.IsOffered((MagicElement)Enum.Parse(typeof(MagicElement), b.name.Substring(6)))),
+                        "Visible skill choices do not match the current growth contract.");
                     foreach (var choice in choices) ButtonPoint(choice);
                     if (report.levelUps == 0) yield return Capture("levelup");
                     yield return Click(choices[0].name); yield return Click("ConfirmButton");
