@@ -136,6 +136,14 @@ public static class ElementReactionValues
     // 일반 적만. 보스는 Enemy.TryDarkExecute 에서 isBoss 로 제외
     public const float DarkExecuteHealthRatio = 0.10f;
 
+    // 냉기 8레벨 서리 장판. 빙결이 풀린 자리에 남음
+    // 반경은 기획에 없어 지진 구역과 같은 값으로 시작. 확인 요청 대상
+    // 특화 "서리 장판 반경 +10%" 의 기준값.
+    // 보스 면역은 GroundAreaState 가 원소로 이미 거름
+    public const float FrostGroundRadius = 1.5f;
+    public const float FrostGroundDurationSeconds = 2.5f;
+    public const float FrostGroundSlowPercent = 0.35f;
+
 
     // 레벨별 값 계산
     // 호출부는 스킬 레벨만 넘김. 게이트와 기본 강화 수치는 이 클래스가 관리

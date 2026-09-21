@@ -60,6 +60,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 적은 스킬 레벨을 모르므로, 레벨을 아는 투사체가 권한만 남기고 감
     private bool frostShatterArmed;
 
+    // 냉기 8레벨 서리 장판 권한. 파괴 권한과 같은 방식
+    // 빙결이 자연히 풀리는 프레임에만 소비.
+    private bool frostGroundArmed;
+
     // 화염&암흑 5레벨 사망 전염 권한. 냉기 파괴와 같은 방식
     // 전염으로 표식만 받은 적에게는 넘기지 않음 (재전염 여부 미확정)
     // 실제 전염 여부는 죽는 순간의 표식 수로 판정
@@ -188,9 +192,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 지속시간에 CrowdControlDurationMultiplier를 곱하기.
     // 보스는 이 값이 0f 라 applied 가 0 이 되고 빙결이 걸리지 않음
     //
-    // armShatter 는 5레벨 파괴 권한. 보스는 위 가드에서 먼저 빠져나가
-    // 권한도 받지 않는다
-    public void ApplyFreeze(float durationSeconds, bool armShatter)
+    // armShatter 는 5레벨 파괴 권한, armFrostGround 는 8레벨 서리 장판 권한.
+    // 보스는 위 가드에서 먼저 빠져나가 둘 다 받지 않음
+    public void ApplyFreeze(float durationSeconds, bool armShatter, bool armFrostGround)
     {
         float applied = durationSeconds * CrowdControlDurationMultiplier;
 
@@ -217,6 +221,12 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         if (armShatter)
         {
             frostShatterArmed = true;
+        }
+
+        // 장판 권한도 같은 규칙
+        if (armFrostGround)
+        {
+            frostGroundArmed = true;
         }
     }
 
@@ -337,11 +347,14 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             FrozenChanged?.Invoke(false);
         }
 
-
         frostShatterArmed = false;
         fireDeathSpreadArmed = false;
         darkDeathSpreadArmed = false;
         darkExecuteArmed = false;
+
+        // 풀 반환에서는 장판을 만들지 않고 권한만 버린다
+        // 보스 등장 정리와 재시작에서 DespawnAll 이 방금 지운 장판이 되살아나면 안 됨
+        frostGroundArmed = false;
 
         // 레벨로 받은 값. 풀에서 다음 개체에 남지 않게 기본값으로
         frostSlowPerStack = ElementReactionValues.FrostMovementSpeedReductionPerStack;
@@ -435,10 +448,32 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         enemyManager.ResolveFrostShatter(transform.position);
     }
 
+    // 냉기 8레벨. 빙결이 자연히 풀린 자리에 서리 장판 남기기.
+    // Tick 의 해제 분기에서만 호출.
+    private void TryCreateFrostGround()
+    {
+        if (!frostGroundArmed)
+        {
+            return;
+        }
+
+        // 한 번의 빙결에 장판 하나. 만들지 못해도 권한은 소비한다
+        frostGroundArmed = false;
+
+        if (!IsAlive || enemyManager == null)
+        {
+            return;
+        }
+
+        enemyManager.AddGroundArea(
+            MagicElement.Frost,
+            transform.position,
+            ElementReactionValues.FrostGroundRadius,
+            ElementReactionValues.FrostGroundDurationSeconds,
+            ElementReactionValues.FrostGroundSlowPercent);
+    }
+
     // 암흑 8레벨 처형. 이번 타격으로 체력이 문턱 아래가 된 일반 적을 즉시 처리
-    // 남은 체력만큼의 피해로 처리하는 이유:
-    // 사망 처리(EXP, 사망 전염, EnemyKilled)를 기존 경로로 한 번만 태우기 위해서.
-    // 별도 사망 경로를 만들면 그 셋을 모두 다시 구현해야 함
     private void TryDarkExecute(bool armedThisHit, float appliedDamage)
     {
         // 보스는 제외. 실제로 깎인 양이 0 이면 판정하지 않음 (파괴와 같은 가드)
@@ -555,6 +590,9 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
                 freezeRemainingSeconds = 0f;
                 frostShatterArmed = false;
                 FrozenChanged?.Invoke(false);
+
+                // 냉기 8레벨. 빙결이 풀린 자리에 서리 장판을 남긴다
+                TryCreateFrostGround();
             }
 
             return;
@@ -566,7 +604,7 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
         // 이동 방식을 가진 적은 방향만 위임받음.
         // 위치 대입은 아래에서 한 번만
-        
+
         // 돌진은 방향뿐 아니라 속도도 바꾸므로 배율을 함께 받기.
         // 이동 방식이 3종째가 되면 공통 인터페이스로 묶을 것. 지금은 2종.
         Vector2 direction;
@@ -607,7 +645,6 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         float currentSpeed = moveSpeed * (1f - frostStacks * frostSlowPerStack) * groundSlowMultiplier * speedMultiplier;
 
         transform.position = currentPosition + direction * currentSpeed * deltaTime;
-
     }
 
     // 화염표식 지속피해. Enemy.TakeDamage를 지나므로 공통 표식 효과가 함께 적용
