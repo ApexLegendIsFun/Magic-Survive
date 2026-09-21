@@ -24,7 +24,15 @@ public sealed class AssetPresentationFeedback : MonoBehaviour
     {
         sound = SoundManager.instance;
         if (sound == null && soundPrefab != null) sound = Instantiate(soundPrefab);
-        if (sound != null) sound.soundClip = new[] { clickClip, levelUpClip };
+        if (sound != null)
+        {
+            // Keep the team's elemental/encounter SFX slots when refreshing UI audio.
+            var clips = sound.soundClip ?? new AudioClip[0];
+            if (clips.Length < 2) System.Array.Resize(ref clips, 2);
+            if (clickClip != null) clips[(int)SFXType.Attack] = clickClip;
+            if (levelUpClip != null) clips[(int)SFXType.LevelUp] = levelUpClip;
+            sound.soundClip = clips;
+        }
         skills = FindFirstObjectByType<PlayerSkillSystem>();
         if (skills != null) skills.SkillPointSpent += HandleLevelUp;
         foreach (var button in FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None))

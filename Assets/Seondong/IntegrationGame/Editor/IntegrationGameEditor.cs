@@ -92,17 +92,17 @@ namespace Seondong.IntegrationGame
         {
             Directory.CreateDirectory(Root + "/Data");
             AssetDatabase.Refresh();
-            var charger = TemporaryEnemy("TemporaryCharger", "Enemy_Fast", 180, 1.8f, 20, 15);
+            var charger = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Dasher.asset");
             var summoner = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Summoner.asset")
                 ?? TemporaryEnemy("TemporarySummoner", "Enemy_Tank", 260, 1f, 12, 25);
-            var boss = TemporaryEnemy("TemporaryBoss", "Enemy_Boss", 2000, 1.3f, 20, 0);
+            var boss = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Boss.asset");
             AssetDatabase.SaveAssets();
             var scene = EditorSceneManager.OpenScene(Game);
             // Opening a scene unloads unused assets; reload the persistent objects afterwards.
-            charger = AssetDatabase.LoadAssetAtPath<EnemyData>(Root + "/Data/TemporaryCharger.asset");
+            charger = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Dasher.asset");
             summoner = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Summoner.asset")
                 ?? AssetDatabase.LoadAssetAtPath<EnemyData>(Root + "/Data/TemporarySummoner.asset");
-            boss = AssetDatabase.LoadAssetAtPath<EnemyData>(Root + "/Data/TemporaryBoss.asset");
+            boss = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Boss.asset");
             var roots = scene.GetRootGameObjects();
             var run = roots.SelectMany(r => r.GetComponentsInChildren<RunDirector>(true)).Single();
             var manager = roots.SelectMany(r => r.GetComponentsInChildren<EnemyManager>(true)).Single();
@@ -114,7 +114,10 @@ namespace Seondong.IntegrationGame
             serialized.FindProperty("enemyManager").objectReferenceValue = manager;
             serialized.FindProperty("spawnCamera").objectReferenceValue = camera;
             // Keep later inspector assignments: the placeholders are only the initial defaults.
-            if (serialized.FindProperty("charger").objectReferenceValue == null) serialized.FindProperty("charger").objectReferenceValue = charger;
+            var configuredCharger = serialized.FindProperty("charger");
+            if (configuredCharger.objectReferenceValue == null ||
+                AssetDatabase.GetAssetPath(configuredCharger.objectReferenceValue) == Root + "/Data/TemporaryCharger.asset")
+                configuredCharger.objectReferenceValue = charger;
             var configuredSummoner = serialized.FindProperty("summoner");
             if (configuredSummoner.objectReferenceValue == null ||
                 AssetDatabase.GetAssetPath(configuredSummoner.objectReferenceValue) == Root + "/Data/TemporarySummoner.asset")
@@ -124,7 +127,7 @@ namespace Seondong.IntegrationGame
             var bossSpawner = roots.SelectMany(r => r.GetComponentsInChildren<BossSpawner>(true)).Single();
             var bossSerialized = new SerializedObject(bossSpawner);
             var assigned = bossSerialized.FindProperty("bossData").objectReferenceValue;
-            if (assigned == null || AssetDatabase.GetAssetPath(assigned) == "Assets/03.Data/Enemy/Enemy_Boss.asset")
+            if (assigned == null || AssetDatabase.GetAssetPath(assigned) == Root + "/Data/TemporaryBoss.asset")
                 bossSerialized.FindProperty("bossData").objectReferenceValue = boss;
             bossSerialized.ApplyModifiedPropertiesWithoutUndo();
             var bossHud = run.GetComponent<IntegrationBossHud>();
@@ -144,6 +147,7 @@ namespace Seondong.IntegrationGame
             existingHud.FindProperty("bossHpBarGroup").objectReferenceValue = bossGroup;
             existingHud.ApplyModifiedPropertiesWithoutUndo();
             bossGroup.SetActive(false);
+            IntegrationTeamWiring.Configure(scene);
             if (bossSerialized.FindProperty("bossData").objectReferenceValue == null ||
                 serialized.FindProperty("charger").objectReferenceValue == null || serialized.FindProperty("summoner").objectReferenceValue == null)
                 throw new Exception("Encounter data did not survive scene loading.");
@@ -225,8 +229,7 @@ namespace Seondong.IntegrationGame
                 if (element == MagicElement.Frost) frostReady = hasPrefab;
             }
             Require(fireReady && frostReady, "Fire and frost reaction effects are not wired.");
-            Require(!roots.SelectMany(root => root.GetComponentsInChildren<LightningChainEffectPlayer>(true)).Any(),
-                "Incomplete lightning chain effect manager must not be wired.");
+            IntegrationTeamWiring.Validate(scene);
 
             IReadOnlyList<Vector2> receivedTargets = null;
             Action<MagicElement, Vector2, IReadOnlyList<Vector2>> handler =
@@ -278,6 +281,24 @@ namespace Seondong.IntegrationGame
             });
             if (report.summary.result != BuildResult.Succeeded) throw new Exception("Windows build failed: " + report.summary.result);
             Debug.Log("[Seondong Integration] Windows build succeeded: " + Path.GetFullPath(Output));
+        }
+
+        [MenuItem("Tools/Seondong Integration/6. Build Mac")]
+        public static void BuildMac()
+        {
+            CreateScenes();
+            // Building also supports diagnosis of incomplete handoffs. Run menu 5
+            // separately; a successful build is not a handoff-validation PASS.
+            const string output = "Builds/SeondongIntegrationMac/Magic-Survive.app";
+            Directory.CreateDirectory(Path.GetDirectoryName(output));
+            var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+            {
+                scenes = new[] { Title, Game }, locationPathName = output,
+                target = BuildTarget.StandaloneOSX, options = BuildOptions.None
+            });
+            if (report.summary.result != BuildResult.Succeeded)
+                throw new Exception("Mac build failed: " + report.summary.result);
+            Debug.Log("[Seondong Integration] Mac build succeeded: " + Path.GetFullPath(output));
         }
 
         [MenuItem("Tools/Seondong Integration/Restore Previous Scene List")]

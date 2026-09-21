@@ -48,12 +48,18 @@ namespace Seondong.IntegrationGame
                 {
                     count++;
                     if(prefab.GetComponent<AssetVisualLifecycle>()==null||prefab.GetComponentsInChildren<Collider2D>(true).Length>0||prefab.GetComponentsInChildren<Projectile>(true).Length>0)throw new Exception("Invalid visual-only prefab "+prefab.name);
+                    if(!prefab.GetComponentsInChildren<SpriteRenderer>(true).Any(sprite=>sprite.sprite!=null))
+                        throw new Exception("Missing source sprites: "+prefab.name+". Import the original third-party packages with their metadata.");
+                    if(prefab.GetComponentsInChildren<Animator>(true).Any(animator=>animator.runtimeAnimatorController==null))
+                        throw new Exception("Missing animation controller: "+prefab.name);
                 }
                 var original=AssetDatabase.LoadAssetAtPath<ProjectileMagicDefinition>("Assets/03.Data/Magic/"+MagicContentCatalog.GetMagicId(element)+".asset");
                 var own=AssetDatabase.LoadAssetAtPath<ProjectileMagicDefinition>(IntegrationGraphicsEditor.Root+"/Magic/"+element+".asset");
                 IntegrationGraphicsEditor.ValidateStats(original,own);
             }
             for(int level=1;level<=8;level++)if(MagicVisualProfile.TierForLevel(level)!=(level<3?0:level<5?1:level<8?2:3))throw new Exception("Tier boundary failed.");
+            var ground=AssetDatabase.LoadAssetAtPath<Material>(IntegrationGraphicsEditor.Root+"/Materials/StoneGround.mat");
+            if(ground==null||ground.GetTexture("_BaseMap")==null)throw new Exception("Missing stone ground source texture.");
             Directory.CreateDirectory("Logs/GraphicsGrowth");File.WriteAllText("Logs/GraphicsGrowth/assets-check.txt","PASS: "+count+" visual prefabs, 5 matching combat definitions, level boundaries 1..8.\n");
         }
     }
