@@ -46,19 +46,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElementReactionEffectPlayer
   effects:
   - element: 0
+    radiusMatch: 0
     effectPrefab: {fileID: 2360207784898761538, guid: 71648fd422021fa47904f40bd7361c1c, type: 3}
     animationClip: {fileID: 0}
     sfxType: 2
   - element: 1
+    radiusMatch: 1
     effectPrefab: {fileID: 6245214841360429208, guid: 529fa5c348d336d46baca5f331c57c18, type: 3}
     animationClip: {fileID: 0}
     sfxType: 3
   - element: 4
+    radiusMatch: 0
     effectPrefab: {fileID: 3685560036689682143, guid: 76d33a7c8e633f445bb82bd2aa374104, type: 3}
     animationClip: {fileID: 0}
     sfxType: 5
   - element: 2
+    radiusMatch: 0
     effectPrefab: {fileID: 392604334091333448, guid: af042ceb11d48fe4f91e6cbe9c148005, type: 3}
+    animationClip: {fileID: 0}
+    sfxType: 0
+  - element: 1
+    radiusMatch: 2
+    effectPrefab: {fileID: 3822345907140699483, guid: 652c8bf9a78e64e36aeb40f68885e957, type: 3}
     animationClip: {fileID: 0}
     sfxType: 0
   singleTargetEffectScale: 0.5
