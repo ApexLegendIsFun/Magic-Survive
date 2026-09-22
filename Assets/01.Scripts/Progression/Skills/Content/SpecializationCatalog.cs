@@ -12,7 +12,7 @@ public enum SpecializationId
 
 // Amounts use display units: 10 means +10%, 2 means +2 percentage points.
 public enum SpecializationUnit { Percent, PercentagePoints }
-public enum SpecializationCombatStatus { NotConnected }
+public enum SpecializationCombatStatus { NotConnected, Applied }
 
 public sealed class SpecializationDefinition
 {
@@ -25,7 +25,7 @@ public sealed class SpecializationDefinition
     public string TargetEffect { get; }
     public float Amount { get; }
     public SpecializationUnit Unit { get; }
-    public SpecializationCombatStatus CombatStatus => SpecializationCombatStatus.NotConnected;
+    public SpecializationCombatStatus CombatStatus => SpecializationCombatStatus.Applied;
     public string Description => $"{TargetEffect} +{Amount:0.##}{UnitText}";
     public string UnitText => Unit == SpecializationUnit.Percent ? "%" : "%p";
 }
