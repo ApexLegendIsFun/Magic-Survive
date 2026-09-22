@@ -266,5 +266,51 @@ public static class ElementReactionValues
         return DarkAmplificationBonus;
     }
 
+
+    // 특화 반영 오버로드
+
+    // 화염 특화 점화 폭발 반경
+    public static float GetIgniteRadius(int skillLevel, float specializationMultiplier)
+    {
+        return GetIgniteRadius(skillLevel) * specializationMultiplier;
+    }
+
+    // 화염 특화 불장판 지속시간" 레벨 강화는 없고 특화만
+    public static float GetFireGroundDurationSeconds(float specializationMultiplier)
+    {
+        return FireGroundDurationSeconds * specializationMultiplier;
+    }
+
+    // 번개 특화 연쇄 탐색 거리. 레벨 강화는 대상 수뿐이고 거리는 특화만
+    public static float GetChainRadius(float specializationMultiplier)
+    {
+        return ChainRadius * specializationMultiplier;
+    }
+
+    // 번개 특화 방전 피해
+    public static float GetDischargeDamage(int skillLevel, float specializationMultiplier)
+    {
+        return GetDischargeDamage(skillLevel) * specializationMultiplier;
+    }
+
+    // 냉기 특화 빙결 지속시간
+    // 보스는 Enemy.ApplyFreeze 에서 CrowdControlDurationMultiplier 0 이 곱해져 그대로 면역
+    public static float GetFreezeDurationSeconds(int skillLevel, float specializationMultiplier)
+    {
+        return GetFreezeDurationSeconds(skillLevel) * specializationMultiplier;
+    }
+
+    // 대지 특화 충격파 반경. 
+    public static float GetShockwaveRadius(int skillLevel, float specializationMultiplier)
+    {
+        return GetShockwaveRadius(skillLevel) * specializationMultiplier;
+    }
+
+    // 대지 특화 밀치기 거리. 보스는 Enemy.ApplyKnockback 의 IsKnockbackImmune 이 처리
+    public static float GetKnockbackDistance(int skillLevel, float specializationMultiplier)
+    {
+        return GetKnockbackDistance(skillLevel) * specializationMultiplier;
+    }
+
 }
 
