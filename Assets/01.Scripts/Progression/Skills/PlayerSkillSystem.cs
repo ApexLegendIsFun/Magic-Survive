@@ -19,6 +19,7 @@ public sealed class PlayerSkillSystem : MonoBehaviour
     private bool isCommitting;
     private IReadOnlyList<MagicElement> choicesView;
     private IReadOnlyList<MagicRuntime> activeMagicsView;
+    private Func<SpecializationId, float> specializationBonusReader;
     public IReadOnlyPlayerSkillTree Tree => tree;
     public MagicRuntime CurrentMagic { get; private set; }
     public IReadOnlyList<MagicRuntime> ActiveMagics => activeMagicsView ?? (activeMagicsView = activeMagics.AsReadOnly());
@@ -153,7 +154,10 @@ public sealed class PlayerSkillSystem : MonoBehaviour
             CurrentMagic = CurrentMagic ?? runtime;
             weaponRunner.Register(runtime);
         }
-        runtime.SetSkillLevel(level);
+
+        specializationBonusReader = specializationBonusReader ?? GetSpecializationBonus;
+        runtime.SetSkillLevel(level, ElementSpecializationBonus.Build(element, specializationBonusReader));
         SkillLevelChanged?.Invoke(element, level);
     }
 }
+
