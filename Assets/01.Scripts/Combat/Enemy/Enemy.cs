@@ -303,6 +303,40 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     }
 
 
+    // 겹침 분리로 밀릴 수 있는 상태인지 확인
+    // EnemyManager 가 계산 단계에서 먼저 묻는다
+    // 적용 시점에 거절만 하면 면역 상대와의 겹침이 절반만 해소
+    public bool CanReceiveSeparation
+    {
+        get
+        {
+            if (!IsAlive || isBoss || freezeRemainingSeconds > 0f)
+            {
+                return false;
+            }
+
+            if (dash != null && dash.isActiveAndEnabled && dash.IsTrajectoryLocked)
+            {
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+
+    // 겹침 분리. EnemyManager 가 이번 프레임 분을 계산해 한 번에 넘김
+    public void ApplySeparation(Vector2 offset)
+    {
+        if (!CanReceiveSeparation || offset.sqrMagnitude < 0.000001f)
+        {
+            return;
+        }
+
+        transform.position = (Vector2)transform.position + offset;
+    }
+
+
     public void SetSourcePrefab(Enemy prefab)
     {
         sourcePrefab = prefab;
