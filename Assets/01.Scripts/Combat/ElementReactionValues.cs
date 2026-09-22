@@ -312,5 +312,32 @@ public static class ElementReactionValues
         return GetKnockbackDistance(skillLevel) * specializationMultiplier;
     }
 
+    // 냉기 특화 서리 장판 반경
+    public static float GetFrostGroundRadius(float specializationMultiplier)
+    {
+        return FrostGroundRadius * specializationMultiplier;
+    }
+
+    // 사망 전염 반경.
+    public static float GetDeathSpreadRadius(MagicElement element, float specializationMultiplier)
+    {
+        if (element == MagicElement.Fire)
+        {
+            return FireSpreadRadius;
+        }
+
+        if (element == MagicElement.Dark)
+        {
+            return DarkSpreadRadius * specializationMultiplier;
+        }
+
+        return 0f;
+    }
+
+    // 암흑 특화 3중첩 피해 증가 효과
+    public static float GetDarkAmplificationBonus(int skillLevel, float specializationBonus)
+    {
+        return GetDarkAmplificationBonus(skillLevel) + specializationBonus;
+    }
 }
 
