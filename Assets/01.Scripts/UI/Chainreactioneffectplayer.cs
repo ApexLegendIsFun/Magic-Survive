@@ -40,7 +40,7 @@ public class ChainReactionEffectPlayer : MonoBehaviour
         var entry = entries?.FirstOrDefault(e => e.element.Equals(element));
         if (entry == null)
         {
-            Debug.LogWarning($"[ChainReactionEffectPlayer] {element} 연쇄 이펙트가 등록되지 않음");
+            
             return;
         }
 
