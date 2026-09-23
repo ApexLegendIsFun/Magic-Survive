@@ -34,6 +34,10 @@ public class EnemyDash : MonoBehaviour
     // Tick 을 부른 직후에 읽으므로 이번 프레임의 상태 전이가 이미 반영.
     public float SpeedMultiplier => state == DashState.Dashing ? dashSpeedMultiplier : 1f;
 
+    // [연동:Combat] 겹침 분리가 이 적을 밀면 안 되는 구간
+    // 예고를 포함
+    public bool IsTrajectoryLocked => state == DashState.Telegraph || state == DashState.Dashing;
+
     private void Awake()
     {
         enemy = GetComponent<Enemy>();

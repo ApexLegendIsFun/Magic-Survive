@@ -19,6 +19,9 @@ public sealed class MagicRuntime : IAttackSource
     public MagicId Id { get; }
     public MagicElement Element { get; }
     public int SkillLevel { get; private set; }
+
+    // 발사할 때 ProjectileSpec 으로 넘길 특화 스냅샷
+    public ElementSpecializationBonus Specialization { get; private set; } = ElementSpecializationBonus.None;
     public float Cooldown { get; private set; }
     public float Damage { get; private set; }
     public int PierceCount { get; private set; }
@@ -26,11 +29,17 @@ public sealed class MagicRuntime : IAttackSource
     public float Speed { get; }
     public float MaxDistance { get; }
     public float HitRadius { get; }
-    public void SetSkillLevel(int level)
+
+    // 기존 호출부 호환용. 특화 없이 레벨만 반영
+    public void SetSkillLevel(int level) => SetSkillLevel(level, ElementSpecializationBonus.None);
+
+    public void SetSkillLevel(int level, ElementSpecializationBonus specialization)
     {
         ElementSkillStats stats = MagicContentCatalog.GetStats(Element, level);
         SkillLevel = level;
-        Damage = stats.Damage;
+        Specialization = specialization;
+        // 기본 성장(레벨 배율)을 먼저 적용하고 그 결과에 특화 배율을 곱함
+        Damage = stats.Damage * specialization.DamageMultiplier;
         Cooldown = stats.Cooldown;
         PierceCount = stats.PierceCount;
     }
@@ -59,7 +68,8 @@ public sealed class MagicRuntime : IAttackSource
             HitRadius,
             PierceCount,
             Element,      // 선동님 확인으로 추가함. 원소 3중첩 발동관련 로직
-            SkillLevel
+            SkillLevel,
+            Specialization
             );
 
         context.Launcher.Fire(spec, context.Origin, direction);

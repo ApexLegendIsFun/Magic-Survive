@@ -90,7 +90,7 @@ public static class SpecializationValidationEditor
         foreach (var definition in SpecializationCatalog.All)
         {
             Require(mockup.Contains("['" + definition.Name + "','" + definition.Description + "']"), "Catalog differs from mockup: " + definition.Name);
-            Require(definition.CombatStatus == SpecializationCombatStatus.NotConnected, "Unimplemented effect reported as active");
+            Require(definition.CombatStatus == SpecializationCombatStatus.Applied, "Implemented effect reported as unconnected");
         }
         foreach (var element in MagicContentCatalog.PentagonElements)
             Require(SpecializationCatalog.All.Count(x => x.Element == element) == 3, "Expected three cards per element");

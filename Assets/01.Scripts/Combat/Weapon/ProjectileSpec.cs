@@ -23,14 +23,25 @@ public readonly struct ProjectileSpec
     public readonly MagicElement Element;
     public readonly int SkillLevel;
 
-    // 기존 6인자 호출부 호환용. 표식 정보 없음
-    // 현재 호출부 2곳: MagicRuntime.Execute, _Test/SimpleProjectileAttack.Execute
+    // [연동:성장] 발사 시점의 특화 누적값. 
+    public readonly ElementSpecializationBonus Specialization;
+
+    // 6인자 호출부 호환용. 표식도 특화도 없는 투사체
+    // 현재 호출부 2곳
+    //   Combat/Enemy/EnemyRangedAttack  (보스 부채꼴, 소환술사 원거리탄)
+    //   _Test/SimpleProjectileAttack
     public ProjectileSpec(Projectile prefab, float damage, float speed, float maxDistance, float hitRadius, int pierceCount)
         : this(prefab, damage, speed, maxDistance, hitRadius, pierceCount, MagicElement.Fire, 0)
     {
     }
 
+    // 8인자 호출부 호환용. 표식은 있고 특화 x
     public ProjectileSpec(Projectile prefab, float damage, float speed, float maxDistance, float hitRadius, int pierceCount, MagicElement element, int skillLevel)
+        : this(prefab, damage, speed, maxDistance, hitRadius, pierceCount, element, skillLevel, ElementSpecializationBonus.None)
+    {
+    }
+
+    public ProjectileSpec(Projectile prefab, float damage, float speed, float maxDistance, float hitRadius, int pierceCount, MagicElement element, int skillLevel, ElementSpecializationBonus specialization)
     {
         Prefab = prefab;
         Damage = damage;
@@ -41,5 +52,6 @@ public readonly struct ProjectileSpec
 
         Element = element;
         SkillLevel = skillLevel;
+        Specialization = specialization;
     }
 }

@@ -60,15 +60,13 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // 적은 스킬 레벨을 모르므로, 레벨을 아는 투사체가 권한만 남기고 감
     private bool frostShatterArmed;
 
-    // 냉기 8레벨 서리 장판 권한. 파괴 권한과 같은 방식
-    // 빙결이 자연히 풀리는 프레임에만 소비.
-    private bool frostGroundArmed;
+    // 냉기 8레벨 서리 장판 권한
 
-    // 화염&암흑 5레벨 사망 전염 권한. 냉기 파괴와 같은 방식
-    // 전염으로 표식만 받은 적에게는 넘기지 않음 (재전염 여부 미확정)
-    // 실제 전염 여부는 죽는 순간의 표식 수로 판정
-    private bool fireDeathSpreadArmed;
-    private bool darkDeathSpreadArmed;
+    private float frostGroundRadius;
+
+    // 화염&암흑 5레벨 사망 전염 권한. 
+    private float fireDeathSpreadRadius;
+    private float darkDeathSpreadRadius;
 
     // 암흑 8레벨 처형 권한. Lv8 암흑 탄이 피해 직전에 켬
     // 그 타격의 TakeDamage 에서 소비. 다음 타격까지 남지 않음
@@ -193,12 +191,16 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
 
 
     // 냉기 표식 3중첩 반응. Projectile이 호출
-    // 지속시간에 CrowdControlDurationMultiplier를 곱하기.
-    // 보스는 이 값이 0f 라 applied 가 0 이 되고 빙결이 걸리지 않음
-    //
-    // armShatter 는 5레벨 파괴 권한, armFrostGround 는 8레벨 서리 장판 권한.
-    // 보스는 위 가드에서 먼저 빠져나가 둘 다 받지 않음
     public void ApplyFreeze(float durationSeconds, bool armShatter, bool armFrostGround)
+    {
+        ApplyFreeze(
+            durationSeconds,
+            armShatter,
+            armFrostGround ? ElementReactionValues.FrostGroundRadius : 0f);
+    }
+
+    // armShatter 는 5레벨 파괴 권한, groundRadius 는 8레벨 서리 장판 반경.
+    public void ApplyFreeze(float durationSeconds, bool armShatter, float groundRadius)
     {
         float applied = durationSeconds * CrowdControlDurationMultiplier;
 
@@ -227,10 +229,10 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
             frostShatterArmed = true;
         }
 
-        // 장판 권한도 같은 규칙
-        if (armFrostGround)
+        // 장판 권한도 같은 규칙. 
+        if (groundRadius > frostGroundRadius)
         {
-            frostGroundArmed = true;
+            frostGroundRadius = groundRadius;
         }
     }
 
@@ -260,17 +262,28 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         enemyManager = manager;
     }
 
-    // 화염·암흑 5레벨 사망 전염 권한. Projectile 이 피해 전에 호출
-    // 그 외 원소는 무시. 호출부가 원소를 가리지 않아도 되게
+    // 기존 호출부 호환용. 특화가 없는 기본 반경이 들어간다
+    // 인계 문서 §8 에 공개 API 로 전달한 시그니처라 남겨둔다
     public void ArmDeathSpread(MagicElement element)
     {
+        ArmDeathSpread(element, ElementReactionValues.GetDeathSpreadRadius(element, 1f));
+    }
+
+    // 화염,암흑 5레벨 사망 전염 권한. Projectile 이 피해 전에 호출
+    public void ArmDeathSpread(MagicElement element, float spreadRadius)
+    {
+        if (spreadRadius <= 0f)
+        {
+            return;
+        }
+
         if (element == MagicElement.Fire)
         {
-            fireDeathSpreadArmed = true;
+            fireDeathSpreadRadius = Mathf.Max(fireDeathSpreadRadius, spreadRadius);
         }
         else if (element == MagicElement.Dark)
         {
-            darkDeathSpreadArmed = true;
+            darkDeathSpreadRadius = Mathf.Max(darkDeathSpreadRadius, spreadRadius);
         }
     }
 
@@ -300,6 +313,40 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         Vector2 currentPosition = transform.position;
 
         transform.position = currentPosition + direction.normalized * distance;
+    }
+
+
+    // 겹침 분리로 밀릴 수 있는 상태인지 확인
+    // EnemyManager 가 계산 단계에서 먼저 묻는다
+    // 적용 시점에 거절만 하면 면역 상대와의 겹침이 절반만 해소
+    public bool CanReceiveSeparation
+    {
+        get
+        {
+            if (!IsAlive || isBoss || freezeRemainingSeconds > 0f)
+            {
+                return false;
+            }
+
+            if (dash != null && dash.isActiveAndEnabled && dash.IsTrajectoryLocked)
+            {
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+
+    // 겹침 분리. EnemyManager 가 이번 프레임 분을 계산해 한 번에 넘김
+    public void ApplySeparation(Vector2 offset)
+    {
+        if (!CanReceiveSeparation || offset.sqrMagnitude < 0.000001f)
+        {
+            return;
+        }
+
+        transform.position = (Vector2)transform.position + offset;
     }
 
 
@@ -352,13 +399,13 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         }
 
         frostShatterArmed = false;
-        fireDeathSpreadArmed = false;
-        darkDeathSpreadArmed = false;
+        fireDeathSpreadRadius = 0f;
+        darkDeathSpreadRadius = 0f;
         darkExecuteArmed = false;
 
         // 풀 반환에서는 장판을 만들지 않고 권한만 버린다
         // 보스 등장 정리와 재시작에서 DespawnAll 이 방금 지운 장판이 되살아나면 안 됨
-        frostGroundArmed = false;
+        frostGroundRadius = 0f;
 
         // 레벨로 받은 값. 풀에서 다음 개체에 남지 않게 기본값으로
         frostSlowPerStack = ElementReactionValues.FrostMovementSpeedReductionPerStack;
@@ -456,23 +503,26 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
     // Tick 의 해제 분기에서만 호출.
     private void TryCreateFrostGround()
     {
-        if (!frostGroundArmed)
+        if (frostGroundRadius <= 0f)
         {
             return;
         }
 
-        // 한 번의 빙결에 장판 하나. 만들지 못해도 권한은 소비한다
-        frostGroundArmed = false;
+        // 한 번의 빙결에 장판 하나. 만들지 못해도 권한은 소비
+        float radius = frostGroundRadius;
+
+        frostGroundRadius = 0f;
 
         if (!IsAlive || enemyManager == null)
         {
             return;
         }
 
+        // 반경은 빙결을 건 얼음창이 남긴 값. 특화가 이미 반영되어 있다
         enemyManager.AddGroundArea(
             MagicElement.Frost,
             transform.position,
-            ElementReactionValues.FrostGroundRadius,
+            radius,
             ElementReactionValues.FrostGroundDurationSeconds,
             ElementReactionValues.FrostGroundSlowPercent);
     }
@@ -708,22 +758,23 @@ public class Enemy : MonoBehaviour, IElementMarkTarget
         Vector2 position = transform.position;
 
         // 화염: 표식이 1 이상이면 화염 적
-        if (fireDeathSpreadArmed
+        // 반경은 맞힌 투사체가 남긴 값. 화염에는 전염 거리 특화가 없어 기본값이 들어옴
+        if (fireDeathSpreadRadius > 0f
             && markState.Get(MagicElement.Fire).Stacks > 0)
         {
             enemyManager.QueueDeathSpread(
                 MagicElement.Fire, position,
-                ElementReactionValues.FireSpreadRadius,
+                fireDeathSpreadRadius,
                 ElementReactionValues.FireSpreadMaxTargets);
         }
 
-        // 암흑: 3중첩일 때만
-        if (darkDeathSpreadArmed
+        // 암흑: 3중첩일 때만. 반경에 특화 "표식 전염 탐색 거리"가 반영
+        if (darkDeathSpreadRadius > 0f
             && markState.Get(MagicElement.Dark).Stacks >= ElementMarkRules.MaximumStacks)
         {
             enemyManager.QueueDeathSpread(
                 MagicElement.Dark, position,
-                ElementReactionValues.DarkSpreadRadius,
+                darkDeathSpreadRadius,
                 ElementReactionValues.DarkSpreadMaxTargets);
         }
     }

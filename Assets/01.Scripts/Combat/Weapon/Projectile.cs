@@ -149,7 +149,8 @@ public class Projectile : MonoBehaviour
             case MagicElement.Fire:
 
                 // 7레벨이면 피해,반경이 커짐. 판정과 이벤트가 같은 반경을 쓰도록 한 번만 계산
-                float igniteRadius = ElementReactionValues.GetIgniteRadius(spec.SkillLevel);
+                float igniteRadius = ElementReactionValues.GetIgniteRadius(
+                    spec.SkillLevel, spec.Specialization.RangeMultiplier);
                 float igniteDamage = ElementReactionValues.GetIgniteDamage(spec.SkillLevel);
 
                 // 점화. 중심 적 자신도 반경 안에 들어가므로 함께 피해를 받음
@@ -182,7 +183,8 @@ public class Projectile : MonoBehaviour
                         MagicElement.Fire,
                         center,
                         igniteRadius,
-                        ElementReactionValues.FireGroundDurationSeconds,
+                        ElementReactionValues.GetFireGroundDurationSeconds(
+                            spec.Specialization.PowerMultiplier),
                         0f,
                         ElementReactionValues.FireGroundDamagePerTick,
                         ElementReactionValues.FireGroundDamageIntervalSeconds);
@@ -203,7 +205,8 @@ public class Projectile : MonoBehaviour
                 enemyManager.FindOverlappingEnemies(center, ElementReactionValues.DischargeRadius, reactionBuffer);
 
                 // 7레벨 방전 피해 강화. 반경은 언급 없어 그대로
-                float dischargeDamage = ElementReactionValues.GetDischargeDamage(spec.SkillLevel);
+                float dischargeDamage = ElementReactionValues.GetDischargeDamage(
+                    spec.SkillLevel, spec.Specialization.PowerMultiplier);
 
                 for (int i = 0; i < reactionBuffer.Count; i++)
                 {
@@ -223,15 +226,13 @@ public class Projectile : MonoBehaviour
             case MagicElement.Frost:
 
                 // 빙결. 
-                // 5레벨이면 파괴 권한, 8레벨이면 서리 장판 권한을 같이 넘김
-                // 둘 다 이 자리가 아니라 나중에 터지므로
-                // 레벨을 아는 여기서 적에게 권한만 남김
-                //
-                // 7레벨이면 빙결 시간이 늘어남. 두 권한 모두 빙결 동안 유지되므로 함께 길어짐
                 origin.ApplyFreeze(
-                    ElementReactionValues.GetFreezeDurationSeconds(spec.SkillLevel),
+                    ElementReactionValues.GetFreezeDurationSeconds(
+                        spec.SkillLevel, spec.Specialization.PowerMultiplier),
                     spec.SkillLevel >= ElementReactionValues.ExpansionUnlockLevel,
-                    spec.SkillLevel >= ElementReactionValues.AwakeningUnlockLevel);
+                    spec.SkillLevel >= ElementReactionValues.AwakeningUnlockLevel
+                        ? ElementReactionValues.GetFrostGroundRadius(spec.Specialization.RangeMultiplier)
+                        : 0f);
 
                 GameEvents.RaiseElementReaction(MagicElement.Frost, center, 0f);
 
@@ -242,7 +243,10 @@ public class Projectile : MonoBehaviour
 
                 // 점화, 빙결은 이 자리에서 끝나는 1회성이지만 암흑은 지속 상태.
                 // 7레벨이면 피해 증가량이 커짐. 적은 받은 값만 기억
-                origin.SetDarkAmplificationUnlocked(ElementReactionValues.GetDarkAmplificationBonus(spec.SkillLevel));
+                // 특화 "3중첩 피해 증가 효과"는 배율이 아니라 퍼센트포인트 가산
+                origin.SetDarkAmplificationUnlocked(
+                    ElementReactionValues.GetDarkAmplificationBonus(
+                        spec.SkillLevel, spec.Specialization.PowerBonus));
 
                 break;
         }
@@ -316,7 +320,8 @@ public class Projectile : MonoBehaviour
 
                 // 6레벨이면 충격파 반경이 커짐. 판정과 이벤트가 같은 반경을 쓰도록 한 번만 계산
                 // 아래 지진 구역은 EarthquakeRadius 를 그대로 사용
-                float shockwaveRadius = ElementReactionValues.GetShockwaveRadius(spec.SkillLevel);
+                float shockwaveRadius = ElementReactionValues.GetShockwaveRadius(
+                    spec.SkillLevel, spec.Specialization.RangeMultiplier);
 
                 // 충격파. 중심 적도 반경 안이라 함께 맞고,
                 // 이 피해는 표식도 적중 카운트도 만들지 않음
@@ -345,9 +350,10 @@ public class Projectile : MonoBehaviour
             case MagicElement.Lightning:
 
                 // 연쇄. 기획이 주변 적이라 직격을 맞은 적을 제외
-                // 충격파와 반대. 충격파는 중심 적도 함께 맞음
                 enemyManager.FindOverlappingEnemies(
-                    center, ElementReactionValues.ChainRadius, reactionBuffer);
+                    center,
+                    ElementReactionValues.GetChainRadius(spec.Specialization.RangeMultiplier),
+                    reactionBuffer);
 
                 float chainDamage = spec.Damage * ElementReactionValues.ChainDamageRatio;
 
@@ -467,11 +473,14 @@ public class Projectile : MonoBehaviour
             alreadyHit.Add(enemy);
 
             // 화염/암흑 5레벨 사망 전염 권한. 반드시 피해보다 먼저
+            // 전염은 죽는 순간에 터지므로 반경을 지금 계산해 함께 남기기
             if (spec.SkillLevel >= ElementReactionValues.ExpansionUnlockLevel)
             {
-                enemy.ArmDeathSpread(spec.Element);
+                enemy.ArmDeathSpread(
+                    spec.Element,
+                    ElementReactionValues.GetDeathSpreadRadius(
+                        spec.Element, spec.Specialization.RangeMultiplier));
             }
-
             // 암흑 8레벨 처형 권한. 같은 이유로 피해보다 먼저
             // 이 타격으로 체력이 10% 아래가 되면 그 자리에서 처형
             if (spec.Element == MagicElement.Dark
@@ -528,7 +537,10 @@ public class Projectile : MonoBehaviour
                 // 7레벨이면 거리 +30%. 보스 면역은 Enemy.ApplyKnockback 의 IsKnockbackImmune 이 처리
                 if (spec.Element == MagicElement.Earth)
                 {
-                    enemy.ApplyKnockback(direction, ElementReactionValues.GetKnockbackDistance(spec.SkillLevel));
+                    enemy.ApplyKnockback(
+                        direction,
+                        ElementReactionValues.GetKnockbackDistance(
+                            spec.SkillLevel, spec.Specialization.PowerMultiplier));
                 }
 
             }

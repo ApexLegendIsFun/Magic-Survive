@@ -9,6 +9,43 @@ public class EnemyManager : MonoBehaviour
 
     [SerializeField] private Transform playerTransform;
 
+    [Header("겹침 분리")]
+
+    // 적끼리 유지할 거리. 두 적의 HitRadius 합에 곱해서 사용
+    [SerializeField, Range(0f, 1.5f)] private float enemySeparationFactor = 0.7f;
+
+    // 플레이어와 유지할 거리
+    [SerializeField, Min(0f)] private float playerSeparationDistance = 0.6f;
+
+    // 분리로 밀리는 최대 속도(초당). 튀는 것을 막는 상한
+    [SerializeField, Min(0f)] private float maxSeparationSpeed = 3f;
+
+    // 겹침을 초당 얼마나 빠르게 해소할지
+    [SerializeField, Range(1f, 30f)] private float separationResponse = 12f;
+
+    // 이 비율 이하의 겹침은 무시.
+    private const float SeparationDeadZone = 0.05f;
+
+    // 겹침 분리 계산용 스냅샷. 프레임 시작 위치로만 계산해 순서 의존x
+    private struct SeparationEntry
+    {
+        public bool IsValid;
+        public bool CanMove;
+
+        // 인스턴스 ID. activeEnemies 인덱스는 적이 죽으면 뒤바뀌므로
+        // 완전히 겹쳤을 때의 탈출 방향이 프레임마다 달라짐
+        public int Id;
+
+        public Vector2 Position;
+        public float Radius;
+        public Vector2 Offset;
+
+        // 이번 프레임에 이 적을 민 이웃 수. 합을 평균으로 낮추는 데 씀
+        public int NeighborCount;
+    }
+
+    private readonly List<SeparationEntry> separationEntries = new List<SeparationEntry>(128);
+
     private readonly List<Enemy> activeEnemies = new List<Enemy>();
 
     private readonly Dictionary<Enemy, ObjectPool<Enemy>>
@@ -257,7 +294,7 @@ public class EnemyManager : MonoBehaviour
         }
 
         // [연동:UI] 중심은 플레이어, 대상은 낙석 3곳
-        // 화염 전염·연쇄와 같은 이벤트라 원소로 구분할 것
+        // 화염 전염,연쇄와 같은 이벤트라 원소로 구분할 것
         GameEvents.RaiseChainReaction(MagicElement.Earth, playerPosition, (Vector2[])rockfallPositions.Clone());
     }
 
@@ -511,6 +548,181 @@ public class EnemyManager : MonoBehaviour
             enemy.Tick(deltaTime, playerPosition);
         }
 
+        // 이동이 끝난 뒤 겹침만 풀어준다. 이동 계산 자체는 건드리지 x
+        ResolveSeparation(deltaTime, playerPosition);
+    }
+
+
+    // 겹친 적을 밀어 간격을 만듦
+    // 판정과 적용을 나눈 이유는 사망 전염과 같다
+    // 순회 도중 위치를 옮기면 뒤쪽 적의 밀림량이 activeEnemies 순서에 의존
+    // 플레이어 위치는 읽기만.
+    private void ResolveSeparation(float deltaTime, Vector2 playerPosition)
+    {
+        int count = activeEnemies.Count;
+
+        if (count == 0 || deltaTime <= 0f)
+        {
+            return;
+        }
+
+        float maxCorrection = maxSeparationSpeed * deltaTime;
+
+        // 겹침을 한 프레임에 다 풀지 않고 초당 비율로 접근
+        float blend = 1f - Mathf.Exp(-separationResponse * deltaTime);
+
+        separationEntries.Clear();
+
+        for (int i = 0; i < count; i++)
+        {
+            Enemy enemy = activeEnemies[i];
+
+            bool valid = enemy != null && enemy.IsAlive;
+
+            separationEntries.Add(new SeparationEntry
+            {
+                IsValid = valid,
+                CanMove = valid && enemy.CanReceiveSeparation,
+                Id = valid ? enemy.GetInstanceID() : 0,
+                Position = valid ? (Vector2)enemy.transform.position : Vector2.zero,
+                Radius = valid ? enemy.HitRadius : 0f,
+                Offset = Vector2.zero,
+                NeighborCount = 0
+            });
+        }
+
+        // 적끼리. 한 쌍을 한 번만 보므로 j 는 i 다음부터
+        for (int i = 0; i < count; i++)
+        {
+            SeparationEntry first = separationEntries[i];
+
+            if (!first.IsValid)
+            {
+                continue;
+            }
+
+            for (int j = i + 1; j < count; j++)
+            {
+                SeparationEntry second = separationEntries[j];
+
+                // 둘 다 면역이면 밀 곳 x
+                if (!second.IsValid || (!first.CanMove && !second.CanMove))
+                {
+                    continue;
+                }
+
+                Vector2 delta = second.Position - first.Position;
+
+                float minDistance = (first.Radius + second.Radius) * enemySeparationFactor;
+
+                float sqrDistance = delta.sqrMagnitude;
+
+                if (sqrDistance >= minDistance * minDistance)
+                {
+                    continue;
+                }
+
+                float distance = Mathf.Sqrt(sqrDistance);
+
+                float penetration = minDistance - distance;
+
+                // 거의 붙어 있는 정도는 그냥 두기
+                if (penetration <= minDistance * SeparationDeadZone)
+                {
+                    continue;
+                }
+
+                // 목록 순서가 바뀌어도 같은 쌍은 늘 같은 방향으로 벌어지게
+                Vector2 direction = distance > 0.001f
+                    ? delta / distance
+                    : GetFallbackDirection(first.Id, second.Id);
+
+                float correction = penetration * blend;
+
+                // 한쪽이 면역이면 움직일 수 있는 쪽이 전부 보정
+                if (first.CanMove && second.CanMove)
+                {
+                    Vector2 half = direction * (correction * 0.5f);
+
+                    first.Offset -= half;
+                    first.NeighborCount++;
+
+                    second.Offset += half;
+                    second.NeighborCount++;
+                }
+                else if (first.CanMove)
+                {
+                    first.Offset -= direction * correction;
+                    first.NeighborCount++;
+                }
+                else
+                {
+                    second.Offset += direction * correction;
+                    second.NeighborCount++;
+                }
+
+                // 구조체라 목록에 되돌려 넣어야 반영된다
+                separationEntries[i] = first;
+                separationEntries[j] = second;
+            }
+        }
+
+        for (int i = 0; i < count; i++)
+        {
+            SeparationEntry entry = separationEntries[i];
+
+            if (!entry.IsValid || !entry.CanMove)
+            {
+                continue;
+            }
+
+            Vector2 offset = entry.Offset;
+
+            // 진동 방지
+            if (entry.NeighborCount > 1)
+            {
+                offset /= entry.NeighborCount;
+            }
+
+            if (offset.sqrMagnitude > maxCorrection * maxCorrection)
+            {
+                offset = offset.normalized * maxCorrection;
+            }
+
+            Vector2 next = entry.Position + offset;
+
+            // 플레이어 겹침은 밀어내기가 아니라 위치 제약으로 처리
+            // 밀어내기로 두면 뒤에서 미는 힘이 강할 때 상한을 이기고 플레이어 위로 올라옴
+            if (playerSeparationDistance > 0f)
+            {
+                Vector2 fromPlayer = next - playerPosition;
+
+                float sqrFromPlayer = fromPlayer.sqrMagnitude;
+
+                if (sqrFromPlayer < playerSeparationDistance * playerSeparationDistance)
+                {
+                    Vector2 outward = sqrFromPlayer > 0.000001f
+                        ? fromPlayer / Mathf.Sqrt(sqrFromPlayer)
+                        : GetFallbackDirection(entry.Id, 0);
+
+                    next = playerPosition + outward * playerSeparationDistance;
+                }
+            }
+
+            // 위치 대입은 Enemy 가 한 번만 한다
+            activeEnemies[i].ApplySeparation(next - entry.Position);
+        }
+    }
+
+
+    // 완전히 겹쳤을 때 쓸 방향
+    private static Vector2 GetFallbackDirection(int firstId, int secondId)
+    {
+        int hash = (firstId * 73856093) ^ (secondId * 19349663);
+
+        float angle = (hash & 1023) * (Mathf.PI * 2f / 1024f);
+
+        return new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
     }
 
     // 모든 Update 가 끝난 뒤. 투사체와 적 순회 양쪽의 피해가 확정된 시점
