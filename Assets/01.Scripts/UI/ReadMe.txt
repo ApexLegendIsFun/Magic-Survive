@@ -151,5 +151,12 @@ UI의 해상도 검사(1280×720 / 1920×1080)
  *이벤트 필요
  BossHud(보스의 Hp bar 연결 대기중)
 
+ 09_22
+
+ LightningChaineffectplayer => Chaineffectplayer 화염 / 전염 매니저(5레벨 화염 전염) (다른 전염이 생기더라도 인스펙터 창으로 추가 가능) 하게 수정 완료.(프리펩 적용 완료.)
+ GroundAreaEffectplayer => Entry 수정완료.
+
+ 수요일에 제가 ReactionValue의 3레벨 해금스킬을 3 => 1 로 수정했던부분을 다시 빌드전이므로 1 => 3 으로 수정하겠습니다.
+
 
 

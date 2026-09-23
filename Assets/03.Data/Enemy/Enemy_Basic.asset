@@ -17,3 +17,4 @@ MonoBehaviour:
   moveSpeed: 2
   contactDamage: 10
   experienceReward: 1
+  isBoss: 0

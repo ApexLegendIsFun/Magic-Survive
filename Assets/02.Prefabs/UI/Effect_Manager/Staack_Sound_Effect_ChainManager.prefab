@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5887413564716011965}
-  - component: {fileID: 3259084942697795194}
+  - component: {fileID: 333907472919510939}
   m_Layer: 0
-  m_Name: Staack_Sound_Effect_LightningManager
+  m_Name: Staack_Sound_Effect_ChainManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3259084942697795194
+--- !u!114 &333907472919510939
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,12 +41,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 4158464932362483992}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 627f334eeaa0fd240ad7ef0ddf5b5e32, type: 3}
+  m_Script: {fileID: 11500000, guid: 971d598d4afae4d4b9e5ed2ae13b2bc1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LightningChainEffectPlayer
-  boltPrefab: {fileID: 3409985999120834207, guid: f5f821215f5b627499bad759ee88c80a, type: 3}
-  boltLifetime: 0.15
-  sfxType: 4
-  burstEffectPrefab: {fileID: 5220326997714010057, guid: 7ac16530d7d1e5d42bc49fa0410bc022, type: 3}
-  burstAnimationClip: {fileID: 0}
-  burstFallbackLifetime: 0.3
+  m_EditorClassIdentifier: Assembly-CSharp::ChainReactionEffectPlayer
+  entries:
+  - element: 2
+    boltPrefab: {fileID: 3409985999120834207, guid: f5f821215f5b627499bad759ee88c80a, type: 3}
+    boltLifetime: 0.15
+    burstEffectPrefab: {fileID: 5220326997714010057, guid: 7ac16530d7d1e5d42bc49fa0410bc022, type: 3}
+    burstAnimationClip: {fileID: 0}
+    burstFallbackLifetime: 0.3
+    sfxType: 4
+  - element: 0
+    boltPrefab: {fileID: 3409985999120834207, guid: f5f821215f5b627499bad759ee88c80a, type: 3}
+    boltLifetime: 0.15
+    burstEffectPrefab: {fileID: 7773857729515046760, guid: 20663650ac089404eba44047ff6ffdd2, type: 3}
+    burstAnimationClip: {fileID: 0}
+    burstFallbackLifetime: 0.3
+    sfxType: 2
