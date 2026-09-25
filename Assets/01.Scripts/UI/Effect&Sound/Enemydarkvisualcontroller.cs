@@ -40,7 +40,7 @@ public class EnemyDarkVisualController : MonoBehaviour
 
     private void HandleDarkAmplifiedChanged(bool amplified)
     {
-        if (amplified) visual?.Show();
+        if (amplified) { visual?.Show(); SoundManager.instance?.PlaySFX(SFXType.Dark_Increased_damage); }
         else visual?.Hide();
     }
 

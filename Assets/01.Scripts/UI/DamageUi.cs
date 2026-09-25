@@ -18,7 +18,7 @@ public class DamageUi : MonoBehaviour
     {
         transform.position = position;
 
-        damageText.text = $"{damage}";
+        damageText.text = $"{damage:0.#}";
 
         timer = 0f;
         damageText.alpha = 1f;

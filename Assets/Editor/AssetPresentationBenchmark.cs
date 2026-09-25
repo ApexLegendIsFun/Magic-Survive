@@ -16,6 +16,7 @@ public static class AssetPresentationBenchmark
     private static readonly List<double> samples = new List<double>();
     private static RenderTexture target;
     private static bool ready;
+    private static double nextEffect;
 
     static AssetPresentationBenchmark()
     {
@@ -23,12 +24,14 @@ public static class AssetPresentationBenchmark
     }
     public static void Before() { Begin("before"); }
     public static void After() { Begin("after"); }
+    public static void Final() { Begin("final"); }
     private static void Begin(string label)
     {
         SessionState.SetBool(Key, true);
         SessionState.SetString(Key + ".Label", label);
         SessionState.SetFloat(Key + ".Requested", (float)EditorApplication.timeSinceStartup);
-        EditorSceneManager.OpenScene("Assets/00.Scenes/SampleScene.unity");
+        EditorSceneManager.OpenScene(SessionState.GetString(Key + ".Label", "") == "final"
+            ? Seondong.IntegrationGame.IntegrationGameEditor.Game : "Assets/00.Scenes/SampleScene.unity");
         Hook();
         EditorApplication.EnterPlaymode();
     }
@@ -50,6 +53,7 @@ public static class AssetPresentationBenchmark
         if (!SessionState.GetBool(Key, false)) return;
         try
         {
+            EditorApplication.QueuePlayerLoopUpdate();
             if (!EditorApplication.isPlaying)
             {
                 if (EditorApplication.timeSinceStartup - SessionState.GetFloat(Key + ".Requested", 0f) > 90)
@@ -60,6 +64,7 @@ public static class AssetPresentationBenchmark
             {
                 var flow = UnityEngine.Object.FindFirstObjectByType<LevelUpController>();
                 if (flow == null || !flow.TryChooseStartingElement(MagicElement.Fire)) return;
+                Application.runInBackground = true;
                 UnityEngine.Object.FindFirstObjectByType<PlayerProgression>().SetExperienceEnabled(false);
                 UnityEngine.Object.FindFirstObjectByType<SpawnDirector>().enabled = false;
                 var player = UnityEngine.Object.FindFirstObjectByType<PlayerController>();
@@ -72,12 +77,23 @@ public static class AssetPresentationBenchmark
                 serialized.FindProperty("maxHealth").floatValue = 1000000;
                 serialized.FindProperty("moveSpeed").floatValue = 0.05f;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
+                bool final = SessionState.GetString(Key + ".Label", "") == "final";
+                var bossData = final ? UnityEngine.Object.Instantiate(AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Boss.asset")) : data;
+                if (final)
+                {
+                    var bossSettings = new SerializedObject(bossData);
+                    bossSettings.FindProperty("maxHealth").floatValue = 1000000;
+                    bossSettings.FindProperty("moveSpeed").floatValue = .05f;
+                    bossSettings.ApplyModifiedPropertiesWithoutUndo();
+                }
                 for (int i = 0; i < 100; i++)
                 {
                     float angle = i * 2.39996323f;
                     float radius = 2f + Mathf.Sqrt(i / 99f) * 4f;
-                    manager.Spawn(data, (Vector2)player.transform.position +
+                    var enemy = manager.Spawn(final && i == 99 ? bossData : data, (Vector2)player.transform.position +
                         new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius);
+                    if (final)
+                        foreach (var element in MagicContentCatalog.PentagonElements) enemy.ApplyElementMark(element, 3, 60);
                 }
                 QualitySettings.vSyncCount = 0;
                 Application.targetFrameRate = -1;
@@ -91,6 +107,12 @@ public static class AssetPresentationBenchmark
             if (Time.frameCount == frame) return;
             frame = Time.frameCount;
             double now = EditorApplication.timeSinceStartup;
+            if (SessionState.GetString(Key + ".Label", "") == "final" && now >= nextEffect)
+            {
+                nextEffect = now + 1;
+                foreach (var element in MagicContentCatalog.PentagonElements)
+                    GameEvents.RaiseElementReaction(element, new Vector2((int)element - 2, 1), 1.2f);
+            }
             if (now - start > 5) samples.Add((now - last) * 1000);
             last = now;
             if (now - start < 25) return;
@@ -101,7 +123,7 @@ public static class AssetPresentationBenchmark
             double mean = samples.Average();
             string report = $"label={label}\nUnity={Application.unityVersion}\n" +
                 $"GPU={SystemInfo.graphicsDeviceName}\nAPI={SystemInfo.graphicsDeviceType}\n" +
-                $"resolution=1920x1080 RenderTexture; Editor Play Mode; 100 enemies + automatic fire\n" +
+                $"resolution=1920x1080 RenderTexture; Editor Play Mode; 100 enemies (final: 99 normal + boss), marks, automatic fire, synthetic effect load; not a natural gameplay test\n" +
                 $"frames={samples.Count}\nmeanMs={mean:F3}\np95Ms={samples[(int)(samples.Count * 0.95)]:F3}\n" +
                 $"meanFPS={1000 / mean:F2}\n";
             Directory.CreateDirectory("Logs");

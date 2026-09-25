@@ -1,3 +1,15 @@
+# 2026-09-25 최종 제출 기준
+
+현재 기준은 [최종 통합 기록](../../../Docs/FinalSubmission.md)이다.
+타이틀은 `Assets/01.Scripts/UI/TitleScene.unity`, 게임은 이 폴더의 `Scenes/SampleScene.unity`다.
+일반 Build Settings와 전용 Build Windows 메뉴 모두 이 두 씬을 사용한다.
+최신 팀원 PopupUi/ResultUi, 최종 EnemyData, 보유 아트·사운드를 연결했다.
+시작 원소 → 시작, 성장 시 원소 → 특화 카드 또는 해금 버튼을 누른다.
+
+아래는 과거 기록이다. 과거의 UI 제거·임시 데이터·에셋 누락 설명은 현재 빌드 지시가 아니다.
+
+---
+
 # 선동 전용 통합 게임
 
 ## 2026-09-22 추가 통합

@@ -17,9 +17,8 @@ public enum SFXType
     Chain_lightning = 4,//3중첩 연쇄 번개
     Eart_Shork = 5, //대지3스택, 밀치기
     Dark_Increased_damage = 6,//암흑 3중첩, 데미지 증가
-    Summon = 7 //소환될떄 나는 소리 
-
-
+    Summon = 7, //소환될떄 나는 소리 
+    Dash = 9
 }
 
 public enum SFXUIType
@@ -46,31 +45,23 @@ public class SoundManager : MonoBehaviour
 
     private void Awake()
     {
-        if (instance == null)
-            instance = this;
-        else
-        {
-            Destroy(gameObject);
-        }
-        DontDestroyOnLoad(gameObject);
+        if (instance != null && instance != this) { Destroy(gameObject); return; }
+        instance = this;
     }
 
+    private void OnDestroy() { if (instance == this) instance = null; }
 
     void Start()
     {
-        //로컬에 사운드 기록 저장 (Ui효과음은 조절 x)
-        bgmSlider.value = PlayerPrefs.GetFloat("BGM", 0.5f);
-        sfxSlider.value = PlayerPrefs.GetFloat("Sfx", 0.5f);
-
         float bgm = PlayerPrefs.GetFloat("BGM", 0.5f);
         float sfx = PlayerPrefs.GetFloat("SFX", 0.5f);
-
-        bgmAudioSurce.volume = bgm;
-        sfxAudioSource.volume = sfx;
-
-        ChangeBgm(BgmType.StartBgm);
+        if (bgmSlider != null) bgmSlider.SetValueWithoutNotify(bgm);
+        if (sfxSlider != null) sfxSlider.SetValueWithoutNotify(sfx);
+        if (bgmAudioSurce != null) bgmAudioSurce.volume = bgm;
+        if (sfxAudioSource != null) sfxAudioSource.volume = sfx;
+        if (sfxUiAudioSource != null) sfxUiAudioSource.volume = sfx;
+        ChangeBgm(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "TitleScene" ? BgmType.StartBgm : BgmType.GameBgm);
     }
-
 
     public void ChangeBgm(BgmType type)
     {
@@ -89,21 +80,21 @@ public class SoundManager : MonoBehaviour
 
     public void PlaySFXUI(SFXType type)
     {
-        if ((int)type > soundClip.Length)
+        if (soundClip == null || (int)type < 0 || (int)type >= soundClip.Length || soundClip[(int)type] == null)
             return;
 
 
-        sfxUiAudioSource.PlayOneShot(soundClip[(int)type]);
+        sfxUiAudioSource?.PlayOneShot(soundClip[(int)type]);
     }
 
 
     public void PlaySFX(SFXType type)
     {
-        if ((int)type > soundClip.Length)
+        if (soundClip == null || (int)type < 0 || (int)type >= soundClip.Length || soundClip[(int)type] == null)
             return;
 
 
-        sfxAudioSource.PlayOneShot(soundClip[(int)type]);
+        sfxAudioSource?.PlayOneShot(soundClip[(int)type]);
     }
 
 
@@ -115,7 +106,8 @@ public class SoundManager : MonoBehaviour
 
     public void SetSfxVolume(float volume)
     {
-        sfxAudioSource.volume = volume;
+        if (sfxAudioSource != null) sfxAudioSource.volume = volume;
+        if (sfxUiAudioSource != null) sfxUiAudioSource.volume = volume;
         PlayerPrefs.SetFloat("SFX", volume);
     }
 

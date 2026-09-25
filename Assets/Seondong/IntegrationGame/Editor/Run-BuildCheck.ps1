@@ -4,11 +4,12 @@ param(
     [int]$Width = 1280,
     [int]$Height = 720,
     [string]$RunName = '',
+    [string]$Executable = '',
     [int]$DeadlineSeconds = 1050
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../../..')).Path
-$exe = Join-Path $projectRoot 'Builds/SeondongIntegrationFinal/Magic-Survive.exe'
+$exe = if ($Executable) { (Resolve-Path -LiteralPath $Executable).Path } else { Join-Path $projectRoot 'Builds/SeondongIntegrationFinal/Magic-Survive.exe' }
 if (!(Test-Path -LiteralPath $exe)) { throw 'Build Windows first.' }
 if (!$RunName) { $RunName = "$Scenario-${Width}x${Height}-$(Get-Date -Format yyyyMMdd-HHmmss)" }
 if ($RunName -notmatch '^[a-zA-Z0-9_-]+$') { throw 'RunName must contain only letters, digits, hyphens and underscores.' }

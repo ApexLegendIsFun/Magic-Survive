@@ -245,7 +245,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -505,7 +505,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -715,7 +715,7 @@ GameObject:
   - component: {fileID: 300349680}
   - component: {fileID: 300349682}
   m_Layer: 5
-  m_Name: Option
+  m_Name: OPEN OPTIONS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -822,7 +822,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 300349680}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 738633578}
+        m_TargetAssemblyTypeName: OptionsUi, Assembly-CSharp
+        m_MethodName: Open
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1001 &353478478
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1021,8 +1033,23 @@ MonoBehaviour:
   sfxUiAudioSource: {fileID: 992174029}
   bgmSlider: {fileID: 1860301043}
   sfxSlider: {fileID: 1069835342}
-  bgmClip: []
-  soundClip: []
+  bgmClip:
+  - {fileID: 8300000, guid: f8671c4986b74e1469b141303d5159d0, type: 3}
+  - {fileID: 8300000, guid: c0aee14ebadfd924281a6437fcc23f6d, type: 3}
+  soundClip:
+  - {fileID: 8300000, guid: 5b9f8db31fc5c4e9fa1a788f4e5878e2, type: 3}
+  - {fileID: 8300000, guid: 9ab7be34eb9cd374e9c28db4d6f9f8bf, type: 3}
+  - {fileID: 8300000, guid: 138b2db8fabcc2f4d8e928b21a3e1a9d, type: 3}
+  - {fileID: 8300000, guid: 90b5659c566483147a510ba1aee1b62f, type: 3}
+  - {fileID: 8300000, guid: 9de0a9b941bfe744da2aa37df38e667c, type: 3}
+  - {fileID: 8300000, guid: 74d4097a4abe9cd45af86788b33cb355, type: 3}
+  - {fileID: 8300000, guid: fa7b58d87446c20498273d3f3453ed24, type: 3}
+  - {fileID: 8300000, guid: ecc06cf8772ce564a87d99e1b1eaa019, type: 3}
+  - {fileID: 8300000, guid: 39e5463693c4eae4e94fc933ca6fb550, type: 3}
+  - {fileID: 8300000, guid: e6c195af1a5d1c34d9a6fff989f830b7, type: 3}
+  - {fileID: 8300000, guid: fa7b58d87446c20498273d3f3453ed24, type: 3}
+  - {fileID: 8300000, guid: fa7b58d87446c20498273d3f3453ed24, type: 3}
+  - {fileID: 8300000, guid: fa7b58d87446c20498273d3f3453ed24, type: 3}
   soundUiClip: []
 --- !u!1 &404092894
 GameObject:
@@ -1260,10 +1287,10 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -1487,7 +1514,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::OptionsUi
   panelRoot: {fileID: 608179023}
   exitButton: {fileID: 882603219}
-  enableEscToggle: 1
+  enableEscToggle: 0
   bgmSlider: {fileID: 1860301043}
   sfxSlider: {fileID: 1069835342}
 --- !u!4 &738633579
@@ -1857,7 +1884,7 @@ GameObject:
   - component: {fileID: 882603217}
   - component: {fileID: 882603219}
   m_Layer: 5
-  m_Name: Exit
+  m_Name: CloseOptions
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1978,7 +2005,7 @@ GameObject:
   - component: {fileID: 886440444}
   - component: {fileID: 886440446}
   m_Layer: 5
-  m_Name: Start
+  m_Name: START GAME
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2137,7 +2164,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -2871,6 +2898,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1153085276}
   - component: {fileID: 1153085275}
+  - component: {fileID: 1153085277}
   m_Layer: 0
   m_Name: TitleFlow
   m_TagString: Untagged
@@ -2907,6 +2935,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1153085277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1153085274}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddc928cb077e2ab44b6fe1d1b3e97dbe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Seondong.IntegrationGame.FinalSubmissionExit
 --- !u!1 &1197881376
 GameObject:
   m_ObjectHideFlags: 0
@@ -3064,7 +3104,7 @@ GameObject:
   - component: {fileID: 1471435778}
   - component: {fileID: 1471435780}
   m_Layer: 5
-  m_Name: Exit
+  m_Name: QUIT
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3171,7 +3211,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1471435778}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1153085277}
+        m_TargetAssemblyTypeName: Seondong.IntegrationGame.FinalSubmissionExit, Assembly-CSharp
+        m_MethodName: Quit
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1538662860
 GameObject:
   m_ObjectHideFlags: 0
@@ -3263,7 +3315,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -3365,7 +3417,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -4000,7 +4052,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:

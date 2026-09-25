@@ -24,6 +24,7 @@ public class BossPhaseController : MonoBehaviour
     private BossShockwave shockwave;
 
     private bool isPhaseTwo;
+    public bool IsPhaseTwo => isPhaseTwo;
 
     private void Awake()
     {

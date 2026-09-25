@@ -130,7 +130,7 @@ public static class SpecializationValidationEditor
         Require(events == 1 && sawSettled, "GrowthChanged observed unsettled state");
         Require(before.CurrentLevel == 1 && before.Cards[0].SelectionCount == 0, "Preview was not immutable");
         Require(!controller.TryConfirmSpecialization(MagicElement.Fire, SpecializationId.FireDamage), "Duplicate confirmed without opportunity");
-        Require(Mathf.Approximately(skills.ActiveMagics.First(x => x.Element == MagicElement.Fire).Damage, 6.9f), "Specialization accidentally changed combat");
+        Require(Mathf.Approximately(skills.ActiveMagics.First(x => x.Element == MagicElement.Fire).Damage, 7.59f), "Fire Lv2 damage must include the delivered +10% specialization");
 
         earn(); earn();
         int pending = controller.PendingLevelUps;

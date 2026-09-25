@@ -16,6 +16,8 @@ public sealed class AssetVisualLifecycle : MonoBehaviour
     private bool[] hasMove;
     private bool[] hasState;
     private SortingGroup sorting;
+    private Camera sortingCamera;
+    private BossPhaseController bossPhase;
     private Vector3 initialScale;
     private Vector3 previousPosition;
     private static readonly int Move = Animator.StringToHash("1_Move");
@@ -25,6 +27,7 @@ public sealed class AssetVisualLifecycle : MonoBehaviour
     {
         if (visual == null) visual = transform;
         initialScale = visual.localScale;
+        bossPhase = GetComponent<BossPhaseController>();
         animators = visual.GetComponentsInChildren<Animator>(true);
         sprites = visual.GetComponentsInChildren<SpriteRenderer>(true);
         particles = visual.GetComponentsInChildren<ParticleSystem>(true);
@@ -67,9 +70,12 @@ public sealed class AssetVisualLifecycle : MonoBehaviour
         previousPosition = transform.position;
         if (Time.deltaTime <= 0f) return;
         bool moving = delta.sqrMagnitude > 0.0000001f;
+        Vector3 phaseScale = initialScale * (bossPhase != null && bossPhase.IsPhaseTwo ? 1.15f : 1f);
+        if (bossPhase != null)
+            visual.localScale = new Vector3(Mathf.Sign(visual.localScale.x) * Mathf.Abs(phaseScale.x), phaseScale.y, phaseScale.z);
         if (faceMovement && Mathf.Abs(delta.x) > 0.00001f)
-            visual.localScale = new Vector3(Mathf.Abs(initialScale.x) * (delta.x > 0f ? -1f : 1f),
-                initialScale.y, initialScale.z);
+            visual.localScale = new Vector3(Mathf.Abs(phaseScale.x) * (delta.x > 0f ? -1f : 1f),
+                phaseScale.y, phaseScale.z);
         for (int i = 0; i < animators.Length; i++)
         {
             var animator = animators[i];
@@ -80,7 +86,13 @@ public sealed class AssetVisualLifecycle : MonoBehaviour
                 animator.Play(animator.GetCurrentAnimatorStateInfo(0).fullPathHash, 0, 0f);
         }
         if (faceMovement && sorting != null)
-            sorting.sortingOrder = 1000 - Mathf.RoundToInt(transform.position.y * 100f);
+        {
+            // The arena is unbounded. Absolute Y eventually placed actors behind
+            // the ground (and overflowed the renderer's sorting range).
+            if (sortingCamera == null) sortingCamera = Camera.main;
+            float originY = sortingCamera != null ? sortingCamera.transform.position.y : 0f;
+            sorting.sortingOrder = Mathf.Clamp(1000 - Mathf.RoundToInt((transform.position.y - originY) * 100f), 1, 4000);
+        }
         ApplyTint();
     }
     private void ApplyTint()

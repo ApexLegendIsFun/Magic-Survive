@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -121,7 +121,7 @@ public class ResultUi : MonoBehaviour
 
             // RunResult엔 원소별 레벨이 없고 보유 목록만 있음 (확인 완료).
             // 레벨까지 보여주려면 RunResult에 필드 추가를 요청해야 함 — 그 전까진 보유 여부만 표시.
-            if (slot.levelText != null) slot.levelText.text = owned ? "보유" : string.Empty;
+            if (slot.levelText != null) slot.levelText.text = "Lv." + (FindFirstObjectByType<PlayerSkillSystem>()?.GetSkillLevel(element) ?? 0);
         }
     }
 

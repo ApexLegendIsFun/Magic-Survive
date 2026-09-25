@@ -23,16 +23,17 @@ public class EnemyFrozenVisualController : MonoBehaviour
     private void OnEnable()
     {
         //TODO: 현재 이부분이 연동되지 않았으므로 연동이 되는대로 주석 해제 후 테스트.
-        // enemy.FrozenChanged += HandleFrozenChanged;
+        enemy.FrozenChanged += HandleFrozenChanged;
 
         //TODO: 현재 이부분이 연동되지 않았으므로 연동이 되는대로 주석 해제 후 테스트.
-        // ApplyVisual(enemy.IsFrozen);
+        ApplyVisual(enemy.IsFrozen);
     }
 
     private void OnDisable()
     {
         //TODO: 현재 이부분이 연동되지 않았으므로 연동이 되는대로 주석 해제 후 테스트.
-        // enemy.FrozenChanged -= HandleFrozenChanged;
+        enemy.FrozenChanged -= HandleFrozenChanged;
+        ApplyVisual(false);
     }
 
     private void HandleFrozenChanged(bool frozen)

@@ -16,6 +16,7 @@ public class BossHudUi : MonoBehaviour
     [SerializeField] private Image bossHpBar;               // Image.Type = Filled 전제
 
     [Header("Flow")]
+    [SerializeField] private GameObject panelRoot;
     [SerializeField] private RunDirector runDirector;
     [SerializeField] private BossSpawner bossSpawner;
 
@@ -28,7 +29,7 @@ public class BossHudUi : MonoBehaviour
         if (runDirector == null) runDirector = FindFirstObjectByType<RunDirector>();
         if (bossSpawner == null) bossSpawner = FindFirstObjectByType<BossSpawner>();
 
-        gameObject.SetActive(false); // 평소엔 숨김, 보스전 시작 시 켜짐
+        if (panelRoot != null) panelRoot.SetActive(false);
     }
 
     private void OnEnable()
@@ -48,6 +49,7 @@ public class BossHudUi : MonoBehaviour
 
         if (runDirector != null) runDirector.TimeChanged += HandleTimeChanged;
         if (bossSpawner != null) bossSpawner.BossSpawned += HandleBossSpawned;
+        if (runDirector != null) runDirector.ResultReady += HandleResult;
 
         isSubscribed = true;
     }
@@ -58,6 +60,7 @@ public class BossHudUi : MonoBehaviour
 
         if (runDirector != null) runDirector.TimeChanged -= HandleTimeChanged;
         if (bossSpawner != null) bossSpawner.BossSpawned -= HandleBossSpawned;
+        if (runDirector != null) runDirector.ResultReady -= HandleResult;
 
         isSubscribed = false;
     }
@@ -65,7 +68,7 @@ public class BossHudUi : MonoBehaviour
     // BossSpawner가 실제 스폰 직후 보스 인스턴스를 직접 넘겨줌
     private void HandleBossSpawned(Enemy boss)
     {
-        gameObject.SetActive(true);
+        if (panelRoot != null) panelRoot.SetActive(true);
         SetBossName(bossName);
 
         SubscribeBoss(boss);
@@ -114,7 +117,7 @@ public class BossHudUi : MonoBehaviour
         if (bossTimeText == null) return;
 
         int totalSeconds = Mathf.CeilToInt(remaining);
-        bossTimeText.text = $"{totalSeconds / 60}:{(totalSeconds % 60):00}";
+        bossTimeText.text = $"{totalSeconds / 60:00}:{(totalSeconds % 60):00}";
     }
 
     public void SetBossName(string name)
@@ -130,6 +133,7 @@ public class BossHudUi : MonoBehaviour
 
     public void Hide()
     {
-        gameObject.SetActive(false);
+        if (panelRoot != null) panelRoot.SetActive(false);
     }
+    private void HandleResult(RunResult result) { UnsubscribeBoss(); Hide(); }
 }

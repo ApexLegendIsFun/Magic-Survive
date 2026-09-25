@@ -22,6 +22,7 @@ public class DashTelegraphEffectPlayer : MonoBehaviour
     private void HandleDashTelegraph(Vector2 origin, Vector2 direction, float distance, float telegraphSeconds)
     {
         if (dashLinePrefab == null) return;
+        SoundManager.instance?.PlaySFX(SFXType.Dash);
 
         var line = Instantiate(dashLinePrefab);
         line.useWorldSpace = true;

@@ -27,6 +27,14 @@ namespace Seondong.IntegrationGame
             public string startingElement;
             public int highestStartingSkillLevel, visualPoolReuses;
             public List<int> visualTiers = new List<int>();
+            public List<string> realCombatEvents = new List<string>();
+            public int maxActiveEnemies, combatFrames;
+            public float sampledSeconds, averageFps, lowestSecondFps = 9999;
+            public List<string> playingAudioSources = new List<string>();
+            public int actorSortSamples;
+            public float maxPlayerDistance;
+            public bool bossPhaseTwoVisual;
+            public int bossFanProjectiles;
         }
         private Report report;
         private Keyboard keyboard;
@@ -41,6 +49,11 @@ namespace Seondong.IntegrationGame
         private InputSettings.BackgroundBehavior previousBackgroundBehavior;
         private bool previousRunInBackground;
         private MagicElement startingElement = MagicElement.Fire;
+        private float fpsWindow;
+        private int fpsFrames;
+        private float growthMaxAt = -1;
+        private float audioWindow;
+        private bool checkingRestart;
         private readonly Dictionary<int, Vector2Int> visualSnapshots = new Dictionary<int, Vector2Int>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -86,6 +99,12 @@ namespace Seondong.IntegrationGame
             mouse = InputSystem.AddDevice<Mouse>("IntegrationMouse");
             keyboard.MakeCurrent(); mouse.MakeCurrent();
             Application.logMessageReceived += Log;
+            GameEvents.ElementReactionTriggered += Reaction;
+            GameEvents.ChainReactionTriggered += Chain;
+            GameEvents.GroundAreaCreated += Ground;
+            GameEvents.DashTelegraph += Dash;
+            GameEvents.SummonTelegraph += Summon;
+            GameEvents.BossShockwaveTriggered += Shockwave;
             Write();
             StartCoroutine(Guard(Run()));
         }
@@ -116,6 +135,60 @@ namespace Seondong.IntegrationGame
             if (!condition) throw new InvalidOperationException(message);
         }
         private void Mark(string value) { report.checkpoints.Add(value); Debug.Log("[Integration Auto] " + value); Write(); }
+        private void Evidence(string value)
+        {
+            if (report.realCombatEvents.Contains(value)) return;
+            report.realCombatEvents.Add(value); Mark("Combat event: " + value);
+            StartCoroutine(Capture("event-" + value.Replace(':', '-')));
+        }
+        private void Reaction(MagicElement e, Vector2 p, float r) => Evidence("Reaction:" + e);
+        private void Chain(MagicElement e, Vector2 p, IReadOnlyList<Vector2> targets) => Evidence("Chain:" + e);
+        private void Ground(MagicElement e, Vector2 p, float r, float duration) => Evidence("Ground:" + e);
+        private void Dash(Vector2 from, Vector2 to, float width, float duration) => Evidence("Dash");
+        private void Summon(IReadOnlyList<Vector2> p, float duration) => Evidence(boss != null && boss.IsAlive ? "BossSummon" : "Summon");
+        private void Shockwave(Vector2 p, float r) => Evidence("BossPhaseTwoShockwave");
+        private void Update()
+        {
+            if (report != null && !stopping && (audioWindow += Time.unscaledDeltaTime) >= .1f)
+            {
+                audioWindow = 0;
+                foreach (var source in FindObjectsByType<AudioSource>(FindObjectsSortMode.None))
+                    if (source.isPlaying)
+                    {
+                        string name = source.name + ":" + (source.clip != null ? source.clip.name : "OneShot");
+                        if (!report.playingAudioSources.Contains(name)) report.playingAudioSources.Add(name);
+                    }
+            }
+            var flow = FindFirstObjectByType<GameFlowController>();
+            if (report == null || flow == null || Time.timeScale == 0 || stopping)
+            { fpsWindow = 0; fpsFrames = 0; return; }
+            report.combatFrames++; report.sampledSeconds += Time.unscaledDeltaTime;
+            report.averageFps = report.combatFrames / Mathf.Max(.001f, report.sampledSeconds);
+            fpsWindow += Time.unscaledDeltaTime; fpsFrames++;
+            if (fpsWindow >= 1)
+            {
+                report.lowestSecondFps = Mathf.Min(report.lowestSecondFps, fpsFrames / fpsWindow);
+                var manager = FindFirstObjectByType<EnemyManager>();
+                if (manager != null) report.maxActiveEnemies = Mathf.Max(report.maxActiveEnemies, manager.ActiveCount);
+                foreach (var actor in FindObjectsByType<AssetVisualLifecycle>(FindObjectsSortMode.None).Where(a => a.faceMovement && a.visual != null))
+                {
+                    var group = actor.visual.GetComponent<UnityEngine.Rendering.SortingGroup>();
+                    if (group == null) continue;
+                    if (group.sortingOrder < 1 || group.sortingOrder > 4000) Fail("Actor sorting outside safe range: " + actor.name);
+                    report.actorSortSamples++;
+                }
+                var player = FindFirstObjectByType<PlayerController>();
+                if (player != null) report.maxPlayerDistance = Mathf.Max(report.maxPlayerDistance, player.transform.position.magnitude);
+                if (boss != null && boss.IsAlive && boss.GetComponent<BossPhaseController>().IsPhaseTwo)
+                    report.bossPhaseTwoVisual |= Mathf.Approximately(boss.GetComponent<AssetVisualLifecycle>().visual.localScale.y, 1.15f);
+                if (boss != null && boss.IsAlive)
+                {
+                    var targetField = typeof(Projectile).GetField("playerTarget", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                    report.bossFanProjectiles = Mathf.Max(report.bossFanProjectiles, FindObjectsByType<Projectile>(FindObjectsSortMode.None).Count(p => p.IsActive && targetField.GetValue(p) != null));
+                }
+                fpsWindow = 0; fpsFrames = 0;
+            }
+        }
         private void Write()
         {
             report.wallSeconds = Time.realtimeSinceStartup - began;
@@ -124,6 +197,26 @@ namespace Seondong.IntegrationGame
         private IEnumerator Capture(string name)
         {
             yield return new WaitForEndOfFrame();
+            foreach (var label in FindObjectsByType<TMPro.TMP_Text>(FindObjectsSortMode.None))
+            {
+                // The team's announcement deliberately slides across the screen edge.
+                if (!label.isActiveAndEnabled || label.alpha <= 0 || label.name == "Warn_Massage" || label.GetComponentInParent<DamageUi>() != null) continue;
+                var canvas = label.GetComponentInParent<Canvas>();
+                if (canvas == null || canvas.renderMode == RenderMode.WorldSpace) continue;
+                label.ForceMeshUpdate();
+                var camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+                foreach (var glyph in label.textInfo.characterInfo.Take(label.textInfo.characterCount).Where(c => c.isVisible))
+                {
+                    var lo = RectTransformUtility.WorldToScreenPoint(camera, label.transform.TransformPoint(glyph.bottomLeft));
+                    var hi = RectTransformUtility.WorldToScreenPoint(camera, label.transform.TransformPoint(glyph.topRight));
+                    if (lo.x < -.5f || lo.y < -.5f || hi.x > Screen.width + .5f || hi.y > Screen.height + .5f)
+                    {
+                        string failure = "Clipped UI text: " + label.name + " at " + name;
+                        if (!report.failures.Contains(failure)) report.failures.Add(failure);
+                        break;
+                    }
+                }
+            }
             var texture = ScreenCapture.CaptureScreenshotAsTexture();
             File.WriteAllBytes(Path.Combine(output, $"{imageIndex++:00}-{name}.png"), texture.EncodeToPNG());
             Destroy(texture);
@@ -186,10 +279,16 @@ namespace Seondong.IntegrationGame
         {
             Check(new[] { "death", "victory", "timeout", "layout", "growth" }.Contains(report.scenario), "Unknown scenario.");
             yield return new WaitForSecondsRealtime(1);
-            Check(SceneManager.GetActiveScene().path.Contains("Seondong/IntegrationGame"), "Wrong scene loaded.");
+            Check(SceneManager.GetActiveScene().name == "TitleScene", "Wrong scene loaded.");
             BindInput(); Canvas.ForceUpdateCanvases();
             ButtonPoint(FindButton("START GAME")); ButtonPoint(FindButton("QUIT"));
             Mark("Title buttons visible and topmost"); yield return Capture("title");
+            Check(FindObjectsByType<AudioSource>(FindObjectsSortMode.None).Any(a => a.isPlaying && a.loop && a.clip == SoundManager.instance.bgmClip[0]), "Title BGM not playing.");
+            yield return Click("OPEN OPTIONS");
+            yield return Capture("title-options");
+            yield return Click("CloseOptions");
+            Check(FindButton("CloseOptions") == null, "Title options did not close.");
+            Mark("Team title settings open and close verified");
             yield return Click("START GAME");
             yield return Await(() => FindFirstObjectByType<GameFlowController>() != null, 10, "Title failed to load gameplay.");
             var flow = FindFirstObjectByType<GameFlowController>();
@@ -205,6 +304,7 @@ namespace Seondong.IntegrationGame
             foreach (var element in MagicContentCatalog.PentagonElements) ButtonPoint(FindButton("Element_" + element));
             yield return Capture("element-select");
             yield return Click("Element_" + startingElement);
+            yield return Click("ConfirmStart");
             yield return Await(() => flow.State == GameFlowState.Playing, 5, "Starting selection did not begin combat.");
             BindInput();
             var player = FindFirstObjectByType<PlayerController>();
@@ -213,6 +313,12 @@ namespace Seondong.IntegrationGame
             report.movement = Vector3.Distance(original, player.transform.position) > .1f;
             Check(report.movement, "Virtual keyboard did not move player.");
             Mark("Movement through PlayerInput verified"); yield return Capture("combat");
+            Check(FindObjectsByType<AudioSource>(FindObjectsSortMode.None).Any(a => a.isPlaying && a.loop && a.clip == SoundManager.instance.bgmClip[1]), "Gameplay BGM not playing.");
+            Keys(Key.Escape); yield return null; Keys();
+            yield return Await(() => FindButton("GameCloseOptions") != null, 3, "Gameplay options did not open with ESC.");
+            yield return Capture("game-options"); yield return Click("GameCloseOptions");
+            Check(FindButton("GameCloseOptions") == null, "Gameplay options did not close.");
+            Mark("Gameplay ESC settings verified");
             float deadline = Time.realtimeSinceStartup + 760;
             float nextEvidence = 30;
             int observedElites = 0;
@@ -226,22 +332,16 @@ namespace Seondong.IntegrationGame
                     yield return new WaitForSecondsRealtime(.15f);
                     Check(Mathf.Approximately(Time.timeScale, 0) && Mathf.Approximately(pausedTime, run.ElapsedCombatTime), "Level-up failed to pause.");
                     var skills = FindFirstObjectByType<PlayerSkillSystem>();
-                    var choices = FindObjectsByType<Button>(FindObjectsSortMode.None).Where(b => b.name.StartsWith("Skill_") && b.IsInteractable()).OrderBy(b => report.scenario == "death" || report.scenario == "layout" || report.scenario == "growth" ? (b.name == "Skill_" + startingElement ? 0 : 1) : skills.GetSkillLevel((MagicElement)Enum.Parse(typeof(MagicElement), b.name.Substring(6)))).ToArray();
-                    // PrepareChoices now offers every eligible element, up to five.
-                    Check(choices.Length > 0 && choices.Length == skills.Choices.Count &&
-                        choices.All(b => skills.IsOffered((MagicElement)Enum.Parse(typeof(MagicElement), b.name.Substring(6)))),
-                        "Visible skill choices do not match the current growth contract.");
-                    foreach (var choice in choices) ButtonPoint(choice);
                     if (report.levelUps == 0) yield return Capture("levelup");
-                    yield return Click(choices[0].name); yield return Click("ConfirmButton");
-                    yield return Await(() => flow.State != GameFlowState.LevelUp, 3, "Skill confirmation failed to resume combat.");
+                    yield return ChooseGrowth(skills);
                     report.levelUps++;
                     Check(progression.Level > 1, "Level did not increase through combat XP.");
                     Mark("Level-up confirmed through input");
                 }
                 else
                 {
-                    if (report.scenario == "growth" && report.visualTiers.Count == 4) MoveTowardEnemy(player);
+                    if (report.scenario == "growth" && report.visualTiers.Count == 4 && growthMaxAt < 0) growthMaxAt = run.ElapsedCombatTime;
+                    if (report.scenario == "death" || report.scenario == "layout" || (growthMaxAt >= 0 && run.ElapsedCombatTime - growthMaxAt > 45)) MoveTowardEnemy(player);
                     else MoveBot(player, report.scenario == "death" || report.scenario == "layout", flow.State == GameFlowState.Boss && report.scenario == "timeout");
                     yield return new WaitForSecondsRealtime(.1f);
                 }
@@ -293,6 +393,8 @@ namespace Seondong.IntegrationGame
                 if (report.levelUps == 0 || report.kills == 0 || report.chargerSpawns != 1 || report.summonerSpawns != 1 || report.bossSpawns != 1)
                     report.failures.Add("Full run did not reach every required combat stage.");
             }
+            if (report.scenario == "victory" && (report.bossFanProjectiles < 3 || !report.bossPhaseTwoVisual || !report.realCombatEvents.Contains("BossPhaseTwoShockwave") || !report.realCombatEvents.Contains("BossSummon")))
+                report.failures.Add("Boss phase-two appearance, summon or shockwave not observed.");
             ButtonPoint(FindButton("RestartButton")); ButtonPoint(FindButton("TitleButton"));
             Check(!FindObjectsByType<TMPro.TMP_Text>(FindObjectsSortMode.None).Any(t => t.name == "Boss_Timer"), "Boss HUD remained over the result.");
             Mark("Result=" + report.outcome); yield return Capture("result");
@@ -302,7 +404,8 @@ namespace Seondong.IntegrationGame
             Check(flow.State == GameFlowState.ElementSelect && run.ElapsedCombatTime == 0 && run.KillCount == 0 && progression.Level == 1, "Restart did not reset run.");
             Check(FindObjectsByType<IntegrationEliteSpawner>(FindObjectsSortMode.None).Length == 1 && FindObjectsByType<EventSystem>(FindObjectsSortMode.None).Length == 1, "Duplicate systems after restart.");
             report.restarted = true; Mark("Restart reset verified"); yield return Capture("restart");
-            yield return Click("Element_Fire"); BindInput();
+            checkingRestart = true;
+            yield return Click("Element_Fire"); yield return Click("ConfirmStart"); BindInput();
             yield return Await(() => FindObjectsByType<IntegrationMagicVisual>(FindObjectsSortMode.None).Any(v => v.isActiveAndEnabled), 15, "No projectile after restart.");
             Check(FindObjectsByType<IntegrationMagicVisual>(FindObjectsSortMode.None).Where(v => v.isActiveAndEnabled).All(v => v.CapturedLevel == 1 && v.Tier == 0), "Restart retained an upgraded projectile visual.");
             Mark("Restart projectile appearance reset to level 1 verified");
@@ -312,8 +415,7 @@ namespace Seondong.IntegrationGame
                 Check(Time.realtimeSinceStartup < deathDeadline, "Second natural death not reached.");
                 if (flow.State == GameFlowState.LevelUp)
                 {
-                    var choice = FindObjectsByType<Button>(FindObjectsSortMode.None).First(b => b.name.StartsWith("Skill_") && b.IsInteractable());
-                    yield return Click(choice.name); yield return Click("ConfirmButton");
+                    yield return ChooseGrowth(FindFirstObjectByType<PlayerSkillSystem>());
                 }
                 var victim = FindFirstObjectByType<PlayerController>();
                 var nearest = FindObjectsByType<Enemy>(FindObjectsSortMode.None).Where(e => e.IsAlive).OrderBy(e => (e.transform.position - victim.transform.position).sqrMagnitude).FirstOrDefault();
@@ -334,6 +436,20 @@ namespace Seondong.IntegrationGame
             yield return Click("QUIT", true);
             yield return new WaitForSecondsRealtime(3);
             Fail("Quit button did not terminate player.");
+        }
+
+        private IEnumerator ChooseGrowth(PlayerSkillSystem skills)
+        {
+            var choices = MagicContentCatalog.PentagonElements.Where(e => skills.IsOffered(e)).ToArray();
+            Check(choices.Length > 0, "No growth choices.");
+            foreach (var element in choices) ButtonPoint(FindButton("Element_" + element));
+            var selected = choices.OrderBy(e => checkingRestart ? (e == MagicElement.Fire ? -100 : skills.GetSkillLevel(e)) : report.scenario == "growth" || report.scenario == "death" || report.scenario == "layout" ? (e == startingElement ? -100 : skills.GetSkillLevel(e)) : skills.GetSkillLevel(e)).First();
+            int before = skills.GetSkillLevel(selected);
+            yield return Click("Element_" + selected);
+            if (report.levelUps == 0) yield return Capture(before == 0 ? "unlock-card" : "specialization-cards");
+            if (before == 0) yield return Click("UnlockElement");
+            else yield return Click(checkingRestart ? "Specialization_2" : "Specialization_0");
+            yield return Await(() => skills.GetSkillLevel(selected) == before + 1, 3, "Team growth confirmation did not increase level once.");
         }
 
         private void MoveBot(PlayerController player, bool stand, bool avoidBoss)
@@ -394,6 +510,12 @@ namespace Seondong.IntegrationGame
         private void OnDestroy()
         {
             Application.logMessageReceived -= Log;
+            GameEvents.ElementReactionTriggered -= Reaction;
+            GameEvents.ChainReactionTriggered -= Chain;
+            GameEvents.GroundAreaCreated -= Ground;
+            GameEvents.DashTelegraph -= Dash;
+            GameEvents.SummonTelegraph -= Summon;
+            GameEvents.BossShockwaveTriggered -= Shockwave;
             if (keyboard != null && keyboard.added) InputSystem.RemoveDevice(keyboard);
             if (mouse != null && mouse.added) InputSystem.RemoveDevice(mouse);
             InputSystem.settings.backgroundBehavior = previousBackgroundBehavior;

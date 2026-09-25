@@ -382,10 +382,10 @@ public class PopupUi : MonoBehaviour
         currentSkillSystem = skillSystem;
         foreach (var slot in elementSlots)
         {
-            bool offered = skillSystem.IsOffered(slot.element);
+            bool offered = skillSystem.IsOffered(slot.element) && skillSystem.Tree.CanUpgrade(slot.element);
             if (slot.button != null)
             {
-                slot.button.gameObject.SetActive(offered);
+                slot.button.gameObject.SetActive(true);
                 slot.button.interactable = offered;
             }
             bool maxed = LevelUpSlotMapper.IsMaxed(slot.element, skillSystem.Tree);

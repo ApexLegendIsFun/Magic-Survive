@@ -11,6 +11,7 @@ public sealed class LevelUpController : MonoBehaviour
     [SerializeField] private GrayboxGameFlowView view;
 
     private PopupUi popupView;
+    private ResultUi resultView;
     private bool UsePopup => popupView != null && popupView.IsConfigured;
 
     private int pendingLevelUps;
@@ -200,7 +201,8 @@ public sealed class LevelUpController : MonoBehaviour
 
     private void HandleResultReady(RunResult result)
     {
-        view?.ShowResult(result);
+        if (resultView != null) resultView.ShowResult(result);
+        else view?.ShowResult(result);
     }
 
     private void HandleRestartRequested()
@@ -303,6 +305,7 @@ public sealed class LevelUpController : MonoBehaviour
     private void ResolveLocalDependencies()
     {
         popupView = FindFirstObjectByType<PopupUi>(FindObjectsInactive.Include);
+        resultView = FindFirstObjectByType<ResultUi>(FindObjectsInactive.Include);
         if (playerProgression == null)
         {
             playerProgression = GetComponent<PlayerProgression>();

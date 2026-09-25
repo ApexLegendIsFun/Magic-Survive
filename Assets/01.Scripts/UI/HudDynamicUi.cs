@@ -82,7 +82,7 @@ public class HudDynamicUi : MonoBehaviour
 
     public void UpdateLvtext(int level)
     {
-        lvText.text = $"·¹º§{level}";
+        lvText.text = $"Lv.{level}";
     }
 
 

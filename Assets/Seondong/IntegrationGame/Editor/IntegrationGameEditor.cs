@@ -15,7 +15,7 @@ namespace Seondong.IntegrationGame
     public static class IntegrationGameEditor
     {
         public const string Root = "Assets/Seondong/IntegrationGame";
-        public const string Title = Root + "/Scenes/TitleScene.unity";
+        public const string Title = "Assets/01.Scripts/UI/TitleScene.unity";
         public const string Game = Root + "/Scenes/SampleScene.unity";
         public const string Output = "Builds/SeondongIntegrationFinal/Magic-Survive.exe";
         private const string BackupKey = "Seondong.IntegrationGame.BuildScenesBackup";
@@ -49,38 +49,12 @@ namespace Seondong.IntegrationGame
                 {
                     if (!AssetDatabase.CopyAsset("Assets/00.Scenes/SampleScene.unity", Game)) throw new Exception("Scene copy failed.");
                     var scene = EditorSceneManager.OpenScene(Game);
-                    foreach (var root in scene.GetRootGameObjects())
-                    {
-                        // Only the personal scene instance changes. Shared prefab assets stay intact.
-                        if (root.GetComponentInChildren<PopupUi>(true) != null && PrefabUtility.IsAnyPrefabInstanceRoot(root))
-                            PrefabUtility.UnpackPrefabInstance(root, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
-                        foreach (var popup in root.GetComponentsInChildren<PopupUi>(true))
-                        {
-                            if (popup.GetComponentInChildren<HudDynamicUi>(true) != null) throw new Exception("Popup contains HUD; cannot remove safely.");
-                            UnityEngine.Object.DestroyImmediate(popup.gameObject);
-                        }
-                        foreach (var result in root.GetComponentsInChildren<ResultUi>(true)) result.gameObject.SetActive(false);
-                        foreach (var scaler in root.GetComponentsInChildren<CanvasScaler>(true))
-                        {
-                            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-                            scaler.referenceResolution = new Vector2(1920, 1080);
-                            scaler.matchWidthOrHeight = .5f;
-                        }
-                    }
                     var flow = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<GameFlowController>(true)).Single();
                     flow.gameObject.AddComponent<IntegrationRunEvidence>();
                     EditorSceneManager.SaveScene(scene, Game);
                 }
-                if (!File.Exists(Title))
-                {
-                    var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-                    var camera = new GameObject("Main Camera", typeof(Camera), typeof(AudioListener)).GetComponent<Camera>();
-                    camera.tag = "MainCamera";
-                    camera.clearFlags = CameraClearFlags.SolidColor;
-                    camera.backgroundColor = new Color(.045f, .065f, .1f);
-                    new GameObject("IntegrationTitle", typeof(TitleSceneController), typeof(IntegrationTitle));
-                    EditorSceneManager.SaveScene(scene, Title);
-                }
+                if (!File.Exists(Title)) throw new Exception("Team title scene missing.");
+                FinalSubmissionWiring.ConfigureTitle();
                 ConfigureEncounters();
                 AssetDatabase.SaveAssets();
                 Debug.Log("[Seondong Integration] Personal scenes ready.");
@@ -90,73 +64,10 @@ namespace Seondong.IntegrationGame
 
         private static void ConfigureEncounters()
         {
-            Directory.CreateDirectory(Root + "/Data");
-            AssetDatabase.Refresh();
-            var charger = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Dasher.asset");
-            var summoner = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Summoner.asset")
-                ?? TemporaryEnemy("TemporarySummoner", "Enemy_Tank", 260, 1f, 12, 25);
-            var boss = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Boss.asset");
-            AssetDatabase.SaveAssets();
             var scene = EditorSceneManager.OpenScene(Game);
-            // Opening a scene unloads unused assets; reload the persistent objects afterwards.
-            charger = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Dasher.asset");
-            summoner = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Summoner.asset")
-                ?? AssetDatabase.LoadAssetAtPath<EnemyData>(Root + "/Data/TemporarySummoner.asset");
-            boss = AssetDatabase.LoadAssetAtPath<EnemyData>("Assets/03.Data/Enemy/Enemy_Boss.asset");
-            var roots = scene.GetRootGameObjects();
-            var run = roots.SelectMany(r => r.GetComponentsInChildren<RunDirector>(true)).Single();
-            var manager = roots.SelectMany(r => r.GetComponentsInChildren<EnemyManager>(true)).Single();
-            var camera = roots.SelectMany(r => r.GetComponentsInChildren<Camera>(true)).First(c => c.CompareTag("MainCamera"));
-            var elite = run.GetComponent<IntegrationEliteSpawner>();
-            if (elite == null) elite = run.gameObject.AddComponent<IntegrationEliteSpawner>();
-            var serialized = new SerializedObject(elite);
-            serialized.FindProperty("runDirector").objectReferenceValue = run;
-            serialized.FindProperty("enemyManager").objectReferenceValue = manager;
-            serialized.FindProperty("spawnCamera").objectReferenceValue = camera;
-            // Keep later inspector assignments: the placeholders are only the initial defaults.
-            var configuredCharger = serialized.FindProperty("charger");
-            if (configuredCharger.objectReferenceValue == null ||
-                AssetDatabase.GetAssetPath(configuredCharger.objectReferenceValue) == Root + "/Data/TemporaryCharger.asset")
-                configuredCharger.objectReferenceValue = charger;
-            var configuredSummoner = serialized.FindProperty("summoner");
-            if (configuredSummoner.objectReferenceValue == null ||
-                AssetDatabase.GetAssetPath(configuredSummoner.objectReferenceValue) == Root + "/Data/TemporarySummoner.asset")
-                configuredSummoner.objectReferenceValue = summoner;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-            EnsureReactionEffectManager(scene);
-            var bossSpawner = roots.SelectMany(r => r.GetComponentsInChildren<BossSpawner>(true)).Single();
-            var bossSerialized = new SerializedObject(bossSpawner);
-            var assigned = bossSerialized.FindProperty("bossData").objectReferenceValue;
-            if (assigned == null || AssetDatabase.GetAssetPath(assigned) == Root + "/Data/TemporaryBoss.asset")
-                bossSerialized.FindProperty("bossData").objectReferenceValue = boss;
-            bossSerialized.ApplyModifiedPropertiesWithoutUndo();
-            var bossHud = run.GetComponent<IntegrationBossHud>();
-            if (bossHud == null) bossHud = run.gameObject.AddComponent<IntegrationBossHud>();
-            var hudSerialized = new SerializedObject(bossHud);
-            hudSerialized.FindProperty("spawner").objectReferenceValue = bossSpawner;
-            hudSerialized.FindProperty("hud").objectReferenceValue = roots.SelectMany(r => r.GetComponentsInChildren<HudDynamicUi>(true)).Single();
-            hudSerialized.ApplyModifiedPropertiesWithoutUndo();
-            var hud = (HudDynamicUi)hudSerialized.FindProperty("hud").objectReferenceValue;
-            var existingHud = new SerializedObject(hud);
-            hudSerialized.FindProperty("runDirector").objectReferenceValue = run;
-            hudSerialized.FindProperty("remainingTime").objectReferenceValue = existingHud.FindProperty("bossTimer").objectReferenceValue;
-            hudSerialized.ApplyModifiedPropertiesWithoutUndo();
-            var bossGroup = roots.SelectMany(r => r.GetComponentsInChildren<Transform>(true)).Single(t => t.name == "Boss_Timer&Hp").gameObject;
-            hudSerialized.FindProperty("bossGroup").objectReferenceValue = bossGroup;
-            hudSerialized.ApplyModifiedPropertiesWithoutUndo();
-            existingHud.FindProperty("bossHpBarGroup").objectReferenceValue = bossGroup;
-            existingHud.ApplyModifiedPropertiesWithoutUndo();
-            bossGroup.SetActive(false);
-            IntegrationTeamWiring.Configure(scene);
-            if (bossSerialized.FindProperty("bossData").objectReferenceValue == null ||
-                serialized.FindProperty("charger").objectReferenceValue == null || serialized.FindProperty("summoner").objectReferenceValue == null)
-                throw new Exception("Encounter data did not survive scene loading.");
+            FinalSubmissionWiring.ConfigureGame(scene);
             EditorSceneManager.SaveScene(scene, Game);
-            var finalRoots = scene.GetRootGameObjects();
-            foreach (var root in finalRoots)
-                foreach (var t in root.GetComponentsInChildren<Transform>(true))
-                    if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(t.gameObject) > 0) throw new Exception("Missing script: " + t.name);
-            if (finalRoots.Any(r => r.GetComponentInChildren<PopupUi>(true) != null)) throw new Exception("Conflicting PopupUi remains.");
+            EditorBuildSettings.scenes = PersonalScenes();
         }
 
         private static void EnsureReactionEffectManager(Scene scene)
@@ -212,7 +123,7 @@ namespace Seondong.IntegrationGame
                 Mathf.Approximately(summoner.MoveSpeed, 1f) && Mathf.Approximately(summoner.ContactDamage, 12f) &&
                 summoner.ExperienceReward == 25, "Summoner data values changed.");
             Require(RunTimelineRules.Reached(360f, RunTimelineRules.SecondEliteTime), "Summoner timeline missing.");
-            Require(ElementReactionValues.ReactionUnlockLevel == 1, "Reaction unlock level changed.");
+            Require(ElementReactionValues.ReactionUnlockLevel == 3, "Reaction unlock level changed.");
             Require(Mathf.Approximately(ElementReactionValues.KnockbackDistance, .5f), "Earth knockback value changed.");
 
             var reactionPlayers = roots.SelectMany(root => root.GetComponentsInChildren<ElementReactionEffectPlayer>(true)).ToArray();
@@ -229,7 +140,7 @@ namespace Seondong.IntegrationGame
                 if (element == MagicElement.Frost) frostReady = hasPrefab;
             }
             Require(fireReady && frostReady, "Fire and frost reaction effects are not wired.");
-            IntegrationTeamWiring.Validate(scene);
+            FinalSubmissionWiring.Validate(scene);
 
             IReadOnlyList<Vector2> receivedTargets = null;
             Action<MagicElement, Vector2, IReadOnlyList<Vector2>> handler =
@@ -273,6 +184,7 @@ namespace Seondong.IntegrationGame
             if (EditorApplication.isPlaying) throw new InvalidOperationException("Stop Play Mode first.");
             CreateScenes();
             RequireScenes();
+            ValidateTeamHandoff();
             Directory.CreateDirectory(Path.GetDirectoryName(Output));
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
