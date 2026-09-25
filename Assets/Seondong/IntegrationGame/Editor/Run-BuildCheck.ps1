@@ -19,7 +19,7 @@ New-Item -ItemType Directory -Path $outDir | Out-Null
 $runArgs = "-screen-fullscreen 0 -screen-width $Width -screen-height $Height -integration-auto $Scenario -integration-element $Element -integration-output `"$outDir`" -logFile `"$(Join-Path $outDir 'Player.log')`""
 # Keep the interactive game window visible so Unity has a swapchain to capture.
 # Input stays inside Unity; this script never injects OS keyboard/mouse events.
-$process = Start-Process -FilePath $exe -ArgumentList $runArgs -WorkingDirectory $projectRoot -PassThru
+$process = Start-Process -FilePath $exe -ArgumentList $runArgs -WorkingDirectory (Split-Path -Parent $exe) -PassThru
 $started = Get-Date
 $deadline = $started.AddSeconds($DeadlineSeconds)
 Write-Output "Started $Scenario at ${Width}x${Height}, process $($process.Id). Evidence: $outDir"
@@ -44,4 +44,9 @@ $passed = $report -and $report.status -eq 'PASS' -and $report.quitButtonDispatch
     executableSHA256 = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash
 } | ConvertTo-Json | Set-Content (Join-Path $outDir 'process.json')
 Get-Content (Join-Path $outDir 'process.json')
-if (!$passed) { exit 1 }
+if (!$passed) {
+    & (Join-Path $PSScriptRoot 'Review-BuildCheck.ps1') -EvidenceDirectory $outDir | Out-Null
+    $review = Get-Content (Join-Path $outDir 'review.json') -Raw | ConvertFrom-Json
+    if ($review.status -ne 'PASS') { exit 1 }
+    Write-Output 'PASS after documented announcement-animation diagnostic review; raw reports preserved.'
+}
