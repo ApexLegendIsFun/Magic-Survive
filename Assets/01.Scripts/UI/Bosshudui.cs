@@ -1,12 +1,10 @@
-﻿using System.Collections;
-using System.Linq;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
 /// 보스전 HUD. 이름은 고정 문자열, 남은 시간은 RunDirector가 주는 값 그대로.
-/// 보스 인스턴스 자체는 IsBoss/Killed(둘 다 확정된 공개 API)로 찾아서 자동 추적함.
+/// 보스 인스턴스는 BossSpawner.BossSpawned(Enemy)로 직접 받음 — 스캔/폴링 불필요.
 /// 체력만 여전히 Enemy 쪽에 HealthRatio 같은 좁은 조회 API가 필요해서 대기 중.
 /// </summary>
 public class BossHudUi : MonoBehaviour
@@ -19,16 +17,16 @@ public class BossHudUi : MonoBehaviour
 
     [Header("Flow")]
     [SerializeField] private RunDirector runDirector;
+    [SerializeField] private BossSpawner bossSpawner;
 
     private bool isSubscribed;
     private Enemy currentBoss;
+    private Health currentBossHealth;
 
     private void Awake()
     {
-        if (runDirector == null)
-        {
-            runDirector = FindFirstObjectByType<RunDirector>();
-        }
+        if (runDirector == null) runDirector = FindFirstObjectByType<RunDirector>();
+        if (bossSpawner == null) bossSpawner = FindFirstObjectByType<BossSpawner>();
 
         gameObject.SetActive(false); // 평소엔 숨김, 보스전 시작 시 켜짐
     }
@@ -46,43 +44,29 @@ public class BossHudUi : MonoBehaviour
 
     private void Subscribe()
     {
-        if (isSubscribed || runDirector == null) return;
+        if (isSubscribed) return;
 
-        runDirector.BossSpawnRequested += HandleBossSpawnRequested;
-        runDirector.TimeChanged += HandleTimeChanged;
+        if (runDirector != null) runDirector.TimeChanged += HandleTimeChanged;
+        if (bossSpawner != null) bossSpawner.BossSpawned += HandleBossSpawned;
+
         isSubscribed = true;
     }
 
     private void Unsubscribe()
     {
-        if (!isSubscribed || runDirector == null) return;
+        if (!isSubscribed) return;
 
-        runDirector.BossSpawnRequested -= HandleBossSpawnRequested;
-        runDirector.TimeChanged -= HandleTimeChanged;
+        if (runDirector != null) runDirector.TimeChanged -= HandleTimeChanged;
+        if (bossSpawner != null) bossSpawner.BossSpawned -= HandleBossSpawned;
+
         isSubscribed = false;
     }
 
-    private void HandleBossSpawnRequested()
+    // BossSpawner가 실제 스폰 직후 보스 인스턴스를 직접 넘겨줌
+    private void HandleBossSpawned(Enemy boss)
     {
         gameObject.SetActive(true);
-        SetBossName(bossName); // 고정값이라 스폰 시점에 바로 세팅
-
-        // BossSpawnRequested 시점엔 아직 EnemyManager.Spawn이 안 끝났을 수 있어서 한 프레임 늦춰서 찾음
-        StartCoroutine(FindBossNextFrame());
-    }
-
-    private IEnumerator FindBossNextFrame()
-    {
-        yield return null;
-
-        var boss = FindObjectsByType<Enemy>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)
-            .FirstOrDefault(e => e.IsBoss);
-
-        if (boss == null)
-        {
-            Debug.LogWarning("[BossHudUi] IsBoss인 Enemy를 못 찾음");
-            yield break;
-        }
+        SetBossName(bossName);
 
         SubscribeBoss(boss);
     }
@@ -94,10 +78,8 @@ public class BossHudUi : MonoBehaviour
         currentBoss = boss;
         currentBoss.Killed += HandleBossKilled;
 
-        // TODO: 체력은 여전히 Enemy 쪽에 HealthRatio/HealthRatioChanged 같은
-        // 좁은 조회 API가 필요함 (Health 전체 노출은 지양, health.MaxHealth 필드명은 확정됨).
-        // 받으면 여기서 currentBoss.HealthRatioChanged += HandleHealthRatioChanged; 로 교체.
-        // 받기 전까진 SetHpRatio를 디버그로 수동 호출해서 테스트.
+        // Enemy를 거치지 않고 Health를 직접 읽음 (읽기 전용이라 생명주기 보호 원칙 위반 아님).
+        currentBossHealth = boss.GetComponent<Health>();
     }
 
     private void UnsubscribeBoss()
@@ -107,6 +89,18 @@ public class BossHudUi : MonoBehaviour
             currentBoss.Killed -= HandleBossKilled;
         }
         currentBoss = null;
+        currentBossHealth = null;
+    }
+
+    private void Update()
+    {
+        if (currentBossHealth == null || bossHpBar == null) return;
+
+        float ratio = currentBossHealth.MaxHealth > 0f
+            ? currentBossHealth.CurrentHealth / currentBossHealth.MaxHealth
+            : 0f;
+
+        bossHpBar.fillAmount = Mathf.Clamp01(ratio);
     }
 
     private void HandleBossKilled(Enemy boss)

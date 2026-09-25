@@ -12,7 +12,7 @@
 public static class ElementReactionValues
 {
     // 5원소 모두 3레벨에서 첫 고유 효과가 해금
-    public const int ReactionUnlockLevel = 1; //TODO: 빌드 전 수정 필수. 테스트 용이하기 위함, 일시적인 조정입니다.
+    public const int ReactionUnlockLevel = 3; 
 
     // 5원소 공통. 기획 공통 레벨 상승표의 "5 공격 형태 확장"
     // ReactionUnlockLevel 과 독립. 그쪽 값이 무엇이든 5레벨 효과는 이 상수로만 열림

@@ -16290,6 +16290,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7855774140421082917, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3607718225273788966}
+    - targetCorrespondingSourceObject: {fileID: 2180673723708173702, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6312600070210812487}
     - targetCorrespondingSourceObject: {fileID: 342763017939109334, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6857223123170221378}
@@ -16468,6 +16471,29 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 688261400862296236, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
   m_PrefabInstance: {fileID: 165946900071682792}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2021765356393004910 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2180673723708173702, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
+  m_PrefabInstance: {fileID: 165946900071682792}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6312600070210812487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2021765356393004910}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ad095cf5ed4b31478910745febfea8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BossHudUi
+  bossNameText: {fileID: 765711806742349203}
+  bossName: "\uC6D0\uC18C \uC218\uD638\uC790"
+  bossTimeText: {fileID: 3903583415535980779}
+  bossHpBar: {fileID: 1693338280187343965}
+  runDirector: {fileID: 0}
+  bossSpawner: {fileID: 0}
 --- !u!224 &2661742256123737985 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2791642057976800617, guid: f75d705bf36f0eb4e99b38a515ab54dc, type: 3}
@@ -16734,7 +16760,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3873289515969384767, guid: 711e4904882235541a1219050ed117f9, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3935628123274627305, guid: 711e4904882235541a1219050ed117f9, type: 3}
       propertyPath: m_text
@@ -16752,31 +16778,13 @@ PrefabInstance:
     - {fileID: 5418942018223776477, guid: 711e4904882235541a1219050ed117f9, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3873289515969384767, guid: 711e4904882235541a1219050ed117f9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 5217898071524722944}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 711e4904882235541a1219050ed117f9, type: 3}
 --- !u!1 &720226788553825349 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3873289515969384767, guid: 711e4904882235541a1219050ed117f9, type: 3}
   m_PrefabInstance: {fileID: 4341032683441294714}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5217898071524722944
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 720226788553825349}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ad095cf5ed4b31478910745febfea8d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BossHudUi
-  bossTimeText: {fileID: 3903583415535980779}
-  bossHpBar: {fileID: 1693338280187343965}
-  runDirector: {fileID: 0}
 --- !u!114 &765711806742349203 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3935628123274627305, guid: 711e4904882235541a1219050ed117f9, type: 3}
