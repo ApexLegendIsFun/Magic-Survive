@@ -40,6 +40,8 @@ namespace Seondong.IntegrationGame
             var systems = All<GameFlowController>(scene).Single().gameObject;
             var run = systems.GetComponent<RunDirector>();
             var skills = systems.GetComponent<PlayerSkillSystem>();
+            Set(skills, "gameFlowController", systems.GetComponent<GameFlowController>());
+            Set(skills, "levelUpController", systems.GetComponent<LevelUpController>());
             var manager = All<EnemyManager>(scene).Single();
             var player = All<PlayerController>(scene).Single();
             var input = new SerializedObject(player.GetComponent<PlayerInput>());
@@ -130,6 +132,8 @@ namespace Seondong.IntegrationGame
                 s.ApplyModifiedPropertiesWithoutUndo();
             }
             var dynamicHud = ui.GetComponentInChildren<HudDynamicUi>(true);
+            foreach (string field in new[] { "timerText", "lvText", "killCount" })
+                Get<TMP_Text>(dynamicHud, field).color = new Color32(245, 244, 230, 255);
             var killGroup = (RectTransform)Get<TMP_Text>(dynamicHud, "killCount").transform.parent;
             killGroup.anchoredPosition = new Vector2(-160, -114);
             Get<TMP_Text>(dynamicHud, "killCount").rectTransform.sizeDelta = new Vector2(140, 46.5f);
@@ -344,6 +348,7 @@ namespace Seondong.IntegrationGame
             if (All<MonoBehaviour>(s).Any(b => b != null && b.GetType().Name.EndsWith("DebugTrigger"))) throw new Exception("Debug trigger in final scene.");
             if (ElementReactionValues.ReactionUnlockLevel != 3) throw new Exception("Test reaction level remains enabled.");
             IntegrationGraphicsCheck.ValidateAssets();
+            FinalFunctionalCoverage.Validate(s);
             string output = FinalSubmissionAudit.Output;
             var dependencies = AssetDatabase.GetDependencies(new[] { IntegrationGameEditor.Title, IntegrationGameEditor.Game }, true).OrderBy(p => p).ToArray();
             File.WriteAllLines(Path.Combine(output, "final-asset-dependencies.txt"), dependencies);

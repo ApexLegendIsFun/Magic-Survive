@@ -175,7 +175,8 @@ namespace Seondong.IntegrationGame
             GameEvents.ElementReactionTriggered -= Reaction; GameEvents.ChainReactionTriggered -= Chain; GameEvents.GroundAreaCreated -= Ground;
             report.status = pass ? "PASS" : "FAIL"; report.failure = failure; Write();
             Debug.Log("[Final Combat Fixture] " + report.status + " " + failure);
-            EditorApplication.Exit(pass ? 0 : 1);
+            if (Application.isBatchMode) EditorApplication.Exit(pass ? 0 : 1);
+            else EditorApplication.ExitPlaymode();
         }
     }
 }

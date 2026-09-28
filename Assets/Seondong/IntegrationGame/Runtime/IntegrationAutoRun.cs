@@ -196,6 +196,10 @@ namespace Seondong.IntegrationGame
         }
         private IEnumerator Capture(string name)
         {
+            // Sample the authored encounter panel after its 0.35s entrance,
+            // while it is centered, so intentional slide-in is not clipping.
+            if (name.StartsWith("elite-") || name == "boss")
+                yield return new WaitForSecondsRealtime(.5f);
             yield return new WaitForEndOfFrame();
             foreach (var label in FindObjectsByType<TMPro.TMP_Text>(FindObjectsSortMode.None))
             {
@@ -277,12 +281,17 @@ namespace Seondong.IntegrationGame
 
         private IEnumerator Run()
         {
-            Check(new[] { "death", "victory", "timeout", "layout", "growth" }.Contains(report.scenario), "Unknown scenario.");
+            Check(new[] { "death", "victory", "timeout", "layout", "growth", "quit" }.Contains(report.scenario), "Unknown scenario.");
             yield return new WaitForSecondsRealtime(1);
             Check(SceneManager.GetActiveScene().name == "TitleScene", "Wrong scene loaded.");
             BindInput(); Canvas.ForceUpdateCanvases();
             ButtonPoint(FindButton("START GAME")); ButtonPoint(FindButton("QUIT"));
             Mark("Title buttons visible and topmost"); yield return Capture("title");
+            if (report.scenario == "quit")
+            {
+                yield return Click("QUIT", true);
+                yield break;
+            }
             Check(FindObjectsByType<AudioSource>(FindObjectsSortMode.None).Any(a => a.isPlaying && a.loop && a.clip == SoundManager.instance.bgmClip[0]), "Title BGM not playing.");
             yield return Click("OPEN OPTIONS");
             yield return Capture("title-options");

@@ -1172,8 +1172,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSkillSystem
   weaponRunner: {fileID: 847271158}
-  gameFlowController: {fileID: 0}
-  levelUpController: {fileID: 0}
+  gameFlowController: {fileID: 2046186193}
+  levelUpController: {fileID: 2046186188}
   startingMagic: {fileID: 0}
   targetedMagicDefinitions:
   - {fileID: 11400000, guid: 87d380fe71362ed4891994b34628a701, type: 2}
@@ -1977,7 +1977,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 3137339391
-  m_fontColor: {r: 1, g: 1, b: 1, a: 0.7294118}
+  m_fontColor: {r: 0.9607843, g: 0.95686275, b: 0.9019608, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -6447,7 +6447,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+  m_fontColor: {r: 0.9607843, g: 0.95686275, b: 0.9019608, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -8112,7 +8112,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4278190080
-  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+  m_fontColor: {r: 0.9607843, g: 0.95686275, b: 0.9019608, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:

@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('death', 'victory', 'timeout', 'layout', 'growth')][string]$Scenario = 'death',
+    [ValidateSet('death', 'victory', 'timeout', 'layout', 'growth', 'quit')][string]$Scenario = 'death',
     [ValidateSet('Fire', 'Lightning', 'Frost', 'Earth', 'Dark')][string]$Element = 'Fire',
     [int]$Width = 1280,
     [int]$Height = 720,

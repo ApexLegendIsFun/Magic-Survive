@@ -248,6 +248,9 @@ namespace Seondong.IntegrationGame
                 else if (command == "create") CreateScenes();
                 else if (command == "play") Play();
                 else if (command == "auto-death") AutoPlay();
+                else if (command == "audit") { FinalSubmissionAudit.Run(); ValidateTeamHandoff(); }
+                else if (command == "combat-check") FinalCombatValidation.Run();
+                else if (command == "growth-check") SpecializationValidationEditor.RunBatch();
                 else throw new Exception("Unknown integration request: " + command);
                 File.WriteAllText("Logs/SeondongIntegration/editor-result.txt", "OK " + command);
             }
